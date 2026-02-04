@@ -114,13 +114,17 @@
                 <el-icon><Download /></el-icon>
                 导出Excel
               </el-button>
+              <el-button type="success" @click="handleExportPdf">
+                <el-icon><Download /></el-icon>
+                导出PDF
+              </el-button>
             </el-form-item>
           </el-form>
         </div>
 
         <el-tabs v-model="activeTab">
           <el-tab-pane label="表格" name="table">
-            <el-table :data="reportData" border max-height="500" v-loading="queryLoading">
+            <el-table ref="tableRef" :data="reportData" border max-height="500" v-loading="queryLoading">
               <el-table-column
                 v-for="col in currentReport.columns"
                 :key="col.fieldName"
@@ -140,11 +144,12 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, nextTick } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { reportApi } from '../../api/request'
 import * as echarts from 'echarts'
+import { exportToPdf } from '../../utils/pdfExport'
 
 const router = useRouter()
 
@@ -156,6 +161,7 @@ const viewDialogVisible = ref(false)
 const currentReport = ref(null)
 const activeTab = ref('table')
 const chartRef = ref(null)
+const tableRef = ref(null)
 let chartInstance = null
 
 const searchForm = reactive({
@@ -232,12 +238,77 @@ const handleQuery = async () => {
     const res = await reportApi.executeReport(currentReport.value.reportId, queryForm)
     if (res.success) {
       reportData.value = res.data
+
+      // 如果启用了图表，渲染图表
+      if (currentReport.value.enableChart && reportData.value.length > 0) {
+        await nextTick()
+        renderChart()
+      }
     }
   } catch (error) {
     console.error('查询失败:', error)
   } finally {
     queryLoading.value = false
   }
+}
+
+const renderChart = () => {
+  if (!chartRef.value || !currentReport.value) return
+
+  // 如果已有实例，先销毁
+  if (chartInstance) {
+    chartInstance.dispose()
+  }
+
+  // 创建新实例
+  chartInstance = echarts.init(chartRef.value)
+
+  // 准备图表数据
+  const columns = currentReport.value.columns || []
+  const data = reportData.value || []
+
+  if (data.length === 0) return
+
+  // 使用第一列作为X轴，第二列作为Y轴（简化处理）
+  const xAxisData = data.map(row => row[columns[0]?.fieldName] || '')
+  const seriesData = data.map(row => row[columns[1]?.fieldName] || 0)
+
+  // 根据图表类型配置选项
+  const chartType = currentReport.value.chartType || 'bar'
+  let option = {
+    tooltip: {
+      trigger: 'axis'
+    },
+    xAxis: {
+      type: 'category',
+      data: xAxisData
+    },
+    yAxis: {
+      type: 'value'
+    },
+    series: [{
+      data: seriesData,
+      type: chartType
+    }]
+  }
+
+  // 如果是饼图，需要不同的配置
+  if (chartType === 'pie') {
+    option = {
+      tooltip: {
+        trigger: 'item'
+      },
+      series: [{
+        type: 'pie',
+        data: data.map((row, index) => ({
+          name: xAxisData[index],
+          value: seriesData[index]
+        }))
+      }]
+    }
+  }
+
+  chartInstance.setOption(option)
 }
 
 const handleExport = async (row) => {
@@ -263,6 +334,45 @@ const handleExportExcel = () => {
   }
 }
 
+const handleExportPdf = async () => {
+  if (!currentReport.value || !tableRef.value) {
+    ElMessage.warning('请先查询数据')
+    return
+  }
+
+  try {
+    // 准备查询参数数据
+    const parameters = currentReport.value.parameters ? currentReport.value.parameters.map(param => ({
+      name: param.parameterName,
+      label: param.displayName,
+      value: queryForm[param.parameterName]
+    })) : []
+
+    // 准备图表配置
+    const chart = {
+      enableChart: currentReport.value.enableChart || false,
+      chartType: currentReport.value.chartType,
+      chartRef: chartRef.value
+    }
+
+    // 获取表格元素（需要获取实际的 DOM 元素）
+    const tableElement = tableRef.value.$el
+
+    await exportToPdf({
+      title: currentReport.value.reportName,
+      parameters: parameters,
+      chart: chart,
+      tableElement: tableElement,
+      filename: `${currentReport.value.reportName}_${Date.now()}`
+    })
+
+    ElMessage.success('PDF 导出成功')
+  } catch (error) {
+    console.error('PDF 导出失败:', error)
+    ElMessage.error('PDF 导出失败，请重试')
+  }
+}
+
 const handleDelete = async (row) => {
   try {
     await ElMessageBox.confirm(`确定要删除报表"${row.reportName}"吗？`, '提示', {
@@ -282,6 +392,22 @@ const handleDelete = async (row) => {
     }
   }
 }
+
+// 监听标签切换，渲染图表
+watch(activeTab, (newTab) => {
+  if (newTab === 'chart' && reportData.value.length > 0) {
+    nextTick(() => {
+      renderChart()
+    })
+  }
+})
+
+// 清理图表实例
+onUnmounted(() => {
+  if (chartInstance) {
+    chartInstance.dispose()
+  }
+})
 </script>
 
 <style scoped>
