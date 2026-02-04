@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Auth Debug</title>
+</head>
+<body>
+  <h1>Authentication Debug</h1>
+  <pre id="result"></pre>
+  <button onclick="clearToken()">Clear Token</button>
+  <button onclick="checkToken()">Check Token</button>
+  <button onclick="testLogin()">Test Login</button>
+
+  <script>
+    function checkToken() {
+      const token = localStorage.getItem('token');
+      document.getElementById('result').textContent = `Token in localStorage: ${token ? 'EXISTS' : 'NULL'}\nToken value: ${token ? token.substring(0, 50) + '...' : 'N/A'}`;
+    }
+
+    function clearToken() {
+      localStorage.removeItem('token');
+      document.getElementById('result').textContent = 'Token cleared from localStorage';
+    }
+
+    async function testLogin() {
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: 'root', password: 'admin123' })
+      });
+      const data = await response.json();
+      if (data.Success) {
+        localStorage.setItem('token', data.Data.Token);
+        document.getElementById('result').textContent = 'Login successful, token saved';
+      }
+    }
+
+    checkToken();
+  </script>
+</body>
+</html>

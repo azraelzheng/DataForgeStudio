@@ -1,0 +1,71 @@
+# ====================
+# DataForgeStudio V4
+# ====================
+
+# ------------- IDE -------------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# ------------- Build -------------
+backend/**/*.obj
+backend/**/*.bin
+backend/**/bin/
+backend/**/obj/
+backend/**/*.user
+backend/!.vscode/tasks.json
+backend/**/*.csproj.user
+backend/**/*.csproj.user
+
+# ------------- Frontend -------------
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/.output/
+frontend/.nuxt/
+frontend/.cache/
+
+# ------------- Database -------------
+database/*.mdf
+database/*.ldf
+database/*.log
+backend/**/*.db
+backend/**/*.db-shm
+backend/**/*.db-wal
+
+# ------------- Keys & Secrets -------------
+backend/keys/
+*.pem
+*.key
+**/keys/
+*.lic
+
+# ------------- Logs -------------
+logs/
+*.log
+backend/logs/
+
+# ------------- OS -------------
+Thumbs.db
+Desktop.ini
+
+# ------------- Environment -------------
+.env
+.env.local
+.env.*.local
+
+# ------------- Backups -------------
+**/Backups/
+*.bak
+*.backup
+
+# ------------- Temp Files -------------
+tmp/
+temp/
+*.tmp
+
+# ------------- Claude Code -------------
+.claude/
