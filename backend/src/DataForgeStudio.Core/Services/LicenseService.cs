@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Caching.Memory;
 using DataForgeStudio.Core.Interfaces;
 using DataForgeStudio.Core.DTO;
@@ -19,22 +18,20 @@ namespace DataForgeStudio.Core.Services;
 public class LicenseService : ILicenseService
 {
     private readonly DataForgeStudioDbContext _context;
-    private readonly IConfiguration _configuration;
     private readonly ILogger<LicenseService> _logger;
     private readonly IKeyManagementService _keyManagementService;
     private readonly IMemoryCache _memoryCache;
     private const string CACHE_KEY = "LicenseValidation";
     private const int CACHE_DURATION_MINUTES = 30;
+    private const string LICENSE_TYPE_TRIAL = "Trial";
 
     public LicenseService(
         DataForgeStudioDbContext context,
-        IConfiguration configuration,
         ILogger<LicenseService> logger,
         IKeyManagementService keyManagementService,
         IMemoryCache memoryCache)
     {
         _context = context;
-        _configuration = configuration;
         _logger = logger;
         _keyManagementService = keyManagementService;
         _memoryCache = memoryCache;
@@ -60,7 +57,17 @@ public class LicenseService : ILicenseService
             return ApiResponse<LicenseInfoDto>.Fail("许可证数据解密失败", "DECRYPT_FAILED");
         }
 
-        var licenseInfo = new LicenseInfoDto
+        var licenseInfo = MapToLicenseInfoDto(license, licenseData);
+
+        return ApiResponse<LicenseInfoDto>.Ok(licenseInfo);
+    }
+
+    /// <summary>
+    /// 将许可证实体和数据映射到 DTO
+    /// </summary>
+    private LicenseInfoDto MapToLicenseInfoDto(License license, LicenseData licenseData)
+    {
+        return new LicenseInfoDto
         {
             LicenseId = license.LicenseId,
             LicenseType = licenseData.LicenseType,
@@ -71,8 +78,6 @@ public class LicenseService : ILicenseService
             MaxDataSources = licenseData.MaxDataSources,
             Features = licenseData.Features
         };
-
-        return ApiResponse<LicenseInfoDto>.Ok(licenseInfo);
     }
 
     public async Task<ApiResponse<LicenseInfoDto>> ActivateLicenseAsync(ActivateLicenseRequest request, string? ipAddress)
@@ -87,8 +92,9 @@ public class LicenseService : ILicenseService
                 var aesIv = _keyManagementService.GetAesIv();
                 licenseJson = EncryptionHelper.AesDecrypt(request.LicenseKey, aesKey, aesIv);
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "许可证 AES 解密失败");
                 return ApiResponse<LicenseInfoDto>.Fail("许可证文件格式错误或已损坏", "INVALID_FORMAT");
             }
 
@@ -97,9 +103,15 @@ public class LicenseService : ILicenseService
             try
             {
                 licenseData = JsonSerializer.Deserialize<LicenseData>(licenseJson);
+                if (licenseData == null)
+                {
+                    _logger.LogError("许可证数据反序列化后为 null");
+                    return ApiResponse<LicenseInfoDto>.Fail("许可证内容格式错误", "INVALID_CONTENT");
+                }
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "许可证数据反序列化失败");
                 return ApiResponse<LicenseInfoDto>.Fail("许可证内容格式错误", "INVALID_CONTENT");
             }
 
@@ -166,17 +178,7 @@ public class LicenseService : ILicenseService
             _memoryCache.Remove(CACHE_KEY);
 
             // 9. 返回许可证信息
-            var licenseInfo = new LicenseInfoDto
-            {
-                LicenseId = license.LicenseId,
-                LicenseType = licenseData.LicenseType,
-                CustomerName = licenseData.CustomerName,
-                ExpiryDate = licenseData.ExpiryDate,
-                MaxUsers = licenseData.MaxUsers,
-                MaxReports = licenseData.MaxReports,
-                MaxDataSources = licenseData.MaxDataSources,
-                Features = licenseData.Features
-            };
+            var licenseInfo = MapToLicenseInfoDto(license, licenseData);
 
             return ApiResponse<LicenseInfoDto>.Ok(licenseInfo, "许可证激活成功");
         }
@@ -281,17 +283,7 @@ public class LicenseService : ILicenseService
         {
             Valid = true,
             Message = "许可证有效",
-            LicenseInfo = new LicenseInfoDto
-            {
-                LicenseId = license.LicenseId,
-                LicenseType = licenseData.LicenseType,
-                CustomerName = licenseData.CustomerName,
-                ExpiryDate = licenseData.ExpiryDate,
-                MaxUsers = licenseData.MaxUsers,
-                MaxReports = licenseData.MaxReports,
-                MaxDataSources = licenseData.MaxDataSources,
-                Features = licenseData.Features
-            }
+            LicenseInfo = MapToLicenseInfoDto(license, licenseData)
         });
 
         // 缓存结果
@@ -339,14 +331,14 @@ public class LicenseService : ILicenseService
                 try
                 {
                     var existingData = await DecryptLicenseAsync(existingLicense.LicenseKey);
-                    if (existingData != null && existingData.LicenseType == "Trial")
+                    if (existingData != null && existingData.LicenseType == LICENSE_TYPE_TRIAL)
                     {
                         return ApiResponse<LicenseInfoDto>.Fail("该机器已使用过试用许可证", "TRIAL_USED");
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // 解密失败，跳过此许可证
+                    _logger.LogWarning(ex, "解密现有许可证失败，跳过此许可证");
                 }
             }
 
@@ -362,7 +354,7 @@ public class LicenseService : ILicenseService
                 Features = new List<string> { "报表设计", "报表查询", "数据源管理" },
                 MachineCode = machineCode,
                 IssuedDate = DateTime.UtcNow.ToString("yyyy-MM-dd"),
-                LicenseType = "Trial",
+                LicenseType = LICENSE_TYPE_TRIAL,
                 Signature = "" // 稍后生成签名
             };
 
@@ -404,17 +396,7 @@ public class LicenseService : ILicenseService
                 licenseData.LicenseId, licenseData.ExpiryDate);
 
             // 返回许可证信息
-            var licenseInfo = new LicenseInfoDto
-            {
-                LicenseId = license.LicenseId,
-                LicenseType = licenseData.LicenseType,
-                CustomerName = licenseData.CustomerName,
-                ExpiryDate = licenseData.ExpiryDate,
-                MaxUsers = licenseData.MaxUsers,
-                MaxReports = licenseData.MaxReports,
-                MaxDataSources = licenseData.MaxDataSources,
-                Features = licenseData.Features
-            };
+            var licenseInfo = MapToLicenseInfoDto(license, licenseData);
 
             return ApiResponse<LicenseInfoDto>.Ok(licenseInfo, "试用许可证已自动生成");
         }
