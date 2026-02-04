@@ -106,7 +106,7 @@
               <el-input v-else v-model="queryForm[param.name]" :placeholder="`请输入${param.label}`" />
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" @click="handleQuery">
+              <el-button type="primary" @click="handleQuery" :loading="queryLoading">
                 <el-icon><Search /></el-icon>
                 查询
               </el-button>
@@ -114,9 +114,9 @@
                 <el-icon><Download /></el-icon>
                 导出Excel
               </el-button>
-              <el-button type="success" @click="handleExportPdf">
+              <el-button type="success" @click="handleExportPdf" :loading="pdfExportLoading">
                 <el-icon><Download /></el-icon>
-                导出PDF
+                {{ pdfExportLoading ? '生成中...' : '导出PDF' }}
               </el-button>
             </el-form-item>
           </el-form>
@@ -155,6 +155,7 @@ const router = useRouter()
 
 const loading = ref(false)
 const queryLoading = ref(false)
+const pdfExportLoading = ref(false)
 const tableData = ref([])
 const reportData = ref([])
 const viewDialogVisible = ref(false)
@@ -335,10 +336,23 @@ const handleExportExcel = () => {
 }
 
 const handleExportPdf = async () => {
-  if (!currentReport.value || !tableRef.value) {
-    ElMessage.warning('请先查询数据')
+  // 验证数据可用性
+  if (!currentReport.value) {
+    ElMessage.warning('请先选择报表')
     return
   }
+
+  if (!tableRef.value) {
+    ElMessage.warning('表格组件未加载，请稍后重试')
+    return
+  }
+
+  if (!reportData.value || reportData.value.length === 0) {
+    ElMessage.warning('暂无数据可导出，请先执行查询')
+    return
+  }
+
+  pdfExportLoading.value = true
 
   try {
     // 准备查询参数数据
@@ -358,6 +372,10 @@ const handleExportPdf = async () => {
     // 获取表格元素（需要获取实际的 DOM 元素）
     const tableElement = tableRef.value.$el
 
+    if (!tableElement) {
+      throw new Error('无法获取表格 DOM 元素')
+    }
+
     await exportToPdf({
       title: currentReport.value.reportName,
       parameters: parameters,
@@ -369,7 +387,22 @@ const handleExportPdf = async () => {
     ElMessage.success('PDF 导出成功')
   } catch (error) {
     console.error('PDF 导出失败:', error)
-    ElMessage.error('PDF 导出失败，请重试')
+
+    // 根据错误类型提供更详细的错误信息
+    let errorMessage = 'PDF 导出失败，请重试'
+    if (error.message) {
+      if (error.message.includes('DOM')) {
+        errorMessage = 'PDF 导出失败：无法获取页面元素，请刷新页面后重试'
+      } else if (error.message.includes('canvas')) {
+        errorMessage = 'PDF 导出失败：生成图片失败，请减少数据量后重试'
+      } else {
+        errorMessage = `PDF 导出失败：${error.message}`
+      }
+    }
+
+    ElMessage.error(errorMessage)
+  } finally {
+    pdfExportLoading.value = false
   }
 }
 

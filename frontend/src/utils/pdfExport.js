@@ -33,7 +33,14 @@ export async function exportToPdf(options) {
   const contentWidth = pageWidth - 2 * margin
   let yPosition = margin
 
-  // 添加中文字体支持（使用系统字体）
+  // 字体设置
+  // 注意: jsPDF 默认字体不支持中文字符显示
+  // 这是一个已知的浏览器环境限制
+  // 可能的解决方案:
+  // 1. 使用自定义中文字体文件 (需要加载 .ttf 文件，增加包大小)
+  // 2. 使用 canvas 将中文文本渲染为图片后嵌入 PDF
+  // 3. 使用后端生成 PDF (推荐用于生产环境)
+  // 当前实现: 使用 html2canvas 将整个表格/图表转为图片，中文可以正常显示
   pdf.setFont('helvetica')
   pdf.setFontSize(16)
 
