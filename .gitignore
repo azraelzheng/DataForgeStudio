@@ -69,3 +69,6 @@ temp/
 
 # ------------- Claude Code -------------
 .claude/
+
+# ------------- Git Worktrees -------------
+.worktrees/
