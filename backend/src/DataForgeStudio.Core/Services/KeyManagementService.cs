@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Security.Cryptography;
+using DataForgeStudio.Core.Interfaces;
 
 namespace DataForgeStudio.Core.Services;
 

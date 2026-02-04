@@ -24,9 +24,10 @@ public class SystemController : ControllerBase
     }
 
     /// <summary>
-    /// 获取机器码
+    /// 获取机器码（无需认证，用于许可证激活）
     /// </summary>
     [HttpGet("machine-code")]
+    [AllowAnonymous]
     public ApiResponse<string> GetMachineCode()
     {
         try
