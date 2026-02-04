@@ -40,10 +40,10 @@
           <template #header>
             <span>SQL查询</span>
           </template>
-          <el-input
+          <SqlEditor
+            ref="sqlEditorRef"
             v-model="form.sqlQuery"
-            type="textarea"
-            :rows="10"
+            style="height: 300px;"
             placeholder="请输入SQL查询语句，使用 @参数名 格式定义参数，如: WHERE CreateTime >= @StartTime AND CreateTime <= @EndTime"
           />
           <div style="margin-top: 10px;">
@@ -54,6 +54,10 @@
             <el-button @click="handleTestQuery">
               <el-icon><Connection /></el-icon>
               测试查询
+            </el-button>
+            <el-button @click="formatSQL">
+              <el-icon><MagicStick /></el-icon>
+              格式化SQL
             </el-button>
           </div>
         </el-card>
@@ -250,6 +254,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { reportApi, dataSourceApi } from '../../api/request'
+import SqlEditor from '../../components/SqlEditor.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -281,6 +286,17 @@ const rules = {
   reportCategory: [{ required: true, message: '请选择分类', trigger: 'change' }],
   dataSourceId: [{ required: true, message: '请选择数据源', trigger: 'change' }],
   sqlQuery: [{ required: true, message: '请输入SQL查询语句', trigger: 'blur' }]
+}
+
+// SqlEditor 组件引用
+const sqlEditorRef = ref(null)
+
+// 格式化 SQL
+const formatSQL = () => {
+  if (sqlEditorRef.value) {
+    sqlEditorRef.value.formatSQL()
+    ElMessage.success('SQL 格式化成功')
+  }
 }
 
 onMounted(async () => {
