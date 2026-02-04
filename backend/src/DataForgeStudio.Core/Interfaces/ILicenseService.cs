@@ -20,5 +20,6 @@ public interface ILicenseService
     /// <summary>
     /// 验证许可证
     /// </summary>
-    Task<ApiResponse<LicenseValidationResponse>> ValidateLicenseAsync();
+    /// <param name="forceRefresh">是否强制刷新缓存</param>
+    Task<ApiResponse<LicenseValidationResponse>> ValidateLicenseAsync(bool forceRefresh = false);
 }

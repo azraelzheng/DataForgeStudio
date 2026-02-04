@@ -39,6 +39,9 @@ builder.Services.AddScoped<ISystemService, SystemService>();
 builder.Services.AddScoped<IDatabaseService, DatabaseService>();
 builder.Services.AddScoped<IKeyManagementService, KeyManagementService>();
 
+// 注册内存缓存（用于许可证验证缓存）
+builder.Services.AddMemoryCache();
+
 // 配置 JWT 认证
 var jwtSection = builder.Configuration.GetSection("Jwt");
 var secretKey = Encoding.UTF8.GetBytes(jwtSection["Secret"]);

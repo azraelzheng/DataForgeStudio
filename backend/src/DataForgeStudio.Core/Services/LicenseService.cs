@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Caching.Memory;
 using DataForgeStudio.Core.Interfaces;
 using DataForgeStudio.Core.DTO;
 using DataForgeStudio.Data.Data;
@@ -8,6 +9,7 @@ using DataForgeStudio.Domain.Entities;
 using DataForgeStudio.Shared.DTO;
 using DataForgeStudio.Shared.Utils;
 using System.Text.Json;
+using System.Security.Cryptography;
 
 namespace DataForgeStudio.Core.Services;
 
@@ -19,15 +21,23 @@ public class LicenseService : ILicenseService
     private readonly DataForgeStudioDbContext _context;
     private readonly IConfiguration _configuration;
     private readonly ILogger<LicenseService> _logger;
+    private readonly IKeyManagementService _keyManagementService;
+    private readonly IMemoryCache _memoryCache;
+    private const string CACHE_KEY = "LicenseValidation";
+    private const int CACHE_DURATION_MINUTES = 30;
 
     public LicenseService(
         DataForgeStudioDbContext context,
         IConfiguration configuration,
-        ILogger<LicenseService> logger)
+        ILogger<LicenseService> logger,
+        IKeyManagementService keyManagementService,
+        IMemoryCache memoryCache)
     {
         _context = context;
         _configuration = configuration;
         _logger = logger;
+        _keyManagementService = keyManagementService;
+        _memoryCache = memoryCache;
     }
 
     public async Task<ApiResponse<LicenseInfoDto>> GetLicenseAsync()
@@ -73,8 +83,8 @@ public class LicenseService : ILicenseService
             string licenseJson;
             try
             {
-                var aesKey = _configuration["License:AesKey"];
-                var aesIv = _configuration["License:AesIv"];
+                var aesKey = _keyManagementService.GetAesKey();
+                var aesIv = _keyManagementService.GetAesIv();
                 licenseJson = EncryptionHelper.AesDecrypt(request.LicenseKey, aesKey, aesIv);
             }
             catch
@@ -93,8 +103,8 @@ public class LicenseService : ILicenseService
                 return ApiResponse<LicenseInfoDto>.Fail("许可证内容格式错误", "INVALID_CONTENT");
             }
 
-            // 3. 读取公钥验证签名
-            var publicKey = await GetPublicKeyAsync();
+            // 3. 使用 KeyManagementService 获取公钥验证签名
+            var publicKey = await _keyManagementService.GetPublicKeyAsync();
             bool isValid = EncryptionHelper.RsaVerifyData(
                 licenseJson,
                 licenseData.Signature,
@@ -152,6 +162,9 @@ public class LicenseService : ILicenseService
             _context.Licenses.Add(license);
             await _context.SaveChangesAsync();
 
+            // 清除缓存，以便下次验证时使用新的许可证
+            _memoryCache.Remove(CACHE_KEY);
+
             // 9. 返回许可证信息
             var licenseInfo = new LicenseInfoDto
             {
@@ -174,8 +187,19 @@ public class LicenseService : ILicenseService
         }
     }
 
-    public async Task<ApiResponse<LicenseValidationResponse>> ValidateLicenseAsync()
+    /// <summary>
+    /// 验证许可证（带缓存，支持自动生成试用许可证）
+    /// </summary>
+    /// <param name="forceRefresh">是否强制刷新缓存</param>
+    public async Task<ApiResponse<LicenseValidationResponse>> ValidateLicenseAsync(bool forceRefresh = false)
     {
+        // 检查缓存
+        if (!forceRefresh && _memoryCache.TryGetValue<ApiResponse<LicenseValidationResponse>>(CACHE_KEY, out var cachedResponse))
+        {
+            _logger.LogDebug("从缓存返回许可证验证结果");
+            return cachedResponse;
+        }
+
         var machineCode = EncryptionHelper.GetMachineCode();
         var license = await _context.Licenses
             .Where(l => l.MachineCode == machineCode)
@@ -184,52 +208,76 @@ public class LicenseService : ILicenseService
 
         if (license == null)
         {
-            return ApiResponse<LicenseValidationResponse>.Ok(new LicenseValidationResponse
+            // 自动生成试用许可证
+            _logger.LogInformation("未找到许可证，自动生成试用许可证");
+            var trialResult = await GenerateTrialLicenseAsync();
+
+            if (!trialResult.Success)
             {
-                Valid = false,
-                Message = "未激活许可证"
+                var response = ApiResponse<LicenseValidationResponse>.Ok(new LicenseValidationResponse
+                {
+                    Valid = false,
+                    Message = $"未激活许可证，且试用许可证生成失败: {trialResult.Message}"
+                });
+                _memoryCache.Set(CACHE_KEY, response, TimeSpan.FromMinutes(CACHE_DURATION_MINUTES));
+                return response;
+            }
+
+            var trialValidationResponse = ApiResponse<LicenseValidationResponse>.Ok(new LicenseValidationResponse
+            {
+                Valid = true,
+                Message = "试用许可证已自动生成",
+                LicenseInfo = trialResult.Data
             });
+            _memoryCache.Set(CACHE_KEY, trialValidationResponse, TimeSpan.FromMinutes(CACHE_DURATION_MINUTES));
+            return trialValidationResponse;
         }
 
         // 解密并验证许可证
         var licenseData = await DecryptLicenseAsync(license.LicenseKey);
         if (licenseData == null)
         {
-            return ApiResponse<LicenseValidationResponse>.Ok(new LicenseValidationResponse
+            var response = ApiResponse<LicenseValidationResponse>.Ok(new LicenseValidationResponse
             {
                 Valid = false,
                 Message = "许可证数据无效"
             });
+            _memoryCache.Set(CACHE_KEY, response, TimeSpan.FromMinutes(CACHE_DURATION_MINUTES));
+            return response;
         }
 
         // 验证签名
-        var publicKey = await GetPublicKeyAsync();
+        var publicKey = await _keyManagementService.GetPublicKeyAsync();
         bool isValid = EncryptionHelper.RsaVerifyData(
             JsonSerializer.Serialize(licenseData),
-            license.Signature,
+            licenseData.Signature,
             publicKey
         );
 
         if (!isValid)
         {
-            return ApiResponse<LicenseValidationResponse>.Ok(new LicenseValidationResponse
+            var response = ApiResponse<LicenseValidationResponse>.Ok(new LicenseValidationResponse
             {
                 Valid = false,
                 Message = "许可证已被篡改"
             });
+            _memoryCache.Set(CACHE_KEY, response, TimeSpan.FromMinutes(CACHE_DURATION_MINUTES));
+            return response;
         }
 
         // 检查过期
         if (licenseData.ExpiryDate < DateTime.UtcNow)
         {
-            return ApiResponse<LicenseValidationResponse>.Ok(new LicenseValidationResponse
+            var response = ApiResponse<LicenseValidationResponse>.Ok(new LicenseValidationResponse
             {
                 Valid = false,
                 Message = $"许可证已过期（过期日期: {licenseData.ExpiryDate:yyyy-MM-dd}）"
             });
+            _memoryCache.Set(CACHE_KEY, response, TimeSpan.FromMinutes(CACHE_DURATION_MINUTES));
+            return response;
         }
 
-        return ApiResponse<LicenseValidationResponse>.Ok(new LicenseValidationResponse
+        var validationResponse = ApiResponse<LicenseValidationResponse>.Ok(new LicenseValidationResponse
         {
             Valid = true,
             Message = "许可证有效",
@@ -245,6 +293,11 @@ public class LicenseService : ILicenseService
                 Features = licenseData.Features
             }
         });
+
+        // 缓存结果
+        _memoryCache.Set(CACHE_KEY, validationResponse, TimeSpan.FromMinutes(CACHE_DURATION_MINUTES));
+
+        return validationResponse;
     }
 
     /// <summary>
@@ -254,8 +307,8 @@ public class LicenseService : ILicenseService
     {
         try
         {
-            var aesKey = _configuration["License:AesKey"];
-            var aesIv = _configuration["License:AesIv"];
+            var aesKey = _keyManagementService.GetAesKey();
+            var aesIv = _keyManagementService.GetAesIv();
             var licenseJson = EncryptionHelper.AesDecrypt(encryptedLicense, aesKey, aesIv);
             return JsonSerializer.Deserialize<LicenseData>(licenseJson);
         }
@@ -267,11 +320,108 @@ public class LicenseService : ILicenseService
     }
 
     /// <summary>
-    /// 读取公钥
+    /// 生成试用许可证
     /// </summary>
-    private async Task<string> GetPublicKeyAsync()
+    private async Task<ApiResponse<LicenseInfoDto>> GenerateTrialLicenseAsync()
     {
-        var publicKeyPath = _configuration["License:PublicKeyPath"];
-        return await File.ReadAllTextAsync(publicKeyPath);
+        try
+        {
+            var machineCode = EncryptionHelper.GetMachineCode();
+
+            // 检查是否已有试用许可证
+            var existingLicenses = await _context.Licenses
+                .Where(l => l.MachineCode == machineCode)
+                .ToListAsync();
+
+            // 尝试解密现有许可证以检查是否有试用许可证
+            foreach (var existingLicense in existingLicenses)
+            {
+                try
+                {
+                    var existingData = await DecryptLicenseAsync(existingLicense.LicenseKey);
+                    if (existingData != null && existingData.LicenseType == "Trial")
+                    {
+                        return ApiResponse<LicenseInfoDto>.Fail("该机器已使用过试用许可证", "TRIAL_USED");
+                    }
+                }
+                catch
+                {
+                    // 解密失败，跳过此许可证
+                }
+            }
+
+            // 生成试用许可证数据
+            var licenseData = new LicenseData
+            {
+                LicenseId = Guid.NewGuid().ToString(),
+                CustomerName = "试用用户",
+                ExpiryDate = DateTime.UtcNow.AddDays(30),
+                MaxUsers = 5,
+                MaxReports = 10,
+                MaxDataSources = 2,
+                Features = new List<string> { "报表设计", "报表查询", "数据源管理" },
+                MachineCode = machineCode,
+                IssuedDate = DateTime.UtcNow.ToString("yyyy-MM-dd"),
+                LicenseType = "Trial",
+                Signature = "" // 稍后生成签名
+            };
+
+            // 序列化为 JSON（不包含 Signature）
+            var licenseJson = JsonSerializer.Serialize(licenseData);
+
+            // 使用私钥签名
+            using var rsa = await _keyManagementService.GetRsaWithPrivateKeyAsync();
+            var signatureBytes = rsa.SignData(
+                System.Text.Encoding.UTF8.GetBytes(licenseJson),
+                HashAlgorithmName.SHA256,
+                RSASignaturePadding.Pkcs1
+            );
+            licenseData.Signature = Convert.ToBase64String(signatureBytes);
+
+            // 重新序列化包含签名的完整数据
+            var fullLicenseJson = JsonSerializer.Serialize(licenseData);
+
+            // 使用 AES 加密
+            var aesKey = _keyManagementService.GetAesKey();
+            var aesIv = _keyManagementService.GetAesIv();
+            var encryptedLicense = EncryptionHelper.AesEncrypt(fullLicenseJson, aesKey, aesIv);
+
+            // 保存到数据库
+            var license = new Domain.Entities.License
+            {
+                LicenseKey = encryptedLicense,
+                Signature = licenseData.Signature,
+                MachineCode = machineCode,
+                ActivatedTime = DateTime.UtcNow,
+                ActivatedIP = null,
+                CreatedTime = DateTime.UtcNow
+            };
+
+            _context.Licenses.Add(license);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("试用许可证已生成: {LicenseId}, 过期日期: {ExpiryDate}",
+                licenseData.LicenseId, licenseData.ExpiryDate);
+
+            // 返回许可证信息
+            var licenseInfo = new LicenseInfoDto
+            {
+                LicenseId = license.LicenseId,
+                LicenseType = licenseData.LicenseType,
+                CustomerName = licenseData.CustomerName,
+                ExpiryDate = licenseData.ExpiryDate,
+                MaxUsers = licenseData.MaxUsers,
+                MaxReports = licenseData.MaxReports,
+                MaxDataSources = licenseData.MaxDataSources,
+                Features = licenseData.Features
+            };
+
+            return ApiResponse<LicenseInfoDto>.Ok(licenseInfo, "试用许可证已自动生成");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "生成试用许可证失败");
+            return ApiResponse<LicenseInfoDto>.Fail($"生成试用许可证失败: {ex.Message}", "TRIAL_GENERATION_FAILED");
+        }
     }
 }
