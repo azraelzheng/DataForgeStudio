@@ -37,7 +37,7 @@ builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<ILicenseService, LicenseService>();
 builder.Services.AddScoped<ISystemService, SystemService>();
 builder.Services.AddScoped<IDatabaseService, DatabaseService>();
-builder.Services.AddScoped<KeyManagementService>();
+builder.Services.AddScoped<IKeyManagementService, KeyManagementService>();
 
 // 配置 JWT 认证
 var jwtSection = builder.Configuration.GetSection("Jwt");
