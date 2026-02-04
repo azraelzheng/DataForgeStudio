@@ -37,6 +37,7 @@ builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<ILicenseService, LicenseService>();
 builder.Services.AddScoped<ISystemService, SystemService>();
 builder.Services.AddScoped<IDatabaseService, DatabaseService>();
+builder.Services.AddScoped<KeyManagementService>();
 
 // 配置 JWT 认证
 var jwtSection = builder.Configuration.GetSection("Jwt");
@@ -132,6 +133,14 @@ using (var scope = app.Services.CreateScope())
     var dbContext = scope.ServiceProvider.GetRequiredService<DataForgeStudioDbContext>();
     // 开发环境可以设置为 true 强制重建权限，生产环境设置为 false
     await DbInitializer.InitializeAsync(dbContext, forceResetPermissions: false);
+}
+
+// 初始化密钥 - 生成 RSA 密钥对（如果不存在）
+using (var scope = app.Services.CreateScope())
+{
+    var keyService = scope.ServiceProvider.GetRequiredService<KeyManagementService>();
+    await keyService.EnsureKeyPairExistsAsync();
+    await keyService.EnsureAesKeyExistsAsync();
 }
 
 // 配置 HTTP 请求管道
