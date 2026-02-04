@@ -14,7 +14,7 @@ import { keymap } from '@codemirror/view'
 import { defaultKeymap, indentWithTab } from '@codemirror/commands'
 import { searchKeymap, highlightSelectionMatches } from '@codemirror/search'
 import { autocompletion } from '@codemirror/autocomplete'
-import { linter, diagnosticCount } from '@codemirror/lint'
+import { linter } from '@codemirror/lint'
 import { bracketMatching } from '@codemirror/language'
 import { lineNumbers, highlightActiveLineGutter } from '@codemirror/view'
 import { highlightSpecialChars, drawSelection, dropCursor, rectangularSelection } from '@codemirror/view'
@@ -176,7 +176,7 @@ onMounted(() => {
 
 // 监听外部值变化
 watch(() => props.modelValue, (newValue) => {
-  if (editorView && newValue !== editorView.state.doc.toString()) {
+  if (editorView && newValue !== editorView.state.doc.toString() && !editorView.hasFocus) {
     const transaction = editorView.state.update({
       changes: {
         from: 0,
@@ -200,8 +200,9 @@ onBeforeUnmount(() => {
 defineExpose({
   formatSQL: () => {
     if (editorView) {
-      formatSQL(editorView)
+      return formatSQL(editorView)
     }
+    return false
   }
 })
 </script>
@@ -209,6 +210,7 @@ defineExpose({
 <style scoped>
 .sql-editor-container {
   height: 100%;
+  min-height: 200px;
   border: 1px solid #dcdfe6;
   border-radius: 4px;
   overflow: hidden;

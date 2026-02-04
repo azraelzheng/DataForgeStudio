@@ -44,7 +44,6 @@
             ref="sqlEditorRef"
             v-model="form.sqlQuery"
             style="height: 300px;"
-            placeholder="请输入SQL查询语句，使用 @参数名 格式定义参数，如: WHERE CreateTime >= @StartTime AND CreateTime <= @EndTime"
           />
           <div style="margin-top: 10px;">
             <el-button type="primary" @click="handleParseSql">
