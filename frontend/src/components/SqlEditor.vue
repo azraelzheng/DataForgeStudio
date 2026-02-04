@@ -21,7 +21,7 @@ import { highlightSpecialChars, drawSelection, dropCursor, rectangularSelection 
 import { highlightActiveLine } from '@codemirror/view'
 import { format as SQLFormatter } from 'sql-formatter'
 import { createSqlAutocomplete, preloadTableStructure, clearTableCache } from '../utils/sqlAutocomplete'
-import { getTableStructure } from '../api/dataSource'
+import { dataSourceApi } from '../api/request'
 
 const props = defineProps({
   modelValue: {
@@ -101,24 +101,7 @@ const getExtensions = () => {
     searchKeymap.of(searchKeymap),
     highlightSelectionMatches(),
     // 使用自定义 SQL 自动补全
-    createSqlAutocomplete(async (dsId) => {
-      try {
-        const res = await getTableStructure(dsId)
-        // 转换后端返回的格式为自动补全所需的格式
-        // 后端返回: [{ tableName: "Users", columns: ["UserId", "Username", ...] }, ...]
-        // 自动补全需要: [{ label: "Users", columns: ["UserId", "Username", ...] }, ...]
-        if (res.success && res.data) {
-          return res.data.map(t => ({
-            label: t.tableName || t.tableName || t.label,
-            columns: t.columns || []
-          }))
-        }
-        return []
-      } catch (error) {
-        console.warn('获取表结构失败:', error)
-        return []
-      }
-    }, props.dataSourceId),
+    createSqlAutocomplete(fetchTablesFromBackend, props.dataSourceId),
     sqlLinter,
     EditorView.updateListener.of((update) => {
       if (update.docChanged) {
@@ -219,24 +202,32 @@ watch(() => props.dataSourceId, async (newDataSourceId) => {
   }
 })
 
+// 转换后端表结构格式为自动补全所需格式
+const transformTableStructure = (response) => {
+  if (response.success && response.data) {
+    return response.data.map(t => ({
+      label: t.tableName || t.name || t.label,
+      columns: t.columns || []
+    }))
+  }
+  return []
+}
+
+// 从后端获取表结构的通用函数
+const fetchTablesFromBackend = async (dataSourceId) => {
+  try {
+    const res = await dataSourceApi.getTableStructure(dataSourceId)
+    return transformTableStructure(res)
+  } catch (error) {
+    console.warn('获取表结构失败:', error)
+    return []
+  }
+}
+
 // 预加载表结构
 const preloadTableDataSourceId = async (dsId) => {
   if (dsId) {
-    await preloadTableStructure(dsId, async (dataSourceId) => {
-      try {
-        const res = await getTableStructure(dataSourceId)
-        if (res.success && res.data) {
-          return res.data.map(t => ({
-            label: t.tableName || t.label,
-            columns: t.columns || []
-          }))
-        }
-        return []
-      } catch (error) {
-        console.warn('获取表结构失败:', error)
-        return []
-      }
-    })
+    await preloadTableStructure(dsId, fetchTablesFromBackend)
   }
 }
 

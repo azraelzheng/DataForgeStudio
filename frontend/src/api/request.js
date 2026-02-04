@@ -189,7 +189,10 @@ export const dataSourceApi = {
   toggleActive: (id) => request.post(`/datasources/${id}/toggle-active`),
 
   // 获取默认数据源
-  getDefaultDataSource: () => request.get('/datasources/default')
+  getDefaultDataSource: () => request.get('/datasources/default'),
+
+  // 获取数据源的表结构
+  getTableStructure: (dataSourceId) => request.get(`/datasources/${dataSourceId}/tables`)
 }
 
 export const reportApi = {
