@@ -108,9 +108,9 @@ class Program
         Console.Write("请选择许可证类型 (1-4, 默认: 2): ");
         var typeInput = Console.ReadLine()?.Trim();
         int typeIndex = 2; // 默认 Standard
-        if (int.TryParse(typeInput, out int t) && t >= 1 && t <= LicenseTypes.Length)
+        if (int.TryParse(typeInput, out int typeChoice) && typeChoice >= 1 && typeChoice <= LicenseTypes.Length)
         {
-            typeIndex = t;
+            typeIndex = typeChoice;
         }
         info.LicenseType = LicenseTypes[typeIndex - 1];
 
@@ -208,6 +208,15 @@ class Program
         Console.WriteLine("====================================================");
         Console.WriteLine();
 
+        // 4. 确认生成
+        Console.Write("确认生成许可证? (Y/N): ");
+        var confirm = Console.ReadLine()?.Trim().ToUpper();
+        if (confirm != "Y")
+        {
+            Console.WriteLine("已取消生成许可证");
+            Environment.Exit(0);
+        }
+
         return info;
     }
 
@@ -261,7 +270,7 @@ class Program
     {
         Console.WriteLine("正在生成许可证...");
 
-        // 1. 生成许可证唯一标识
+        // 1. 生成许可证唯一标识 (使用 "N" 格式: 无连字符的紧凑格式)
         var licenseId = Guid.NewGuid().ToString("N").ToUpper();
 
         // 2. 构建许可证数据 JSON
@@ -286,17 +295,6 @@ class Program
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             WriteIndented = false
         });
-
-        // 移除临时空 Signature
-        var jsonDoc = JsonDocument.Parse(licenseJson);
-        var jsonElements = new List<(string, string)>();
-        foreach (var prop in jsonDoc.RootElement.EnumerateObject())
-        {
-            if (prop.Name != "signature")
-            {
-                jsonElements.Add((prop.Name, prop.Value.ToString()));
-            }
-        }
 
         // 重新构建不含 Signature 的 JSON
         var jsonForSigning = JsonSerializer.Serialize(new
