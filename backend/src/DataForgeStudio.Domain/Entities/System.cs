@@ -78,7 +78,7 @@ public class BackupRecord
 }
 
 /// <summary>
-/// 许可证表
+/// 许可证表 - 零信任架构，仅存储加密数据
 /// </summary>
 [Table("Licenses")]
 public class License
@@ -88,55 +88,42 @@ public class License
     public int LicenseId { get; set; }
 
     /// <summary>
-    /// RSA 加密的许可证密钥
+    /// AES 加密的完整许可证 JSON
+    /// 包含所有许可证信息（客户名称、过期日期、功能列表等）
     /// </summary>
     [Required]
-    [MaxLength(500)]
+    [MaxLength(512)]
     public string LicenseKey { get; set; } = string.Empty;
 
-    [MaxLength(200)]
-    public string? CompanyName { get; set; }
-
-    [MaxLength(50)]
-    public string? ContactPerson { get; set; }
-
-    [MaxLength(100)]
-    public string? Email { get; set; }
-
-    [MaxLength(20)]
-    public string? Phone { get; set; }
-
-    public int? MaxUsers { get; set; }
-
-    public int? MaxReports { get; set; }
-
-    public int? MaxDataSources { get; set; }
-
-    public DateTime? ExpiryDate { get; set; }
+    /// <summary>
+    /// RSA 签名（Base64）
+    /// 用于验证许可证完整性和真实性
+    /// </summary>
+    [Required]
+    [MaxLength(512)]
+    public string Signature { get; set; } = string.Empty;
 
     /// <summary>
-    /// 功能列表 (JSON)
+    /// 绑定的机器码
+    /// 许可证与特定服务器绑定，防止迁移使用
     /// </summary>
-    public string? Features { get; set; }
+    [Required]
+    [MaxLength(64)]
+    public string MachineCode { get; set; } = string.Empty;
 
-    public bool IsActive { get; set; } = true;
+    /// <summary>
+    /// 激活时间
+    /// </summary>
+    public DateTime ActivatedTime { get; set; }
 
-    public DateTime? ActivatedTime { get; set; }
-
+    /// <summary>
+    /// 激活时的 IP 地址
+    /// </summary>
     [MaxLength(50)]
     public string? ActivatedIP { get; set; }
 
-    [MaxLength(200)]
-    public string? MachineCode { get; set; }
-
-    [MaxLength(500)]
-    public string? Remark { get; set; }
-
-    public int? CreatedBy { get; set; }
-
+    /// <summary>
+    /// 创建时间
+    /// </summary>
     public DateTime CreatedTime { get; set; } = DateTime.UtcNow;
-
-    public int? UpdatedBy { get; set; }
-
-    public DateTime? UpdatedTime { get; set; }
 }

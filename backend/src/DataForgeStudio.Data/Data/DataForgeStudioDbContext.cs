@@ -221,11 +221,11 @@ public class DataForgeStudioDbContext : DbContext
         // 配置 License
         modelBuilder.Entity<License>(entity =>
         {
-            entity.HasIndex(e => e.LicenseKey).IsUnique();
-            entity.HasIndex(e => e.IsActive);
-            entity.HasIndex(e => e.ExpiryDate);
+            entity.HasIndex(e => e.MachineCode).IsUnique();
 
-            entity.Property(e => e.LicenseKey).HasMaxLength(500).IsRequired();
+            entity.Property(e => e.LicenseKey).HasMaxLength(512).IsRequired();
+            entity.Property(e => e.Signature).HasMaxLength(512).IsRequired();
+            entity.Property(e => e.MachineCode).HasMaxLength(64).IsRequired();
         });
 
         // 全局配置: 禁止级联删除

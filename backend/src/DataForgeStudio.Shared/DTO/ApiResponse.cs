@@ -555,6 +555,7 @@ public class LicenseValidationResponse
 {
     public bool Valid { get; set; }
     public string? Message { get; set; }
+    public LicenseInfoDto? LicenseInfo { get; set; }
 }
 
 /// <summary>
