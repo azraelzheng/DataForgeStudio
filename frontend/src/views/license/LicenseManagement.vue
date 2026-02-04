@@ -318,12 +318,12 @@ const stats = reactive({
 })
 
 const features = ref([
-  { name: '报表设计', icon: 'Edit', enabled: true },
-  { name: '报表查询', icon: 'Search', enabled: true },
-  { name: '图表展示', icon: 'DataLine', enabled: true },
-  { name: 'Excel导出', icon: 'Download', enabled: true },
-  { name: 'PDF导出', icon: 'Document', enabled: false },
-  { name: '数据源管理', icon: 'Coin', enabled: true }
+  { name: '报表设计', icon: Edit, enabled: true },
+  { name: '报表查询', icon: Search, enabled: true },
+  { name: '图表展示', icon: DataLine, enabled: true },
+  { name: 'Excel导出', icon: Download, enabled: true },
+  { name: 'PDF导出', icon: Document, enabled: false },
+  { name: '数据源管理', icon: Coin, enabled: true }
 ])
 
 onMounted(async () => {
@@ -336,6 +336,8 @@ const loadMachineCode = async () => {
   const code = await licenseStore.getMachineCode()
   if (code) {
     machineCode.value = code
+  } else {
+    ElMessage.error('加载机器码失败，请检查网络连接或联系管理员')
   }
 }
 
@@ -368,6 +370,12 @@ const handleCopyMachineCode = () => {
 }
 
 const handleFileChange = (file) => {
+  // 文件大小验证 - 限制100KB
+  const maxSize = 100 * 1024 // 100KB in bytes
+  if (file.size > maxSize) {
+    ElMessage.error('许可证文件过大，请选择小于100KB的文件')
+    return false
+  }
   activateForm.licenseFile = file.raw
 }
 
@@ -386,8 +394,13 @@ const handleActivate = async () => {
     // 读取文件内容
     const licenseKey = await readFileAsText(activateForm.licenseFile)
 
-    // 转换为 base64
-    const base64Key = btoa(licenseKey)
+    // 转换为 base64 - 添加错误处理
+    let base64Key
+    try {
+      base64Key = btoa(licenseKey)
+    } catch (encodeError) {
+      throw new Error('许可证文件编码失败，请确保文件格式正确')
+    }
 
     // 激活许可证
     const success = await licenseStore.activateLicense(base64Key)

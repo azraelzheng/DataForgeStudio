@@ -24,21 +24,6 @@ request.interceptors.request.use(
   }
 )
 
-// 请求拦截器
-request.interceptors.request.use(
-  (config) => {
-    // 从 localStorage 获取 token
-    const token = localStorage.getItem('token')
-    if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`
-    }
-    return config
-  },
-  (error) => {
-    return Promise.reject(error)
-  }
-)
-
 // PascalCase 转 camelCase 的工具函数
 function toCamelCase(obj) {
   if (obj === null || typeof obj !== 'object') {

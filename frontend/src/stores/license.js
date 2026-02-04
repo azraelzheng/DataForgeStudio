@@ -63,10 +63,18 @@ export const useLicenseStore = defineStore('license', () => {
         license.value = res.data
         await updateLicenseStatus(res.data)
         return res.data
+      } else {
+        // 服务器返回失败状态
+        const errorMsg = res.message || '加载许可证失败'
+        ElMessage.error(errorMsg)
+        licenseStatus.value = 'invalid'
+        return null
       }
     } catch (error) {
       console.error('加载许可证失败:', error)
       licenseStatus.value = 'invalid'
+      ElMessage.error('加载许可证失败，请检查网络连接')
+      return null
     }
   }
 
