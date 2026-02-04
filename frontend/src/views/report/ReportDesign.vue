@@ -43,6 +43,7 @@
           <SqlEditor
             ref="sqlEditorRef"
             v-model="form.sqlQuery"
+            :data-source-id="form.dataSourceId"
             style="height: 300px;"
           />
           <div style="margin-top: 10px;">
@@ -331,11 +332,20 @@ const loadReport = async (id) => {
   }
 }
 
-const handleDataSourceChange = () => {
+const handleDataSourceChange = async () => {
   // 数据源切换时清除SQL和字段
   form.sqlQuery = ''
   form.columns = []
   form.parameters = []
+
+  // 预加载表结构
+  if (form.dataSourceId && sqlEditorRef.value) {
+    try {
+      await sqlEditorRef.value.preloadTableStructure(form.dataSourceId)
+    } catch (error) {
+      console.warn('预加载表结构失败:', error)
+    }
+  }
 }
 
 const handleParseSql = () => {

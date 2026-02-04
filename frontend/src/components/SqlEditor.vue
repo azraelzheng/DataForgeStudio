@@ -20,6 +20,8 @@ import { lineNumbers, highlightActiveLineGutter } from '@codemirror/view'
 import { highlightSpecialChars, drawSelection, dropCursor, rectangularSelection } from '@codemirror/view'
 import { highlightActiveLine } from '@codemirror/view'
 import { format as SQLFormatter } from 'sql-formatter'
+import { createSqlAutocomplete, preloadTableStructure, clearTableCache } from '../utils/sqlAutocomplete'
+import { getTableStructure } from '../api/dataSource'
 
 const props = defineProps({
   modelValue: {
@@ -33,6 +35,10 @@ const props = defineProps({
   readOnly: {
     type: Boolean,
     default: false
+  },
+  dataSourceId: {
+    type: Number,
+    default: null
   }
 })
 
@@ -94,7 +100,25 @@ const getExtensions = () => {
     ]),
     searchKeymap.of(searchKeymap),
     highlightSelectionMatches(),
-    autocompletion(),
+    // 使用自定义 SQL 自动补全
+    createSqlAutocomplete(async (dsId) => {
+      try {
+        const res = await getTableStructure(dsId)
+        // 转换后端返回的格式为自动补全所需的格式
+        // 后端返回: [{ tableName: "Users", columns: ["UserId", "Username", ...] }, ...]
+        // 自动补全需要: [{ label: "Users", columns: ["UserId", "Username", ...] }, ...]
+        if (res.success && res.data) {
+          return res.data.map(t => ({
+            label: t.tableName || t.tableName || t.label,
+            columns: t.columns || []
+          }))
+        }
+        return []
+      } catch (error) {
+        console.warn('获取表结构失败:', error)
+        return []
+      }
+    }, props.dataSourceId),
     sqlLinter,
     EditorView.updateListener.of((update) => {
       if (update.docChanged) {
@@ -188,6 +212,34 @@ watch(() => props.modelValue, (newValue) => {
   }
 })
 
+// 监听数据源变化，预加载表结构
+watch(() => props.dataSourceId, async (newDataSourceId) => {
+  if (newDataSourceId) {
+    await preloadTableDataSourceId(newDataSourceId)
+  }
+})
+
+// 预加载表结构
+const preloadTableDataSourceId = async (dsId) => {
+  if (dsId) {
+    await preloadTableStructure(dsId, async (dataSourceId) => {
+      try {
+        const res = await getTableStructure(dataSourceId)
+        if (res.success && res.data) {
+          return res.data.map(t => ({
+            label: t.tableName || t.label,
+            columns: t.columns || []
+          }))
+        }
+        return []
+      } catch (error) {
+        console.warn('获取表结构失败:', error)
+        return []
+      }
+    })
+  }
+}
+
 // 清理
 onBeforeUnmount(() => {
   if (editorView) {
@@ -203,6 +255,16 @@ defineExpose({
       return formatSQL(editorView)
     }
     return false
+  },
+  // 预加载表结构
+  preloadTableStructure: async (dsId) => {
+    if (dsId) {
+      await preloadTableDataSourceId(dsId)
+    }
+  },
+  // 清除表缓存
+  clearTableCache: () => {
+    clearTableCache()
   }
 })
 </script>
