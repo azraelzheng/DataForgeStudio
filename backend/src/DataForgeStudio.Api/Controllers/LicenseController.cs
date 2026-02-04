@@ -45,8 +45,8 @@ public class LicenseController : ControllerBase
     /// 验证许可证
     /// </summary>
     [HttpPost("validate")]
-    public async Task<ApiResponse<LicenseValidationResponse>> ValidateLicense()
+    public async Task<ApiResponse<LicenseValidationResponse>> ValidateLicense([FromQuery] bool forceRefresh = false)
     {
-        return await _licenseService.ValidateLicenseAsync();
+        return await _licenseService.ValidateLicenseAsync(forceRefresh);
     }
 }

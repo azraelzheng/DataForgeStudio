@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using DataForgeStudio.Core.Interfaces;
 using DataForgeStudio.Shared.DTO;
+using DataForgeStudio.Shared.Utils;
 
 namespace DataForgeStudio.Api.Controllers;
 
@@ -20,6 +21,24 @@ public class SystemController : ControllerBase
     {
         _systemService = systemService;
         _logger = logger;
+    }
+
+    /// <summary>
+    /// 获取机器码
+    /// </summary>
+    [HttpGet("machine-code")]
+    public ApiResponse<string> GetMachineCode()
+    {
+        try
+        {
+            var machineCode = EncryptionHelper.GetMachineCode();
+            return ApiResponse<string>.Ok(machineCode, "获取机器码成功");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "获取机器码失败");
+            return ApiResponse<string>.Fail("获取机器码失败", "GET_MACHINE_CODE_ERROR");
+        }
     }
 
     /// <summary>

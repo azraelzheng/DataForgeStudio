@@ -240,10 +240,7 @@ export const licenseApi = {
   getLicense: () => request.get('/license'),
 
   // 激活许可证
-  activateLicense: (data) => request.post('/license/activate', data),
-
-  // 验证许可证
-  validateLicense: () => request.post('/license/validate')
+  activateLicense: (data) => request.post('/license/activate', data)
 }
 
 export const systemApi = {
@@ -278,5 +275,14 @@ export const systemApi = {
   deleteBackup: (id) => request.delete(`/system/backups/${id}`),
 
   // 恢复备份
-  restoreBackup: (id) => request.post(`/system/backups/${id}/restore`)
+  restoreBackup: (id) => request.post(`/system/backups/${id}/restore`),
+
+  // 获取机器码
+  getMachineCode: () => request.get('/system/machine-code'),
+
+  // 验证许可证
+  validateLicense: (params) => request.post('/license/validate', null, { params }),
+
+  // 激活许可证
+  activateLicense: (data) => request.post('/license/activate', data)
 }
