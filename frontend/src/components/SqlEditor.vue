@@ -6,7 +6,7 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
-import { EditorView, basicSetup } from '@codemirror/basic-setup'
+import { EditorView } from '@codemirror/view'
 import { EditorState } from '@codemirror/state'
 import { sql } from '@codemirror/lang-sql'
 import { oneDark } from '@codemirror/theme-one-dark'
@@ -15,7 +15,11 @@ import { defaultKeymap, indentWithTab } from '@codemirror/commands'
 import { searchKeymap, highlightSelectionMatches } from '@codemirror/search'
 import { autocompletion } from '@codemirror/autocomplete'
 import { linter, diagnosticCount } from '@codemirror/lint'
-import SQLFormatter from 'sql-formatter'
+import { bracketMatching } from '@codemirror/language'
+import { lineNumbers, highlightActiveLineGutter } from '@codemirror/view'
+import { highlightSpecialChars, drawSelection, dropCursor, rectangularSelection } from '@codemirror/view'
+import { highlightActiveLine } from '@codemirror/view'
+import { format as SQLFormatter } from 'sql-formatter'
 
 const props = defineProps({
   modelValue: {
@@ -74,7 +78,14 @@ const sqlLinter = linter((view) => {
 // 创建编辑器扩展
 const getExtensions = () => {
   const extensions = [
-    basicSetup,
+    lineNumbers(),
+    highlightActiveLineGutter(),
+    highlightSpecialChars(),
+    highlightActiveLine(),
+    drawSelection(),
+    dropCursor(),
+    bracketMatching(),
+    rectangularSelection(),
     sql(),
     keymap.of([
       ...defaultKeymap,
@@ -127,7 +138,7 @@ const getExtensions = () => {
 const formatSQL = (view) => {
   const content = view.state.doc.toString()
   try {
-    const formatted = SQLFormatter.format(content, {
+    const formatted = SQLFormatter(content, {
       language: 'sql',
       tabWidth: 2,
       keywordCase: 'upper'
