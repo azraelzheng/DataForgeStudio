@@ -141,7 +141,7 @@ using (var scope = app.Services.CreateScope())
 // 初始化密钥 - 生成 RSA 密钥对（如果不存在）
 using (var scope = app.Services.CreateScope())
 {
-    var keyService = scope.ServiceProvider.GetRequiredService<KeyManagementService>();
+    var keyService = scope.ServiceProvider.GetRequiredService<IKeyManagementService>();
     await keyService.EnsureKeyPairExistsAsync();
     await keyService.EnsureAesKeyExistsAsync();
 }

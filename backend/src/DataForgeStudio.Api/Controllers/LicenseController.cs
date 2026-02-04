@@ -32,9 +32,10 @@ public class LicenseController : ControllerBase
     }
 
     /// <summary>
-    /// 激活许可证
+    /// 激活许可证（无需认证，用于首次激活）
     /// </summary>
     [HttpPost("activate")]
+    [AllowAnonymous]
     public async Task<ApiResponse<LicenseInfoDto>> ActivateLicense([FromBody] ActivateLicenseRequest request)
     {
         var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
@@ -42,9 +43,10 @@ public class LicenseController : ControllerBase
     }
 
     /// <summary>
-    /// 验证许可证
+    /// 验证许可证（无需认证，用于系统启动时验证）
     /// </summary>
     [HttpPost("validate")]
+    [AllowAnonymous]
     public async Task<ApiResponse<LicenseValidationResponse>> ValidateLicense([FromQuery] bool forceRefresh = false)
     {
         return await _licenseService.ValidateLicenseAsync(forceRefresh);

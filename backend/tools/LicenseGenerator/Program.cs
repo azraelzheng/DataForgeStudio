@@ -23,7 +23,7 @@ class Program
 
     // AES 加密配置
     private const string AesKey = "DataForgeStudioV4AESLicenseKey32Bytes!!";
-    private const string AesIv = "DataForgeI";
+    private const string AesIv = "DataForgeIV16Byte!";
 
     // 私钥路径（相对于工具运行位置）
     private static string PrivateKeyPath => Path.Combine("..", "..", "..", "..", "..", "src", "DataForgeStudio.Api", "keys", "private_key.pem");
