@@ -288,3 +288,6 @@ app.MapGet("/api", () => new
 .AllowAnonymous();
 
 app.Run();
+
+// 集成测试需要公开的 Program 类
+public partial class Program { }
