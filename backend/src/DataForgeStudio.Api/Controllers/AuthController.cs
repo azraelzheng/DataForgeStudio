@@ -26,6 +26,30 @@ public class AuthController : ControllerBase
     /// <summary>
     /// 用户登录
     /// </summary>
+    /// <param name="request">登录请求，包含用户名和密码</param>
+    /// <returns>登录结果，包含 JWT Token 和用户信息</returns>
+    /// <remarks>
+    /// 示例请求:
+    ///
+    ///     POST /api/auth/login
+    ///     {
+    ///       "username": "admin",
+    ///       "password": "admin123"
+    ///     }
+    ///
+    /// 示例响应:
+    ///
+    ///     {
+    ///       "success": true,
+    ///       "message": "登录成功",
+    ///       "data": {
+    ///         "token": "eyJhbGciOiJIUzI1NiJ9...",
+    ///         "tokenType": "Bearer",
+    ///         "expiresIn": 3600,
+    ///         "userInfo": { "userId": 1, "username": "admin" }
+    ///       }
+    ///     }
+    /// </remarks>
     [HttpPost("login")]
     [AllowAnonymous]
     public async Task<ApiResponse<LoginResponse>> Login([FromBody] LoginRequest request)
@@ -35,8 +59,11 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// 获取当前用户信息
+    /// 获取当前登录用户信息
     /// </summary>
+    /// <returns>当前用户的详细信息，包括角色和权限</returns>
+    /// <response code="200">返回用户信息</response>
+    /// <response code="401">未登录或 Token 无效</response>
     [HttpGet("current-user")]
     [Authorize]
     public async Task<ApiResponse<UserInfoDto>> GetCurrentUser()
