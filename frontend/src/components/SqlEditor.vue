@@ -20,7 +20,7 @@ import { lineNumbers, highlightActiveLineGutter } from '@codemirror/view'
 import { highlightSpecialChars, drawSelection, dropCursor, rectangularSelection } from '@codemirror/view'
 import { highlightActiveLine } from '@codemirror/view'
 import { format as SQLFormatter } from 'sql-formatter'
-import { createSqlAutocomplete, preloadTableStructure, clearTableCache } from '../utils/sqlAutocomplete'
+import { createSqlAutocomplete, preloadTableStructure, clearTableCache as clearSqlTableCache } from '../utils/sqlAutocomplete'
 import { dataSourceApi } from '../api/request'
 
 const props = defineProps({
@@ -255,7 +255,7 @@ defineExpose({
   },
   // 清除表缓存
   clearTableCache: () => {
-    clearTableCache()
+    clearSqlTableCache()
   }
 })
 </script>
