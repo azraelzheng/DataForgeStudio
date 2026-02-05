@@ -258,9 +258,10 @@ public class SystemService : ISystemService
             row++;
         }
 
-        // 设置表格样式
+        // 设置表格边框样式
         var range = worksheet.Range(1, 1, row - 1, 6);
-        range.CreateTable().Theme = ClosedXML.Excel.Table.TableThemes.Medium2;
+        range.Style.Border.OutsideBorder = ClosedXML.Excel.XLBorderStyleValues.Thin;
+        range.Style.Border.InsideBorder = ClosedXML.Excel.XLBorderStyleValues.Thin;
 
         worksheet.Columns().AdjustToContents();
 
