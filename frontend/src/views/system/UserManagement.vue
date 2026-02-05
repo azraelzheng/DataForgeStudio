@@ -385,6 +385,10 @@ const handleAssignRoles = async (row) => {
     ElMessage.warning('root 用户拥有所有权限，无需分配角色')
     return
   }
+
+  // 每次打开对话框时重新加载角色列表
+  await loadRoles()
+
   currentUser.value = row
   selectedRoles.value = row.roles?.map(r => r.roleId) || []
   roleDialogVisible.value = true
