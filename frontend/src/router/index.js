@@ -103,15 +103,17 @@ router.beforeEach(async (to, from, next) => {
 
   // 检查是否需要认证
   if (to.meta.requiresAuth) {
-    // 使用 store 中的 isLoggedIn 判断，它会检查 token.value
-    if (!userStore.isLoggedIn) {
-      // 未登录，跳转到登录页
-      console.log('Route guard: Not logged in, redirecting to login')
+    // 首先检查 token 是否存在于 localStorage
+    const hasToken = !!localStorage.getItem('token')
+
+    if (!hasToken) {
+      // 没有 token，直接跳转到登录页
+      console.log('Route guard: No token found, redirecting to login')
       next('/login')
       return
     }
 
-    // 有 token，但需要验证是否有效（如果用户信息未加载）
+    // 有 token，验证用户信息
     if (!userStore.userInfo) {
       try {
         await userStore.getCurrentUser()
