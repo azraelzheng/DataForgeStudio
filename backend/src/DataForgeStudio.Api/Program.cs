@@ -112,8 +112,10 @@ builder.Services.AddScoped<ISystemService, SystemService>();
 builder.Services.AddScoped<IDatabaseService, DatabaseService>();
 builder.Services.AddScoped<IKeyManagementService, KeyManagementService>();
 builder.Services.AddScoped<ISqlValidationService, SqlValidationService>();
+builder.Services.AddScoped<IReportCacheService, ReportCacheService>();
+builder.Services.AddScoped<IExportService, ExportService>();
 
-// 注册内存缓存（用于许可证验证缓存）
+// 注册内存缓存（用于许可证验证缓存和报表查询缓存）
 builder.Services.AddMemoryCache();
 
 // 配置 JWT 认证（从安全选项读取）
