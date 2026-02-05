@@ -1,5 +1,6 @@
 using System.Data;
 using System.Data.Common;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using DataForgeStudio.Core.Interfaces;
@@ -25,11 +26,25 @@ public class DatabaseService : IDatabaseService
 {
     private readonly ILogger<DatabaseService> _logger;
     private readonly DatabaseOptions _options;
+    private readonly IConfiguration _configuration;
 
-    public DatabaseService(ILogger<DatabaseService> logger, IOptions<DatabaseOptions>? options = null)
+    public DatabaseService(ILogger<DatabaseService> logger, IOptions<DatabaseOptions>? options = null, IConfiguration? configuration = null)
     {
         _logger = logger;
         _options = options?.Value ?? new DatabaseOptions();
+        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+    }
+
+    /// <summary>
+    /// 获取加密密钥
+    /// </summary>
+    private (string key, string iv) GetEncryptionKeys()
+    {
+        var key = _configuration["Security:Encryption:AesKey"]
+            ?? throw new InvalidOperationException("加密密钥未配置。请设置环境变量 DFS_ENCRYPTION_AES_KEY");
+        var iv = _configuration["Security:Encryption:AesIV"]
+            ?? throw new InvalidOperationException("加密IV未配置。请设置环境变量 DFS_ENCRYPTION_AES_IV");
+        return (key, iv);
     }
 
     /// <summary>
@@ -37,9 +52,10 @@ public class DatabaseService : IDatabaseService
     /// </summary>
     private string BuildConnectionString(DataSource dataSource)
     {
-        // 解密密码
+        // 解密密码（使用配置的密钥）
+        var (key, iv) = GetEncryptionKeys();
         var password = !string.IsNullOrEmpty(dataSource.Password)
-            ? EncryptionHelper.DecryptAES(dataSource.Password)
+            ? EncryptionHelper.AesDecrypt(dataSource.Password, key, iv)
             : "";
 
         return dataSource.DbType switch

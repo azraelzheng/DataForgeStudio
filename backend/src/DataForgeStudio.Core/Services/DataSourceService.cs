@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using DataForgeStudio.Core.Interfaces;
 using DataForgeStudio.Data.Data;
@@ -16,15 +17,30 @@ public class DataSourceService : IDataSourceService
     private readonly DataForgeStudioDbContext _context;
     private readonly IDatabaseService _databaseService;
     private readonly ILogger<DataSourceService> _logger;
+    private readonly IConfiguration _configuration;
 
     public DataSourceService(
         DataForgeStudioDbContext context,
         IDatabaseService databaseService,
-        ILogger<DataSourceService> logger)
+        ILogger<DataSourceService> logger,
+        IConfiguration configuration)
     {
         _context = context;
         _databaseService = databaseService;
         _logger = logger;
+        _configuration = configuration;
+    }
+
+    /// <summary>
+    /// 获取加密密钥
+    /// </summary>
+    private (string key, string iv) GetEncryptionKeys()
+    {
+        var key = _configuration["Security:Encryption:AesKey"]
+            ?? throw new InvalidOperationException("加密密钥未配置。请设置环境变量 DFS_ENCRYPTION_AES_KEY");
+        var iv = _configuration["Security:Encryption:AesIV"]
+            ?? throw new InvalidOperationException("加密IV未配置。请设置环境变量 DFS_ENCRYPTION_AES_IV");
+        return (key, iv);
     }
 
     public async Task<ApiResponse<PagedResponse<DataSourceDto>>> GetDataSourcesAsync(PagedRequest request, string? dataSourceName = null, string? dbType = null, bool includeInactive = true)
@@ -102,9 +118,10 @@ public class DataSourceService : IDataSourceService
         // 生成数据源编码
         var code = $"DS_{DateTime.UtcNow:yyyyMMddHHmmss}";
 
-        // 加密密码
+        // 加密密码（使用配置的密钥）
+        var (key, iv) = GetEncryptionKeys();
         var encryptedPassword = !string.IsNullOrEmpty(request.Password)
-            ? EncryptionHelper.EncryptAES(request.Password)
+            ? EncryptionHelper.AesEncrypt(request.Password, key, iv)
             : null;
 
         var dataSource = new DataSource
@@ -159,7 +176,8 @@ public class DataSourceService : IDataSourceService
         // 只有提供了新密码才更新
         if (!string.IsNullOrEmpty(request.Password))
         {
-            dataSource.Password = EncryptionHelper.EncryptAES(request.Password);
+            var (key, iv) = GetEncryptionKeys();
+            dataSource.Password = EncryptionHelper.AesEncrypt(request.Password, key, iv);
         }
 
         dataSource.UpdatedTime = DateTime.UtcNow;
@@ -295,9 +313,10 @@ public class DataSourceService : IDataSourceService
 
     private string BuildConnectionString(DataSource dataSource)
     {
-        // 解密密码
+        // 解密密码（使用配置的密钥）
+        var (key, iv) = GetEncryptionKeys();
         var password = !string.IsNullOrEmpty(dataSource.Password)
-            ? EncryptionHelper.DecryptAES(dataSource.Password)
+            ? EncryptionHelper.AesDecrypt(dataSource.Password, key, iv)
             : "";
 
         return dataSource.DbType switch

@@ -221,7 +221,7 @@ public class LoginResponse
     /// <summary>
     /// JWT Token
     /// </summary>
-    public string Token { get; set; }
+    public string Token { get; set; } = string.Empty;
 
     /// <summary>
     /// Token 类型
@@ -236,7 +236,22 @@ public class LoginResponse
     /// <summary>
     /// 用户信息
     /// </summary>
-    public UserInfoDto UserInfo { get; set; }
+    public UserInfoDto? UserInfo { get; set; }
+
+    /// <summary>
+    /// 是否需要修改密码
+    /// </summary>
+    public bool RequiresPasswordChange { get; set; }
+
+    /// <summary>
+    /// 用户ID（用于强制修改密码场景）
+    /// </summary>
+    public int UserId { get; set; }
+
+    /// <summary>
+    /// 登录是否成功
+    /// </summary>
+    public bool Success { get; set; } = true;
 }
 
 /// <summary>
@@ -288,17 +303,43 @@ public class ChangePasswordRequest
     /// <summary>
     /// 旧密码
     /// </summary>
-    public string OldPassword { get; set; }
+    public string OldPassword { get; set; } = string.Empty;
 
     /// <summary>
     /// 新密码
     /// </summary>
-    public string NewPassword { get; set; }
+    public string NewPassword { get; set; } = string.Empty;
 
     /// <summary>
     /// 确认密码
     /// </summary>
-    public string ConfirmPassword { get; set; }
+    public string ConfirmPassword { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// 强制修改密码请求（首次登录）
+/// </summary>
+public class ForcePasswordChangeRequest
+{
+    /// <summary>
+    /// 用户ID
+    /// </summary>
+    public int UserId { get; set; }
+
+    /// <summary>
+    /// 临时密码
+    /// </summary>
+    public string TemporaryPassword { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 新密码
+    /// </summary>
+    public string NewPassword { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 确认密码
+    /// </summary>
+    public string ConfirmPassword { get; set; } = string.Empty;
 }
 
 /// <summary>

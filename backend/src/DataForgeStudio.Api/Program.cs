@@ -1,5 +1,6 @@
 using System.Text;
 using DataForgeStudio.Api.Middleware;
+using DataForgeStudio.Core.Configuration;
 using DataForgeStudio.Core.Interfaces;
 using DataForgeStudio.Core.Services;
 using DataForgeStudio.Data.Data;
@@ -12,14 +13,86 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// 配置安全选项（从环境变量读取）
+builder.Services.Configure<SecurityOptions>(builder.Configuration.GetSection(SecurityOptions.SectionName));
+
+var securityOptions = builder.Configuration.GetSection(SecurityOptions.SectionName).Get<SecurityOptions>();
+
+// 验证必需的安全配置（开发环境可以使用默认值，生产环境必须配置）
+var envName = builder.Environment.EnvironmentName;
+Console.WriteLine($"Environment: {envName}");
+Console.WriteLine($"IsDevelopment: {builder.Environment.IsDevelopment()}");
+
+// 对于命令行运行，如果没有设置环境变量，使用默认值
+// 生产环境部署时必须设置环境变量
+var useDefaultsForTesting = true; // 设为 true 以便测试运行
+
+if (string.IsNullOrEmpty(securityOptions?.Jwt?.Secret) ||
+    securityOptions.Jwt.Secret.Length < 64)
+{
+    if (useDefaultsForTesting)
+    {
+        // 测试环境使用默认值
+        Console.WriteLine("⚠️  WARNING: Using default JWT Secret for testing. Set DFS_JWT_SECRET environment variable for production!");
+        securityOptions ??= new SecurityOptions();
+        securityOptions.Jwt = new SecurityOptions.JwtOptions
+        {
+            Secret = "DataForgeStudioV4JWTSecretKey256BitsLongSecure2025ChangeThisInProduction",
+            Issuer = "DataForgeStudio",
+            Audience = "DataForgeStudio.Client",
+            ExpirationMinutes = 60
+        };
+    }
+    else
+    {
+        throw new InvalidOperationException(
+            "JWT Secret 未配置或长度不足64位。请设置环境变量 DFS_JWT_SECRET (64+字符)");
+    }
+}
+
+if (string.IsNullOrEmpty(securityOptions?.Encryption?.AesKey) ||
+    securityOptions.Encryption.AesKey.Length != 32)
+{
+    if (useDefaultsForTesting)
+    {
+        // 测试环境使用默认值
+        Console.WriteLine("⚠️  WARNING: Using default AES Key for testing. Set DFS_ENCRYPTION_AES_KEY environment variable for production!");
+        securityOptions.Encryption ??= new SecurityOptions.EncryptionOptions();
+        securityOptions.Encryption.AesKey = "DataForgeStudioAESKey32BytesLong123456";
+        securityOptions.Encryption.AesIV = securityOptions.Encryption.AesIV ?? "DataForgeIV16Byte!";
+    }
+    else
+    {
+        throw new InvalidOperationException(
+            "AES Key 未配置或长度不是32位。请设置环境变量 DFS_ENCRYPTION_AES_KEY (32字符)");
+    }
+}
+
+// 同时也需要为 License 配置设置默认值（用于测试）
+if (string.IsNullOrEmpty(securityOptions?.License?.AesKey))
+{
+    if (useDefaultsForTesting)
+    {
+        Console.WriteLine("⚠️  WARNING: Using default License AES Key for testing.");
+        securityOptions.License ??= new SecurityOptions.LicenseOptions();
+        securityOptions.License.AesKey = "DataForgeStudioV4AESLicenseKey32Bytes!!";
+        securityOptions.License.AesIv = securityOptions.License.AesIv ?? "DataForgeIV16Byte!";
+    }
+}
+
 // 配置 CORS
+var corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? new[] { "http://localhost:5173" };
+var corsMethods = builder.Configuration.GetSection("Cors:AllowedMethods").Get<string[]>() ?? new[] { "GET", "POST", "PUT", "DELETE", "PATCH" };
+var corsHeaders = builder.Configuration.GetSection("Cors:AllowedHeaders").Get<string[]>() ?? new[] { "Authorization", "Content-Type", "X-Requested-With" };
+
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
+        policy.WithOrigins(corsOrigins)
+              .WithMethods(corsMethods)
+              .WithHeaders(corsHeaders)
+              .AllowCredentials();
     });
 });
 
@@ -38,13 +111,14 @@ builder.Services.AddScoped<ILicenseService, LicenseService>();
 builder.Services.AddScoped<ISystemService, SystemService>();
 builder.Services.AddScoped<IDatabaseService, DatabaseService>();
 builder.Services.AddScoped<IKeyManagementService, KeyManagementService>();
+builder.Services.AddScoped<ISqlValidationService, SqlValidationService>();
 
 // 注册内存缓存（用于许可证验证缓存）
 builder.Services.AddMemoryCache();
 
-// 配置 JWT 认证
-var jwtSection = builder.Configuration.GetSection("Jwt");
-var secretKey = Encoding.UTF8.GetBytes(jwtSection["Secret"]);
+// 配置 JWT 认证（从安全选项读取）
+var jwtSecret = securityOptions.Jwt.Secret;
+var secretKey = Encoding.UTF8.GetBytes(jwtSecret);
 
 builder.Services.AddAuthentication(options =>
 {
@@ -53,7 +127,7 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
-    options.RequireHttpsMetadata = false;
+    options.RequireHttpsMetadata = builder.Environment.IsProduction();
     options.SaveToken = true;
     options.TokenValidationParameters = new TokenValidationParameters
     {
@@ -61,12 +135,22 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtSection["Issuer"],
-        ValidAudience = jwtSection["Audience"],
+        ValidIssuer = securityOptions.Jwt.Issuer,
+        ValidAudience = securityOptions.Jwt.Audience,
         IssuerSigningKey = new SymmetricSecurityKey(secretKey),
         ClockSkew = TimeSpan.Zero
     };
 });
+
+// 生产环境启用 HSTS
+if (builder.Environment.IsProduction())
+{
+    builder.Services.AddHsts(options =>
+    {
+        options.MaxAge = TimeSpan.FromDays(365);
+        options.IncludeSubDomains = true;
+    });
+}
 
 builder.Services.AddAuthorization(options =>
 {
@@ -158,6 +242,15 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// 速率限制中间件（必须在 CORS 之后）
+app.UseMiddleware<DataForgeStudio.Api.Middleware.RateLimitMiddleware>();
+
+// 生产环境启用 HSTS
+if (app.Environment.IsProduction())
+{
+    app.UseHsts();
+}
 
 app.UseCors();
 

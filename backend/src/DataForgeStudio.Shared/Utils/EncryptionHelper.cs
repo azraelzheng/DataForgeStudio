@@ -232,26 +232,26 @@ public static class EncryptionHelper
 
     /// <summary>
     /// AES 加密（使用默认密钥和IV）
+    /// 注意：此方法已弃用，请使用 AesEncrypt 并传入配置的密钥
     /// </summary>
     /// <param name="plainText">明文</param>
     /// <returns>密文（Base64）</returns>
+    [Obsolete("此方法已弃用。请使用 AesEncrypt(plainText, key, iv) 并从配置读取密钥。")]
     public static string EncryptAES(string plainText)
     {
-        var key = "DataForgeStudioV4SecretKey32Bytes!!";
-        var iv = "DataForgeIV16B";
-        return AesEncrypt(plainText, key, iv);
+        throw new InvalidOperationException("EncryptAES 方法已弃用。请使用 AesEncrypt(plainText, key, iv) 并从配置读取密钥。");
     }
 
     /// <summary>
     /// AES 解密（使用默认密钥和IV）
+    /// 注意：此方法已弃用，请使用 AesDecrypt 并传入配置的密钥
     /// </summary>
     /// <param name="cipherText">密文（Base64）</param>
     /// <returns>明文</returns>
+    [Obsolete("此方法已弃用。请使用 AesDecrypt(cipherText, key, iv) 并从配置读取密钥。")]
     public static string DecryptAES(string cipherText)
     {
-        var key = "DataForgeStudioV4SecretKey32Bytes!!";
-        var iv = "DataForgeIV16B";
-        return AesDecrypt(cipherText, key, iv);
+        throw new InvalidOperationException("DecryptAES 方法已弃用。请使用 AesDecrypt(cipherText, key, iv) 并从配置读取密钥。");
     }
 
     /// <summary>

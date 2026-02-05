@@ -30,16 +30,28 @@ public static class DbInitializer
 
         if (rootUser == null)
         {
+            // 生成强随机临时密码
+            var temporaryPassword = GenerateTemporaryPassword(16);
+
+            // 输出临时密码到控制台（生产环境需记录到安全位置）
+            Console.WriteLine("============================================");
+            Console.WriteLine("⚠️  IMPORTANT: Root User Temporary Password");
+            Console.WriteLine("============================================");
+            Console.WriteLine($"Username: root");
+            Console.WriteLine($"Password: {temporaryPassword}");
+            Console.WriteLine("⚠️  You MUST change this password on first login!");
+            Console.WriteLine("============================================");
+
             // 创建 root 用户
             rootUser = new User
             {
                 Username = "root",
-                PasswordHash = EncryptionHelper.HashPassword("admin123"),
+                PasswordHash = EncryptionHelper.HashPassword(temporaryPassword),
                 RealName = "系统管理员",
                 Email = "root@dataforge.com",
                 IsActive = true,
                 IsSystem = true,
-                MustChangePassword = false,
+                MustChangePassword = true, // 强制首次登录修改密码
                 CreatedTime = DateTime.UtcNow
             };
 
@@ -204,5 +216,16 @@ public static class DbInitializer
 
         // 创建所有权限
         await CreateAllPermissionsAsync(context);
+    }
+
+    /// <summary>
+    /// 生成临时密码
+    /// </summary>
+    private static string GenerateTemporaryPassword(int length)
+    {
+        const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%";
+        var random = new Random();
+        return new string(Enumerable.Repeat(chars, length)
+            .Select(s => s[random.Next(s.Length)]).ToArray());
     }
 }

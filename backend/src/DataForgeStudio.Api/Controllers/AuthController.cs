@@ -84,6 +84,16 @@ public class AuthController : ControllerBase
             ? ApiResponse.Ok("Token 有效")
             : ApiResponse.Fail("Token 无效", "INVALID_TOKEN");
     }
+
+    /// <summary>
+    /// 强制修改密码（首次登录）
+    /// </summary>
+    [HttpPost("force-password-change")]
+    [AllowAnonymous]
+    public async Task<ApiResponse<bool>> ForcePasswordChange([FromBody] ForcePasswordChangeRequest request)
+    {
+        return await _authenticationService.ForcePasswordChangeAsync(request);
+    }
 }
 
 /// <summary>

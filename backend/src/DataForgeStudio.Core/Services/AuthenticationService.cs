@@ -4,6 +4,7 @@ using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using DataForgeStudio.Core.Configuration;
 using DataForgeStudio.Core.Interfaces;
 using DataForgeStudio.Domain.Entities;
 using DataForgeStudio.Domain.Interfaces;
@@ -15,23 +16,12 @@ using DataForgeStudio.Shared.Constants;
 namespace DataForgeStudio.Core.Services;
 
 /// <summary>
-/// JWT 配置选项
-/// </summary>
-public class JwtOptions
-{
-    public string Secret { get; set; } = string.Empty;
-    public string Issuer { get; set; } = string.Empty;
-    public string Audience { get; set; } = string.Empty;
-    public int ExpirationMinutes { get; set; } = 1440;
-}
-
-/// <summary>
 /// 认证服务实现
 /// </summary>
 public class AuthenticationService : IAuthenticationService
 {
     private readonly IUserRepository _userRepository;
-    private readonly JwtOptions _jwtOptions;
+    private readonly SecurityOptions.JwtOptions _jwtOptions;
 
     public AuthenticationService(
         IUserRepository userRepository,
@@ -39,12 +29,18 @@ public class AuthenticationService : IAuthenticationService
     {
         _userRepository = userRepository;
 
-        _jwtOptions = new JwtOptions
+        // 从配置读取 JWT 设置（尝试新的 Security:Jwt 路径，然后回退到旧的 Jwt 路径）
+        var secret = configuration["Security:Jwt:Secret"] ?? configuration["Jwt:Secret"];
+        var issuer = configuration["Security:Jwt:Issuer"] ?? configuration["Jwt:Issuer"] ?? "DataForgeStudio";
+        var audience = configuration["Security:Jwt:Audience"] ?? configuration["Jwt:Audience"] ?? "DataForgeStudio.Client";
+        var expiration = configuration["Security:Jwt:ExpirationMinutes"] ?? configuration["Jwt:ExpirationMinutes"] ?? "1440";
+
+        _jwtOptions = new SecurityOptions.JwtOptions
         {
-            Secret = configuration["Jwt:Secret"] ?? throw new InvalidOperationException("JWT Secret 未配置"),
-            Issuer = configuration["Jwt:Issuer"] ?? "DataForgeStudio",
-            Audience = configuration["Jwt:Audience"] ?? "DataForgeStudio.Client",
-            ExpirationMinutes = int.Parse(configuration["Jwt:ExpirationMinutes"] ?? "1440")
+            Secret = secret ?? throw new InvalidOperationException("JWT Secret 未配置"),
+            Issuer = issuer,
+            Audience = audience,
+            ExpirationMinutes = int.Parse(expiration)
         };
     }
 
@@ -82,6 +78,31 @@ public class AuthenticationService : IAuthenticationService
 
                 await _userRepository.UpdateAsync(user);
                 throw new LoginFailedException("用户名或密码错误");
+            }
+
+            // 检查是否需要强制修改密码
+            if (user.MustChangePassword)
+            {
+                // 重置失败次数
+                user.PasswordFailCount = 0;
+                await _userRepository.UpdateAsync(user);
+
+                return new ApiResponse<LoginResponse>
+                {
+                    Success = true,
+                    Message = "首次登录必须修改密码",
+                    Data = new LoginResponse
+                    {
+                        Success = false,
+                        RequiresPasswordChange = true,
+                        UserId = user.UserId,
+                        Token = string.Empty,
+                        TokenType = "Bearer",
+                        ExpiresIn = 0
+                    },
+                    ErrorCode = null,
+                    Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+                };
             }
 
             // 登录成功，重置失败次数
@@ -268,5 +289,42 @@ public class AuthenticationService : IAuthenticationService
         return user.UserRoles
             .SelectMany(ur => ur.Role.RolePermissions)
             .Any(rp => rp.Permission.PermissionCode == permissionCode);
+    }
+
+    public async Task<ApiResponse<bool>> ForcePasswordChangeAsync(ForcePasswordChangeRequest request)
+    {
+        try
+        {
+            // 验证新密码
+            if (request.NewPassword != request.ConfirmPassword)
+            {
+                return ApiResponse<bool>.Fail("两次输入的密码不一致");
+            }
+
+            var user = await _userRepository.GetByIdAsync(request.UserId);
+            if (user == null)
+            {
+                return ApiResponse<bool>.Fail("用户不存在", "NOT_FOUND");
+            }
+
+            // 验证临时密码
+            if (!EncryptionHelper.VerifyPassword(request.TemporaryPassword, user.PasswordHash))
+            {
+                return ApiResponse<bool>.Fail("临时密码错误");
+            }
+
+            // 更新密码
+            user.PasswordHash = EncryptionHelper.HashPassword(request.NewPassword);
+            user.MustChangePassword = false;
+            user.PasswordFailCount = 0;
+
+            await _userRepository.UpdateAsync(user);
+
+            return ApiResponse<bool>.Ok(true, "密码修改成功，请重新登录");
+        }
+        catch (Exception ex)
+        {
+            return ApiResponse<bool>.Fail("密码修改失败: " + ex.Message);
+        }
     }
 }

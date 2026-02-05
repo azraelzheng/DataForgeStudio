@@ -21,17 +21,20 @@ public class ReportService : IReportService
     private readonly DataForgeStudioDbContext _context;
     private readonly IDataSourceService _dataSourceService;
     private readonly IDatabaseService _databaseService;
+    private readonly ISqlValidationService _sqlValidationService;
     private readonly ILogger<ReportService> _logger;
 
     public ReportService(
         DataForgeStudioDbContext context,
         IDataSourceService dataSourceService,
         IDatabaseService databaseService,
+        ISqlValidationService sqlValidationService,
         ILogger<ReportService> logger)
     {
         _context = context;
         _dataSourceService = dataSourceService;
         _databaseService = databaseService;
+        _sqlValidationService = sqlValidationService;
         _logger = logger;
     }
 
@@ -121,6 +124,15 @@ public class ReportService : IReportService
 
     public async Task<ApiResponse<ReportDto>> CreateReportAsync(CreateReportRequest request, int createdBy)
     {
+        // SQL 验证
+        var validationResult = _sqlValidationService.ValidateQuery(request.SqlQuery);
+        if (!validationResult.IsValid)
+        {
+            _logger.LogWarning("创建报表时 SQL 验证失败: {Message}, SQL: {Sql}",
+                validationResult.ErrorMessage, request.SqlQuery);
+            return ApiResponse<ReportDto>.Fail(validationResult.ErrorMessage, "SQL_VALIDATION_FAILED");
+        }
+
         var code = $"RPT_{DateTime.UtcNow:yyyyMMddHHmmss}";
 
         var report = new Report
@@ -195,6 +207,15 @@ public class ReportService : IReportService
 
     public async Task<ApiResponse> UpdateReportAsync(int reportId, CreateReportRequest request)
     {
+        // SQL 验证
+        var validationResult = _sqlValidationService.ValidateQuery(request.SqlQuery);
+        if (!validationResult.IsValid)
+        {
+            _logger.LogWarning("更新报表时 SQL 验证失败: {Message}, SQL: {Sql}",
+                validationResult.ErrorMessage, request.SqlQuery);
+            return ApiResponse.Fail(validationResult.ErrorMessage, "SQL_VALIDATION_FAILED");
+        }
+
         var report = await _context.Reports
             .Include(r => r.Fields)
             .Include(r => r.Parameters)
@@ -336,6 +357,17 @@ public class ReportService : IReportService
         string sql,
         Dictionary<string, object>? parameters)
     {
+        // SQL 验证
+        var validationResult = _sqlValidationService.ValidateQuery(sql);
+        if (!validationResult.IsValid)
+        {
+            // 记录被阻止的查询
+            _logger.LogWarning("SQL 查询被阻止: {Message}, SQL: {Sql}",
+                validationResult.ErrorMessage, sql);
+
+            return ApiResponse<List<Dictionary<string, object>>>.Fail(validationResult.ErrorMessage, "SQL_VALIDATION_FAILED");
+        }
+
         var dataSource = await _context.DataSources.FindAsync(dataSourceId);
         if (dataSource == null)
         {

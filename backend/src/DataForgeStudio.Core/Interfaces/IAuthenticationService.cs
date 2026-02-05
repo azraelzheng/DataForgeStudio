@@ -33,6 +33,11 @@ public interface IAuthenticationService
     Task<ApiResponse> ChangePasswordAsync(int userId, ChangePasswordRequest request);
 
     /// <summary>
+    /// 强制修改密码（首次登录）
+    /// </summary>
+    Task<ApiResponse<bool>> ForcePasswordChangeAsync(ForcePasswordChangeRequest request);
+
+    /// <summary>
     /// 检查用户是否有权限
     /// </summary>
     Task<bool> HasPermissionAsync(int userId, string permissionCode);
