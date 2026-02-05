@@ -112,6 +112,12 @@
         <el-form-item label="端口" prop="port">
           <el-input-number v-model="form.port" :min="1" :max="65535" />
         </el-form-item>
+        <el-form-item label="用户名" prop="username">
+          <el-input v-model="form.username" placeholder="请输入数据库用户名" />
+        </el-form-item>
+        <el-form-item label="密码" prop="password">
+          <el-input v-model="form.password" type="password" show-password placeholder="请输入数据库密码" />
+        </el-form-item>
         <el-form-item label="数据库名" prop="database">
           <el-select
             v-model="form.database"
@@ -127,12 +133,6 @@
               :value="db"
             />
           </el-select>
-        </el-form-item>
-        <el-form-item label="用户名" prop="username">
-          <el-input v-model="form.username" placeholder="请输入数据库用户名" />
-        </el-form-item>
-        <el-form-item label="密码" prop="password">
-          <el-input v-model="form.password" type="password" show-password placeholder="请输入数据库密码" />
         </el-form-item>
         <el-form-item label="描述">
           <el-input v-model="form.description" type="textarea" :rows="3" placeholder="请输入描述" />
