@@ -294,8 +294,10 @@ public class SystemService : ISystemService
                 System.IO.Directory.CreateDirectory(backupDir);
             }
 
-            // 生成备份文件名
-            var fileName = $"{databaseName}_{DateTime.UtcNow:yyyyMMdd_HHmmss}.bak";
+            // 自动生成备份名称和文件名
+            var timestamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss");
+            var backupName = $"DataForge_{timestamp}";
+            var fileName = $"{databaseName}_{timestamp}.bak";
             var backupPath = System.IO.Path.Combine(backupDir, fileName);
 
             // 执行备份命令
@@ -305,7 +307,7 @@ public class SystemService : ISystemService
             {
                 var failedBackup = new BackupRecord
                 {
-                    BackupName = request.BackupName,
+                    BackupName = backupName,
                     BackupType = "Manual",
                     BackupPath = backupPath,
                     FileSize = 0,
@@ -328,7 +330,7 @@ public class SystemService : ISystemService
             // 记录备份信息
             var backup = new BackupRecord
             {
-                BackupName = request.BackupName,
+                BackupName = backupName,
                 BackupType = "Manual",
                 BackupPath = backupPath,
                 FileSize = (int)fileSize,

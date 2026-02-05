@@ -644,6 +644,6 @@ public class BackupRecordDto
 /// </summary>
 public class CreateBackupRequest
 {
-    public string BackupName { get; set; }
+    public string? BackupName { get; set; }
     public string? Description { get; set; }
 }

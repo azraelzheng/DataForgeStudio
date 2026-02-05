@@ -7,12 +7,9 @@
           <template #header>
             <span>创建备份</span>
           </template>
-          <el-form :model="backupForm" :rules="backupRules" ref="backupFormRef" :inline="true">
-            <el-form-item label="备份名称" prop="backupName">
-              <el-input v-model="backupForm.backupName" placeholder="请输入备份名称" style="width: 300px;" />
-            </el-form-item>
+          <el-form :model="backupForm" ref="backupFormRef" :inline="true">
             <el-form-item label="备注">
-              <el-input v-model="backupForm.description" placeholder="请输入备注" style="width: 300px;" />
+              <el-input v-model="backupForm.description" placeholder="请输入备注（可选）" style="width: 300px;" />
             </el-form-item>
             <el-form-item>
               <el-button type="primary" @click="handleCreateBackup" :loading="creating">
@@ -110,13 +107,8 @@ const creating = ref(false)
 const tableData = ref([])
 
 const backupForm = reactive({
-  backupName: '',
   description: ''
 })
-
-const backupRules = {
-  backupName: [{ required: true, message: '请输入备份名称', trigger: 'blur' }]
-}
 
 const searchForm = reactive({
   backupName: ''
