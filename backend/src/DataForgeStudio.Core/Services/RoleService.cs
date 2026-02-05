@@ -167,6 +167,7 @@ public class RoleService : IRoleService
     public async Task<ApiResponse> DeleteRoleAsync(int roleId)
     {
         var role = await _context.Roles
+            .Include(r => r.RolePermissions)
             .FirstOrDefaultAsync(r => r.RoleId == roleId && !r.IsSystem);
 
         if (role == null)
@@ -181,8 +182,17 @@ public class RoleService : IRoleService
             return ApiResponse.Fail("该角色下还有用户，无法删除", "ROLE_IN_USE");
         }
 
+        // 先删除角色权限关联
+        if (role.RolePermissions.Any())
+        {
+            _context.RolePermissions.RemoveRange(role.RolePermissions);
+        }
+
+        // 删除角色
         _context.Roles.Remove(role);
         await _context.SaveChangesAsync();
+
+        _logger.LogInformation($"角色删除成功: RoleId={roleId}, RoleName={role.RoleName}");
         return ApiResponse.Ok("角色删除成功");
     }
 
