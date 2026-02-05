@@ -12,7 +12,7 @@ import { sql } from '@codemirror/lang-sql'
 import { oneDark } from '@codemirror/theme-one-dark'
 import { keymap } from '@codemirror/view'
 import { defaultKeymap, indentWithTab } from '@codemirror/commands'
-import { searchKeymap, highlightSelectionMatches } from '@codemirror/search'
+import { highlightSelectionMatches } from '@codemirror/search'
 import { autocompletion } from '@codemirror/autocomplete'
 import { linter } from '@codemirror/lint'
 import { bracketMatching } from '@codemirror/language'
@@ -98,7 +98,6 @@ const getExtensions = () => {
       indentWithTab,
       { key: 'Shift-Alt-f', run: formatSQL }
     ]),
-    searchKeymap.of(searchKeymap),
     highlightSelectionMatches(),
     // 使用自定义 SQL 自动补全
     createSqlAutocomplete(fetchTablesFromBackend, props.dataSourceId),
