@@ -88,8 +88,18 @@ public class ReportsController : ControllerBase
     }
 
     /// <summary>
-    /// 测试SQL查询（用于报表设计器）
+    /// 测试 SQL 查询（用于报表设计器）
     /// </summary>
+    /// <param name="request">测试查询请求，包含数据源 ID 和 SQL 语句</param>
+    /// <returns>查询结果数据集</returns>
+    /// <remarks>
+    /// 限制条件:
+    /// - 必须以 SELECT 开头
+    /// - 不允许 DROP, DELETE, INSERT, UPDATE 等危险关键字
+    /// - 不允许注释字符 (-- 和 /* */)
+    /// - 不允许分号（多语句）
+    /// - 不允许 UNION 注入
+    /// </remarks>
     [HttpPost("test-query")]
     public async Task<ApiResponse<List<Dictionary<string, object>>>> TestQuery([FromBody] TestQueryRequest request)
     {
@@ -97,8 +107,13 @@ public class ReportsController : ControllerBase
     }
 
     /// <summary>
-    /// 导出报表
+    /// 导出报表为 Excel 文件
     /// </summary>
+    /// <param name="id">报表 ID</param>
+    /// <param name="request">执行请求，包含参数值</param>
+    /// <returns>Excel 文件流</returns>
+    /// <response code="200">返回 Excel 文件</response>
+    /// <response code="400">请求参数错误</response>
     [HttpPost("{id}/export")]
     public async Task<IActionResult> ExportReport(int id, [FromBody] ExecuteReportRequest request)
     {
