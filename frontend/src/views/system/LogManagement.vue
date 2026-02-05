@@ -60,7 +60,7 @@
             <el-icon><Delete /></el-icon>
             删除
           </el-button>
-          <el-button type="success" @click="handleExport">
+          <el-button type="success" @click="handleExport" :loading="exporting">
             <el-icon><Download /></el-icon>
             导出
           </el-button>
@@ -140,6 +140,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { systemApi } from '../../api/request'
 
 const loading = ref(false)
+const exporting = ref(false)
 const detailDialogVisible = ref(false)
 const currentLog = ref(null)
 const dateRange = ref([])
@@ -263,6 +264,7 @@ const handleSelectionChange = (selection) => {
 }
 
 const handleExport = async () => {
+  exporting.value = true
   try {
     const params = { ...searchForm }
     if (dateRange.value && dateRange.value.length === 2) {
@@ -270,10 +272,22 @@ const handleExport = async () => {
       params.endTime = dateRange.value[1]
     }
 
-    // TODO: 实现导出功能
-    ElMessage.info('导出功能待实现')
+    const blob = await systemApi.exportLogs(params)
+
+    // 创建下载链接
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `操作日志_${new Date().getTime()}.xlsx`
+    link.click()
+    window.URL.revokeObjectURL(url)
+
+    ElMessage.success('导出成功')
   } catch (error) {
     console.error('导出失败:', error)
+    ElMessage.error('导出失败')
+  } finally {
+    exporting.value = false
   }
 }
 

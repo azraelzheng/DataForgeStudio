@@ -251,7 +251,10 @@ export const systemApi = {
   deleteLogsByIds: (logIds) => request.delete('/system/logs/delete-by-ids', { data: logIds }),
 
   // 导出日志
-  exportLogs: (params) => request.get('/system/logs/export', { params }),
+  exportLogs: (params) => request.get('/system/logs/export', {
+    params,
+    responseType: 'blob'
+  }),
 
   // 创建备份
   createBackup: (data) => request.post('/system/backup', data),

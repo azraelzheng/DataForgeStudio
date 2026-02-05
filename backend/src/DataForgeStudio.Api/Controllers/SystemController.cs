@@ -104,6 +104,26 @@ public class SystemController : ControllerBase
     }
 
     /// <summary>
+    /// 导出操作日志到 Excel
+    /// </summary>
+    [HttpGet("logs/export")]
+    public async Task<IActionResult> ExportLogs(
+        [FromQuery] string? username = null,
+        [FromQuery] string? action = null,
+        [FromQuery] string? module = null,
+        [FromQuery] string? startTime = null,
+        [FromQuery] string? endTime = null)
+    {
+        var excelData = await _systemService.ExportLogsToExcelAsync(
+            username, action, module, startTime, endTime);
+
+        return File(
+            excelData,
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            $"操作日志_{DateTime.UtcNow:yyyyMMdd_HHmmss}.xlsx");
+    }
+
+    /// <summary>
     /// 创建备份
     /// </summary>
     [HttpPost("backup")]

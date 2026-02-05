@@ -33,6 +33,11 @@ public interface ISystemService
     Task<ApiResponse> DeleteLogsByIdsAsync(List<int> logIds);
 
     /// <summary>
+    /// 导出操作日志到 Excel
+    /// </summary>
+    Task<byte[]> ExportLogsToExcelAsync(string? username = null, string? action = null, string? module = null, string? startTime = null, string? endTime = null);
+
+    /// <summary>
     /// 创建备份
     /// </summary>
     Task<ApiResponse<BackupRecordDto>> CreateBackupAsync(CreateBackupRequest request, int createdBy);

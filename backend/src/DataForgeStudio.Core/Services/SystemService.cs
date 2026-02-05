@@ -194,6 +194,81 @@ public class SystemService : ISystemService
         return ApiResponse.Ok($"已删除 {logsToDelete.Count} 条日志");
     }
 
+    public async Task<byte[]> ExportLogsToExcelAsync(
+        string? username = null,
+        string? action = null,
+        string? module = null,
+        string? startTime = null,
+        string? endTime = null)
+    {
+        var query = _context.OperationLogs.AsQueryable();
+
+        // 应用相同的过滤条件
+        if (!string.IsNullOrWhiteSpace(username))
+        {
+            query = query.Where(l => l.Username != null && l.Username.Contains(username));
+        }
+
+        if (!string.IsNullOrWhiteSpace(action))
+        {
+            query = query.Where(l => l.Action == action);
+        }
+
+        if (!string.IsNullOrWhiteSpace(module))
+        {
+            query = query.Where(l => l.Module == module);
+        }
+
+        if (DateTime.TryParse(startTime, out var start))
+        {
+            query = query.Where(l => l.CreatedTime >= start);
+        }
+
+        if (DateTime.TryParse(endTime, out var end))
+        {
+            query = query.Where(l => l.CreatedTime <= end);
+        }
+
+        var logs = await query
+            .OrderByDescending(l => l.CreatedTime)
+            .ToListAsync();
+
+        // 使用 ClosedXML 导出 Excel
+        using var workbook = new ClosedXML.Excel.XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("操作日志");
+
+        // 设置表头
+        worksheet.Cell("A1").Value = "用户名";
+        worksheet.Cell("B1").Value = "操作";
+        worksheet.Cell("C1").Value = "模块";
+        worksheet.Cell("D1").Value = "描述";
+        worksheet.Cell("E1").Value = "IP地址";
+        worksheet.Cell("F1").Value = "操作时间";
+
+        // 填充数据
+        int row = 2;
+        foreach (var log in logs)
+        {
+            worksheet.Cell(row, 1).Value = log.Username ?? "";
+            worksheet.Cell(row, 2).Value = log.Action ?? "";
+            worksheet.Cell(row, 3).Value = log.Module ?? "";
+            worksheet.Cell(row, 4).Value = log.Description ?? "";
+            worksheet.Cell(row, 5).Value = log.IpAddress ?? "";
+            worksheet.Cell(row, 6).Value = log.CreatedTime.ToString("yyyy-MM-dd HH:mm:ss");
+            row++;
+        }
+
+        // 设置表格样式
+        var range = worksheet.Range(1, 1, row - 1, 6);
+        range.CreateTable().Theme = ClosedXML.Excel.Table.TableThemes.Medium2;
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        return stream.ToArray();
+    }
+
     public async Task<ApiResponse<BackupRecordDto>> CreateBackupAsync(CreateBackupRequest request, int createdBy)
     {
         try
