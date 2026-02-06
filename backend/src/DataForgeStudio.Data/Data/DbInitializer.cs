@@ -154,12 +154,16 @@ public static class DbInitializer
             new Permission { PermissionCode = "role:assignPermissions", PermissionName = "分配权限", Module = "Role", Action = "AssignPermissions", Description = "为角色分配权限" },
 
             // 报表管理权限
-            new Permission { PermissionCode = "report:view", PermissionName = "查看报表", Module = "Report", Action = "View", Description = "查看报表列表" },
+            // 报表查询相关
+            new Permission { PermissionCode = "report:query", PermissionName = "访问报表查询", Module = "Report", Action = "Query", Description = "访问报表查询页面" },
+            new Permission { PermissionCode = "report:execute", PermissionName = "执行报表查询", Module = "Report", Action = "Execute", Description = "执行报表查询并查看结果" },
+
+            // 报表设计相关
+            new Permission { PermissionCode = "report:design", PermissionName = "访问报表设计", Module = "Report", Action = "Design", Description = "访问报表设计管理页面" },
             new Permission { PermissionCode = "report:create", PermissionName = "创建报表", Module = "Report", Action = "Create", Description = "创建新报表" },
-            new Permission { PermissionCode = "report:edit", PermissionName = "编辑报表", Module = "Report", Action = "Edit", Description = "编辑报表" },
+            new Permission { PermissionCode = "report:edit", PermissionName = "编辑报表", Module = "Report", Action = "Edit", Description = "编辑报表配置" },
             new Permission { PermissionCode = "report:delete", PermissionName = "删除报表", Module = "Report", Action = "Delete", Description = "删除报表" },
-            new Permission { PermissionCode = "report:design", PermissionName = "报表设计", Module = "Report", Action = "Design", Description = "设计报表" },
-            new Permission { PermissionCode = "report:execute", PermissionName = "执行报表", Module = "Report", Action = "Execute", Description = "执行报表查询" },
+            new Permission { PermissionCode = "report:toggle", PermissionName = "停用启用报表", Module = "Report", Action = "Toggle", Description = "停用或启用报表" },
             new Permission { PermissionCode = "report:export", PermissionName = "导出报表", Module = "Report", Action = "Export", Description = "导出报表数据" },
 
             // 数据源管理权限

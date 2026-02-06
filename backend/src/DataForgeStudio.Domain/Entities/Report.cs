@@ -135,6 +135,23 @@ public class Report
     public DateTime? UpdatedTime { get; set; }
 
     /// <summary>
+    /// 图表配置 (JSON)
+    /// </summary>
+    [MaxLength(2000)]
+    public string? ChartConfig { get; set; }
+
+    /// <summary>
+    /// 是否启用图表
+    /// </summary>
+    public bool EnableChart { get; set; } = false;
+
+    /// <summary>
+    /// 查询条件配置 (JSON)
+    /// </summary>
+    [MaxLength(2000)]
+    public string? QueryConditions { get; set; }
+
+    /// <summary>
     /// 导航属性 - 数据源
     /// </summary>
     [ForeignKey(nameof(DataSourceId))]

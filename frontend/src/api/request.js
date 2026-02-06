@@ -220,7 +220,19 @@ export const reportApi = {
   // 导出报表
   exportReport: (id, params) => request.post(`/reports/${id}/export`, params, {
     responseType: 'blob'
-  })
+  }),
+
+  // 报表统计
+  getReportStatistics: (id) => request.get(`/reports/${id}/statistics`),
+
+  // 复制报表
+  copyReport: (id) => request.post(`/reports/${id}/copy`),
+
+  // 导出所有报表配置
+  exportAllConfigs: () => request.get('/reports/export-config'),
+
+  // 切换报表启用状态
+  toggleReport: (id) => request.post(`/reports/${id}/toggle`)
 }
 
 export const licenseApi = {

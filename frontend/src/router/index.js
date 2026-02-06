@@ -15,23 +15,26 @@ const routes = [
     component: () => import('../views/home/HomePage.vue'),
     meta: { title: '首页', requiresAuth: true }
   },
+  // 报表查询 - 纯查询页面
   {
     path: '/report',
-    name: 'Report',
-    redirect: '/report/list',
-    meta: { title: '报表管理', requiresAuth: true }
+    name: 'ReportQuery',
+    component: () => import('../views/report/ReportQuery.vue'),
+    meta: { title: '报表查询', requiresAuth: true, permission: 'report:execute' }
   },
-  {
-    path: '/report/list',
-    name: 'ReportList',
-    component: () => import('../views/report/ReportList.vue'),
-    meta: { title: '报表查询', requiresAuth: true, permission: 'report:view' }
-  },
+  // 报表设计列表 - 设计管理页面
   {
     path: '/report/design',
-    name: 'ReportDesign',
-    component: () => import('../views/report/ReportDesign.vue'),
+    name: 'ReportDesignList',
+    component: () => import('../views/report/ReportDesignList.vue'),
     meta: { title: '报表设计', requiresAuth: true, permission: 'report:design' }
+  },
+  // 报表设计器 - 实际设计页面
+  {
+    path: '/report/designer',
+    name: 'ReportDesigner',
+    component: () => import('../views/report/ReportDesigner.vue'),
+    meta: { title: '报表设计器', requiresAuth: true, permission: 'report:design' }
   },
   {
     path: '/license',

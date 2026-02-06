@@ -474,6 +474,7 @@ public class ReportDetailDto : ReportDto
     public List<ReportParameterDto> Parameters { get; set; }
     public bool EnableChart { get; set; }
     public ChartConfigDto? ChartConfig { get; set; }
+    public List<QueryConditionDto>? QueryConditions { get; set; }
 }
 
 /// <summary>
@@ -502,14 +503,26 @@ public class ReportParameterDto
 }
 
 /// <summary>
+/// 查询条件 DTO
+/// </summary>
+public class QueryConditionDto
+{
+    public string FieldName { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public string DataType { get; set; } = "String";
+    public string Operator { get; set; } = "eq";
+    public string? DefaultValue { get; set; }
+}
+
+/// <summary>
 /// 图表配置 DTO
 /// </summary>
 public class ChartConfigDto
 {
-    public string ChartType { get; set; }
-    public string XField { get; set; }
-    public List<string> YField { get; set; }
-    public string? Title { get; set; }
+    public string ChartType { get; set; } = "bar";
+    public string XField { get; set; } = string.Empty;
+    public List<string> YFields { get; set; } = new();
+    public string Title { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -527,6 +540,7 @@ public class CreateReportRequest
     public List<ReportParameterDto> Parameters { get; set; }
     public bool EnableChart { get; set; }
     public ChartConfigDto? ChartConfig { get; set; }
+    public List<QueryConditionDto>? QueryConditions { get; set; }
 }
 
 /// <summary>
@@ -646,4 +660,45 @@ public class CreateBackupRequest
 {
     public string? BackupName { get; set; }
     public string? Description { get; set; }
+}
+
+/// <summary>
+/// 表字段 DTO
+/// </summary>
+public class TableColumnDto
+{
+    /// <summary>
+    /// 字段名称
+    /// </summary>
+    public string ColumnName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 数据类型
+    /// </summary>
+    public string DataType { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 最大长度
+    /// </summary>
+    public int? MaxLength { get; set; }
+
+    /// <summary>
+    /// 是否可为空
+    /// </summary>
+    public bool IsNullable { get; set; }
+
+    /// <summary>
+    /// 字段属性（如主键、自增等）
+    /// </summary>
+    public string? ColumnProperty { get; set; }
+
+    /// <summary>
+    /// 字段位置
+    /// </summary>
+    public int Position { get; set; }
+
+    /// <summary>
+    /// 系统数据类型（用于前端查询条件）
+    /// </summary>
+    public string SystemDataType { get; set; } = "String";
 }

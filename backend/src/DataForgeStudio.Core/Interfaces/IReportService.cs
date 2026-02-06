@@ -46,4 +46,24 @@ public interface IReportService
     /// 导出报表
     /// </summary>
     Task<ApiResponse<byte[]>> ExportReportAsync(int reportId, ExecuteReportRequest request);
+
+    /// <summary>
+    /// 获取报表统计信息
+    /// </summary>
+    Task<ApiResponse<object>> GetReportStatisticsAsync(int reportId);
+
+    /// <summary>
+    /// 复制报表
+    /// </summary>
+    Task<ApiResponse<ReportDetailDto>> CopyReportAsync(int reportId, int? userId);
+
+    /// <summary>
+    /// 导出所有报表配置
+    /// </summary>
+    Task<ApiResponse<string>> ExportAllReportConfigsAsync();
+
+    /// <summary>
+    /// 切换报表启用状态
+    /// </summary>
+    Task<ApiResponse> ToggleReportAsync(int reportId);
 }

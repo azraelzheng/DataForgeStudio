@@ -130,4 +130,51 @@ public class ReportsController : ControllerBase
             $"report_{id}_{DateTime.UtcNow:yyyyMMddHHmmss}.xlsx"
         );
     }
+
+    /// <summary>
+    /// 获取报表统计信息
+    /// </summary>
+    [HttpGet("{id}/statistics")]
+    public async Task<IActionResult> GetStatistics(int id)
+    {
+        var result = await _reportService.GetReportStatisticsAsync(id);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// 复制报表
+    /// </summary>
+    [HttpPost("{id}/copy")]
+    public async Task<IActionResult> CopyReport(int id)
+    {
+        var userIdClaim = User.FindFirst("UserId")?.Value;
+        int? userId = null;
+        if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out var parsedUserId))
+        {
+            userId = parsedUserId;
+        }
+
+        var result = await _reportService.CopyReportAsync(id, userId);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// 导出所有报表配置
+    /// </summary>
+    [HttpGet("export-config")]
+    public async Task<IActionResult> ExportAllConfigs()
+    {
+        var result = await _reportService.ExportAllReportConfigsAsync();
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// 切换报表启用状态
+    /// </summary>
+    [HttpPost("{id}/toggle")]
+    public async Task<IActionResult> ToggleReport(int id)
+    {
+        var result = await _reportService.ToggleReportAsync(id);
+        return Ok(result);
+    }
 }

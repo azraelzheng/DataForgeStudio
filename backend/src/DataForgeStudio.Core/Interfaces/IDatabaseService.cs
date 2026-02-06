@@ -32,4 +32,9 @@ public interface IDatabaseService
     /// 获取数据库列表
     /// </summary>
     Task<ApiResponse<List<string>>> GetDatabasesAsync(string dbType, string connectionString);
+
+    /// <summary>
+    /// 获取表结构信息
+    /// </summary>
+    Task<ApiResponse<List<TableColumnDto>>> GetTableStructureAsync(DataSource dataSource, string tableName);
 }
