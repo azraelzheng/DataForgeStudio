@@ -6,6 +6,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using DataForgeStudio.Core.Configuration;
 using DataForgeStudio.Core.Interfaces;
+using DataForgeStudio.Core.Validators;
 using DataForgeStudio.Domain.Entities;
 using DataForgeStudio.Domain.Interfaces;
 using DataForgeStudio.Shared.DTO;
@@ -242,6 +243,13 @@ public class AuthenticationService : IAuthenticationService
                 return ApiResponse.Fail("两次输入的密码不一致");
             }
 
+            // 验证新密码强度
+            var passwordValidation = PasswordValidator.ValidatePassword(request.NewPassword);
+            if (!passwordValidation.IsValid)
+            {
+                return ApiResponse.Fail(string.Join("; ", passwordValidation.Errors), "WEAK_PASSWORD");
+            }
+
             var user = await _userRepository.GetByIdAsync(userId);
             if (user == null)
             {
@@ -299,6 +307,13 @@ public class AuthenticationService : IAuthenticationService
             if (request.NewPassword != request.ConfirmPassword)
             {
                 return ApiResponse<bool>.Fail("两次输入的密码不一致");
+            }
+
+            // 验证新密码强度
+            var passwordValidation = PasswordValidator.ValidatePassword(request.NewPassword);
+            if (!passwordValidation.IsValid)
+            {
+                return ApiResponse<bool>.Fail(string.Join("; ", passwordValidation.Errors), "WEAK_PASSWORD");
             }
 
             var user = await _userRepository.GetByIdAsync(request.UserId);

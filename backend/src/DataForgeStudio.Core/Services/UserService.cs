@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using DataForgeStudio.Core.Interfaces;
+using DataForgeStudio.Core.Validators;
 using DataForgeStudio.Data.Data;
 using DataForgeStudio.Domain.Entities;
 using DataForgeStudio.Shared.DTO;
@@ -106,6 +107,13 @@ public class UserService : IUserService
 
     public async Task<ApiResponse<UserDto>> CreateUserAsync(CreateUserRequest request, int createdBy)
     {
+        // 验证密码强度
+        var passwordValidation = PasswordValidator.ValidatePassword(request.Password);
+        if (!passwordValidation.IsValid)
+        {
+            return ApiResponse<UserDto>.Fail(string.Join("; ", passwordValidation.Errors), "WEAK_PASSWORD");
+        }
+
         // 检查用户名是否存在
         var exists = await _context.Users.AnyAsync(u => u.Username == request.Username);
         if (exists)
@@ -116,7 +124,7 @@ public class UserService : IUserService
         var user = new User
         {
             Username = request.Username,
-            PasswordHash = EncryptionHelper.HashPassword(request.Password ?? "123456"),
+            PasswordHash = EncryptionHelper.HashPassword(request.Password ?? throw new ArgumentException("密码不能为空")),
             RealName = request.RealName,
             Email = request.Email,
             Phone = request.Phone,
@@ -192,6 +200,13 @@ public class UserService : IUserService
 
     public async Task<ApiResponse> ResetPasswordAsync(int userId, ResetPasswordRequest request)
     {
+        // 验证新密码强度
+        var passwordValidation = PasswordValidator.ValidatePassword(request.NewPassword);
+        if (!passwordValidation.IsValid)
+        {
+            return ApiResponse.Fail(string.Join("; ", passwordValidation.Errors), "WEAK_PASSWORD");
+        }
+
         var user = await _context.Users
             .FirstOrDefaultAsync(u => u.UserId == userId);
 
