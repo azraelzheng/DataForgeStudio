@@ -37,9 +37,9 @@ public class DataSourceService : IDataSourceService
     private (string key, string iv) GetEncryptionKeys()
     {
         var key = _configuration["Security:Encryption:AesKey"]
-            ?? throw new InvalidOperationException("加密密钥未配置。请设置环境变量 DFS_ENCRYPTION_AES_KEY");
+            ?? throw new InvalidOperationException("加密密钥未配置。请设置环境变量 DFS_ENCRYPTION_AESKEY");
         var iv = _configuration["Security:Encryption:AesIV"]
-            ?? throw new InvalidOperationException("加密IV未配置。请设置环境变量 DFS_ENCRYPTION_AES_IV");
+            ?? throw new InvalidOperationException("加密IV未配置。请设置环境变量 DFS_ENCRYPTION_AESIV");
         return (key, iv);
     }
 
