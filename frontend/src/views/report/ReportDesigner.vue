@@ -104,6 +104,20 @@
             </el-table-column>
           </el-table>
         </el-card>
+
+        <!-- 查询条件配置 -->
+        <el-card class="design-card" style="margin-top: 20px;">
+          <template #header>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span>查询条件配置</span>
+            </div>
+          </template>
+
+          <QueryConditions
+            v-model="form.queryConditions"
+            :fields="form.columns"
+          />
+        </el-card>
       </el-col>
 
       <!-- 右侧：字段配置和预览 -->
@@ -255,6 +269,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { reportApi, dataSourceApi } from '../../api/request'
 import SqlEditor from '../../components/SqlEditor.vue'
+import QueryConditions from '../../components/QueryConditions.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -272,6 +287,7 @@ const form = reactive({
   sqlQuery: '',
   parameters: [],
   columns: [],
+  queryConditions: [],
   enableChart: false,
   chartConfig: {
     chartType: 'bar',
@@ -501,13 +517,19 @@ const handleSave = async () => {
 
   saving.value = true
   try {
+    const saveData = {
+      ...form,
+      chartConfig: form.enableChart ? JSON.stringify(form.chartConfig) : null,
+      queryConditions: form.queryConditions.length > 0 ? JSON.stringify(form.queryConditions) : null
+    }
+
     if (form.reportId) {
-      await reportApi.updateReport(form.reportId, form)
+      await reportApi.updateReport(form.reportId, saveData)
     } else {
-      await reportApi.createReport(form)
+      await reportApi.createReport(saveData)
     }
     ElMessage.success('保存成功')
-    router.push('/report/list')
+    router.push('/report/design')
   } catch (error) {
     console.error('保存失败:', error)
   } finally {
