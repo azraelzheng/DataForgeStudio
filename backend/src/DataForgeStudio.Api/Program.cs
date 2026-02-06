@@ -7,6 +7,7 @@ using DataForgeStudio.Data.Data;
 using DataForgeStudio.Data.Repositories;
 using DataForgeStudio.Domain.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -113,6 +114,19 @@ builder.Services.AddScoped<IExportService, ExportService>();
 
 // 注册内存缓存（用于许可证验证缓存和报表查询缓存）
 builder.Services.AddMemoryCache();
+
+// 配置表单大小限制，防止 DoS 攻击
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 10 * 1024 * 1024; // 10MB
+});
+
+// 配置 Kestrel 服务器限制，防止 DoS 攻击
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 10 * 1024 * 1024; // 10MB
+    options.Limits.RequestHeadersTimeout = TimeSpan.FromSeconds(30);
+});
 
 // 配置 JWT 认证（从安全选项读取）
 var jwtSecret = jwtOptions.Secret;
