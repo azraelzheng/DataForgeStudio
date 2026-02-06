@@ -119,6 +119,36 @@ public class ReportService : IReportService
             }).ToList()
         };
 
+        // 解析查询条件
+        if (!string.IsNullOrEmpty(report.QueryConditions))
+        {
+            try
+            {
+                reportDetail.QueryConditions = JsonSerializer.Deserialize<List<QueryConditionDto>>(report.QueryConditions);
+            }
+            catch
+            {
+                reportDetail.QueryConditions = new List<QueryConditionDto>();
+            }
+        }
+        else
+        {
+            reportDetail.QueryConditions = new List<QueryConditionDto>();
+        }
+
+        // 解析图表配置
+        if (report.EnableChart && !string.IsNullOrEmpty(report.ChartConfig))
+        {
+            try
+            {
+                reportDetail.ChartConfig = JsonSerializer.Deserialize<ChartConfigDto>(report.ChartConfig);
+            }
+            catch
+            {
+                reportDetail.ChartConfig = null;
+            }
+        }
+
         return ApiResponse<ReportDetailDto>.Ok(reportDetail);
     }
 
@@ -146,6 +176,31 @@ public class ReportService : IReportService
             CreatedBy = createdBy,
             CreatedTime = DateTime.UtcNow
         };
+
+        // 保存查询条件
+        if (request.QueryConditions != null && request.QueryConditions.Count > 0)
+        {
+            report.QueryConditions = JsonSerializer.Serialize(request.QueryConditions);
+        }
+        else
+        {
+            report.QueryConditions = null;
+        }
+
+        // 保存图表配置
+        if (request.EnableChart)
+        {
+            report.EnableChart = true;
+            if (request.ChartConfig != null)
+            {
+                report.ChartConfig = JsonSerializer.Serialize(request.ChartConfig);
+            }
+        }
+        else
+        {
+            report.EnableChart = false;
+            report.ChartConfig = null;
+        }
 
         _context.Reports.Add(report);
         await _context.SaveChangesAsync();
@@ -232,6 +287,31 @@ public class ReportService : IReportService
         report.SqlStatement = request.SqlQuery;
         report.Description = request.Description;
         report.UpdatedTime = DateTime.UtcNow;
+
+        // 保存查询条件
+        if (request.QueryConditions != null && request.QueryConditions.Count > 0)
+        {
+            report.QueryConditions = JsonSerializer.Serialize(request.QueryConditions);
+        }
+        else
+        {
+            report.QueryConditions = null;
+        }
+
+        // 保存图表配置
+        if (request.EnableChart)
+        {
+            report.EnableChart = true;
+            if (request.ChartConfig != null)
+            {
+                report.ChartConfig = JsonSerializer.Serialize(request.ChartConfig);
+            }
+        }
+        else
+        {
+            report.EnableChart = false;
+            report.ChartConfig = null;
+        }
 
         // 删除旧字段和参数
         _context.ReportFields.RemoveRange(report.Fields);

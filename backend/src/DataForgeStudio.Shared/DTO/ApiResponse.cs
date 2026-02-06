@@ -474,6 +474,7 @@ public class ReportDetailDto : ReportDto
     public List<ReportParameterDto> Parameters { get; set; }
     public bool EnableChart { get; set; }
     public ChartConfigDto? ChartConfig { get; set; }
+    public List<QueryConditionDto>? QueryConditions { get; set; }
 }
 
 /// <summary>
@@ -502,14 +503,26 @@ public class ReportParameterDto
 }
 
 /// <summary>
+/// 查询条件 DTO
+/// </summary>
+public class QueryConditionDto
+{
+    public string FieldName { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public string DataType { get; set; } = "String";
+    public string Operator { get; set; } = "eq";
+    public string? DefaultValue { get; set; }
+}
+
+/// <summary>
 /// 图表配置 DTO
 /// </summary>
 public class ChartConfigDto
 {
-    public string ChartType { get; set; }
-    public string XField { get; set; }
-    public List<string> YField { get; set; }
-    public string? Title { get; set; }
+    public string ChartType { get; set; } = "bar";
+    public string XField { get; set; } = string.Empty;
+    public List<string> YFields { get; set; } = new();
+    public string Title { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -527,6 +540,7 @@ public class CreateReportRequest
     public List<ReportParameterDto> Parameters { get; set; }
     public bool EnableChart { get; set; }
     public ChartConfigDto? ChartConfig { get; set; }
+    public List<QueryConditionDto>? QueryConditions { get; set; }
 }
 
 /// <summary>
