@@ -803,4 +803,174 @@ public class ReportService : IReportService
         }
         return field;
     }
+
+    /// <summary>
+    /// 获取报表统计信息
+    /// </summary>
+    public async Task<ApiResponse<object>> GetReportStatisticsAsync(int reportId)
+    {
+        var report = await _context.Reports.FindAsync(reportId);
+        if (report == null)
+        {
+            return ApiResponse<object>.Fail("报表不存在", "REPORT_NOT_FOUND");
+        }
+
+        var statistics = new
+        {
+            report.ReportId,
+            report.ReportName,
+            report.ViewCount,
+            report.LastViewTime,
+            report.CreatedTime,
+            report.UpdatedTime
+        };
+
+        return ApiResponse<object>.Ok(statistics);
+    }
+
+    /// <summary>
+    /// 复制报表
+    /// </summary>
+    public async Task<ApiResponse<ReportDetailDto>> CopyReportAsync(int reportId, int? userId)
+    {
+        var originalReport = await _context.Reports
+            .Include(r => r.Fields)
+            .Include(r => r.Parameters)
+            .FirstOrDefaultAsync(r => r.ReportId == reportId);
+
+        if (originalReport == null)
+        {
+            return ApiResponse<ReportDetailDto>.Fail("报表不存在", "REPORT_NOT_FOUND");
+        }
+
+        // 创建新报表
+        var newReport = new Report
+        {
+            ReportName = $"{originalReport.ReportName} (副本)",
+            ReportCode = $"{originalReport.ReportCode}_COPY_{DateTime.UtcNow:yyyyMMddHHmmss}",
+            ReportCategory = originalReport.ReportCategory,
+            DataSourceId = originalReport.DataSourceId,
+            SqlStatement = originalReport.SqlStatement,
+            Description = originalReport.Description,
+            IsPaged = originalReport.IsPaged,
+            PageSize = originalReport.PageSize,
+            CacheDuration = originalReport.CacheDuration,
+            IsEnabled = false,
+            IsSystem = false,
+            ViewCount = 0,
+            CreatedBy = userId,
+            CreatedTime = DateTime.UtcNow,
+            EnableChart = originalReport.EnableChart,
+            ChartConfig = originalReport.ChartConfig,
+            QueryConditions = originalReport.QueryConditions
+        };
+
+        _context.Reports.Add(newReport);
+        await _context.SaveChangesAsync();
+
+        // 复制字段配置
+        foreach (var field in originalReport.Fields)
+        {
+            var newField = new ReportField
+            {
+                ReportId = newReport.ReportId,
+                FieldName = field.FieldName,
+                DisplayName = field.DisplayName,
+                DataType = field.DataType,
+                Width = field.Width,
+                IsVisible = field.IsVisible,
+                IsSortable = field.IsSortable,
+                IsFilterable = field.IsFilterable,
+                IsGroupable = field.IsGroupable,
+                SortOrder = field.SortOrder,
+                Align = field.Align,
+                FormatString = field.FormatString,
+                AggregateFunction = field.AggregateFunction,
+                CssClass = field.CssClass,
+                Remark = field.Remark,
+                CreatedTime = DateTime.UtcNow
+            };
+            _context.ReportFields.Add(newField);
+        }
+
+        // 复制参数配置
+        foreach (var param in originalReport.Parameters)
+        {
+            var newParam = new ReportParameter
+            {
+                ReportId = newReport.ReportId,
+                ParameterName = param.ParameterName,
+                DisplayName = param.DisplayName,
+                DataType = param.DataType,
+                InputType = param.InputType,
+                DefaultValue = param.DefaultValue,
+                IsRequired = param.IsRequired,
+                SortOrder = param.SortOrder,
+                Options = param.Options,
+                QueryOptions = param.QueryOptions,
+                Remark = param.Remark,
+                CreatedTime = DateTime.UtcNow
+            };
+            _context.ReportParameters.Add(newParam);
+        }
+
+        await _context.SaveChangesAsync();
+
+        return await GetReportByIdAsync(newReport.ReportId);
+    }
+
+    /// <summary>
+    /// 导出所有报表配置
+    /// </summary>
+    public async Task<ApiResponse<string>> ExportAllReportConfigsAsync()
+    {
+        var reports = await _context.Reports
+            .Include(r => r.Fields)
+            .Include(r => r.Parameters)
+            .Where(r => !r.IsSystem)
+            .OrderBy(r => r.ReportCategory)
+            .ThenBy(r => r.ReportName)
+            .ToListAsync();
+
+        var configs = reports.Select(r => new
+        {
+            r.ReportName,
+            r.ReportCode,
+            r.ReportCategory,
+            r.DataSourceId,
+            r.SqlStatement,
+            r.Description,
+            r.EnableChart,
+            r.ChartConfig,
+            r.QueryConditions,
+            Fields = r.Fields.Select(f => new
+            {
+                f.FieldName,
+                f.DisplayName,
+                f.DataType,
+                f.Width,
+                f.IsVisible,
+                f.IsSortable,
+                f.Align
+            }).ToList(),
+            Parameters = r.Parameters.Select(p => new
+            {
+                p.ParameterName,
+                p.DisplayName,
+                p.DataType,
+                p.InputType,
+                p.DefaultValue,
+                p.IsRequired
+            }).ToList()
+        }).ToList();
+
+        var json = JsonSerializer.Serialize(configs, new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+        });
+
+        return ApiResponse<string>.Ok(json);
+    }
 }
