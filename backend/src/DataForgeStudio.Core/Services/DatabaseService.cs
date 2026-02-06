@@ -36,13 +36,15 @@ public class DatabaseService : IDatabaseService
     }
 
     /// <summary>
-    /// 获取加密密钥
+    /// 获取加密密钥（优先从环境变量读取）
     /// </summary>
     private (string key, string iv) GetEncryptionKeys()
     {
-        var key = _configuration["Security:Encryption:AesKey"]
+        var key = Environment.GetEnvironmentVariable("DFS_ENCRYPTION_AESKEY")
+            ?? _configuration["Security:Encryption:AesKey"]
             ?? throw new InvalidOperationException("加密密钥未配置。请设置环境变量 DFS_ENCRYPTION_AESKEY");
-        var iv = _configuration["Security:Encryption:AesIV"]
+        var iv = Environment.GetEnvironmentVariable("DFS_ENCRYPTION_AESIV")
+            ?? _configuration["Security:Encryption:AesIV"]
             ?? throw new InvalidOperationException("加密IV未配置。请设置环境变量 DFS_ENCRYPTION_AESIV");
         return (key, iv);
     }
