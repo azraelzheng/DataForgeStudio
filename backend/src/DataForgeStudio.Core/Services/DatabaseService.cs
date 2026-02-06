@@ -448,6 +448,9 @@ public class DatabaseService : IDatabaseService
     {
         try
         {
+            // 验证表名安全性（防止 SQL 注入）
+            SqlTableNameValidator.ValidateAndThrow(tableName, _logger);
+
             _logger.LogInformation($"获取表结构: {dataSource.DbType} - {tableName}");
 
             using var connection = CreateConnection(dataSource);
