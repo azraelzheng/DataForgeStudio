@@ -306,7 +306,7 @@ public class ChangePasswordRequest
     public string OldPassword { get; set; } = string.Empty;
 
     /// <summary>
-    /// 新密码
+    /// 新密码（至少 8 个字符，必须包含大小写字母和数字）
     /// </summary>
     public string NewPassword { get; set; } = string.Empty;
 
@@ -332,7 +332,7 @@ public class ForcePasswordChangeRequest
     public string TemporaryPassword { get; set; } = string.Empty;
 
     /// <summary>
-    /// 新密码
+    /// 新密码（至少 8 个字符，必须包含大小写字母和数字）
     /// </summary>
     public string NewPassword { get; set; } = string.Empty;
 
@@ -364,6 +364,10 @@ public class UserDto
 public class CreateUserRequest
 {
     public string Username { get; set; }
+
+    /// <summary>
+    /// 密码（至少 8 个字符，必须包含大小写字母和数字）
+    /// </summary>
     public string? Password { get; set; }
     public string? RealName { get; set; }
     public string? Email { get; set; }
@@ -376,6 +380,9 @@ public class CreateUserRequest
 /// </summary>
 public class ResetPasswordRequest
 {
+    /// <summary>
+    /// 新密码（至少 8 个字符，必须包含大小写字母和数字）
+    /// </summary>
     public string NewPassword { get; set; }
 }
 

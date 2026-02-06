@@ -36,14 +36,16 @@ public class DatabaseService : IDatabaseService
     }
 
     /// <summary>
-    /// 获取加密密钥
+    /// 获取加密密钥（优先从环境变量读取）
     /// </summary>
     private (string key, string iv) GetEncryptionKeys()
     {
-        var key = _configuration["Security:Encryption:AesKey"]
-            ?? throw new InvalidOperationException("加密密钥未配置。请设置环境变量 DFS_ENCRYPTION_AES_KEY");
-        var iv = _configuration["Security:Encryption:AesIV"]
-            ?? throw new InvalidOperationException("加密IV未配置。请设置环境变量 DFS_ENCRYPTION_AES_IV");
+        var key = Environment.GetEnvironmentVariable("DFS_ENCRYPTION_AESKEY")
+            ?? _configuration["Security:Encryption:AesKey"]
+            ?? throw new InvalidOperationException("加密密钥未配置。请设置环境变量 DFS_ENCRYPTION_AESKEY");
+        var iv = Environment.GetEnvironmentVariable("DFS_ENCRYPTION_AESIV")
+            ?? _configuration["Security:Encryption:AesIV"]
+            ?? throw new InvalidOperationException("加密IV未配置。请设置环境变量 DFS_ENCRYPTION_AESIV");
         return (key, iv);
     }
 
@@ -446,6 +448,9 @@ public class DatabaseService : IDatabaseService
     {
         try
         {
+            // 验证表名安全性（防止 SQL 注入）
+            SqlTableNameValidator.ValidateAndThrow(tableName, _logger);
+
             _logger.LogInformation($"获取表结构: {dataSource.DbType} - {tableName}");
 
             using var connection = CreateConnection(dataSource);
