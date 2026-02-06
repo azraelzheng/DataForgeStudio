@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using NetEscapades.AspNetCore.SecurityHeaders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -254,6 +255,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// 安全响应头中间件（在 HTTPS 重定向之后）
+var isDevelopment = app.Environment.IsDevelopment();
+app.UseSecurityHeaders(DataForgeStudio.Api.SecurityHeadersConfig.GetHeaderPolicyCollection(isDevelopment));
 
 // 速率限制中间件（必须在 CORS 之后）
 app.UseMiddleware<DataForgeStudio.Api.Middleware.RateLimitMiddleware>();
