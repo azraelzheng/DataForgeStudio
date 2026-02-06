@@ -408,4 +408,162 @@ public class DatabaseService : IDatabaseService
             return ApiResponse<List<string>>.Fail($"获取数据库列表失败: {ex.Message}", "GET_DATABASES_ERROR");
         }
     }
+
+    /// <summary>
+    /// 映射 SQL 数据类型到系统数据类型
+    /// </summary>
+    private string MapSystemDataType(string sqlDataType)
+    {
+        var type = sqlDataType?.ToLower() ?? "";
+
+        // 字符串类型
+        if (type.Contains("char") || type.Contains("text") || type.Contains("nvarchar"))
+            return "String";
+
+        // 数值类型
+        if (type.Contains("int") || type.Contains("decimal") ||
+            type.Contains("numeric") || type.Contains("float") ||
+            type.Contains("real") || type.Contains("money") ||
+            type.Contains("smallint") || type.Contains("bigint") ||
+            type.Contains("tinyint"))
+            return "Number";
+
+        // 日期类型
+        if (type.Contains("date") || type.Contains("time"))
+            return "DateTime";
+
+        // 布尔类型
+        if (type.Contains("bit"))
+            return "Boolean";
+
+        return "String"; // 默认字符串
+    }
+
+    /// <summary>
+    /// 获取表结构信息
+    /// </summary>
+    public async Task<ApiResponse<List<TableColumnDto>>> GetTableStructureAsync(DataSource dataSource, string tableName)
+    {
+        try
+        {
+            _logger.LogInformation($"获取表结构: {dataSource.DbType} - {tableName}");
+
+            using var connection = CreateConnection(dataSource);
+            await connection.OpenAsync();
+
+            // 根据数据库类型构建不同的查询
+            var query = dataSource.DbType switch
+            {
+                "SqlServer" => @"
+                    SELECT
+                        c.name,
+                        t.name,
+                        c.max_length,
+                        c.is_nullable,
+                        CAST(
+                            CASE WHEN pk.column_id IS NOT NULL THEN 'PK' ELSE '' END +
+                            CASE WHEN ic.is_identity = 1 THEN ',IDENTITY' ELSE '' END
+                        AS NVARCHAR(100)),
+                        c.column_id
+                    FROM sys.columns c
+                    INNER JOIN sys.types t ON c.user_type_id = t.user_type_id
+                    LEFT JOIN (
+                        SELECT i.column_id, i.object_id
+                        FROM sys.indexes i
+                        INNER JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
+                        WHERE i.is_primary_key = 1
+                    ) pk ON pk.column_id = c.column_id AND pk.object_id = c.object_id
+                    LEFT JOIN sys.identity_columns ic ON ic.object_id = c.object_id AND ic.column_id = c.column_id
+                    WHERE c.object_id = OBJECT_ID(@tableName)
+                    ORDER BY c.column_id",
+                "MySql" => @"
+                    SELECT
+                        COLUMN_NAME,
+                        DATA_TYPE,
+                        CHARACTER_MAXIMUM_LENGTH,
+                        IS_NULLABLE,
+                        COLUMN_KEY,
+                        ORDINAL_POSITION
+                    FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_NAME = @tableName
+                    ORDER BY ORDINAL_POSITION",
+                "PostgreSQL" => @"
+                    SELECT
+                        a.attname as column_name,
+                        pg_catalog.format_type(a.atttypid, a.atttypmod) as data_type,
+                        CASE WHEN a.atttypmod > 0 THEN a.atttypmod - 4 ELSE NULL END as max_length,
+                        NOT a.attnotnull as is_nullable,
+                        CASE WHEN pk.contype = 'p' THEN 'PK' ELSE '' END as column_key,
+                        a.attnum as position
+                    FROM pg_attribute a
+                    LEFT JOIN pg_constraint pk ON pk.conrelid = a.attrelid AND pk.conkey[1] = a.attnum AND pk.contype = 'p'
+                    WHERE a.attrelid = @tableName::regclass AND a.attnum > 0 AND NOT a.attisdropped
+                    ORDER BY a.attnum",
+                "Oracle" => @"
+                    SELECT
+                        cols.column_name,
+                        cols.data_type,
+                        CASE
+                            WHEN cols.char_length > 0 THEN cols.char_length
+                            WHEN cols.data_precision IS NOT NULL THEN cols.data_precision
+                            ELSE NULL
+                        END as max_length,
+                        CASE WHEN cols.nullable = 'Y' THEN 1 ELSE 0 END as is_nullable,
+                        CASE WHEN pk.constraint_type = 'P' THEN 'PK' ELSE '' END as column_key,
+                        cols.column_id as position
+                    FROM all_tab_columns cols
+                    LEFT JOIN all_cons_columns cc ON cc.owner = cols.owner AND cc.table_name = cols.table_name AND cc.column_name = cols.column_name
+                    LEFT JOIN all_constraints pk ON pk.owner = cols.owner AND pk.constraint_name = cc.constraint_name AND pk.constraint_type = 'P'
+                    WHERE cols.table_name = UPPER(@tableName)
+                    ORDER BY cols.column_id",
+                "SQLite" => @"
+                    SELECT
+                        name,
+                        type,
+                        0,
+                        CASE WHEN [notnull] = 0 THEN 1 ELSE 0 END,
+                        CASE WHEN pk = 1 THEN 'PK' ELSE '' END,
+                        cid
+                    FROM pragma_table_info(@tableName)
+                    ORDER BY cid",
+                _ => throw new NotSupportedException($"不支持的数据库类型: {dataSource.DbType}")
+            };
+
+            using var command = connection.CreateCommand();
+            command.CommandText = query;
+            command.CommandTimeout = _options.DefaultCommandTimeout;
+
+            // 添加表名参数
+            var param = command.CreateParameter();
+            param.ParameterName = "@tableName";
+            param.Value = tableName;
+            command.Parameters.Add(param);
+
+            var columns = new List<TableColumnDto>();
+
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                var column = new TableColumnDto
+                {
+                    ColumnName = reader.GetString(0),
+                    DataType = reader.GetString(1),
+                    MaxLength = reader.IsDBNull(2) ? null : (int?)reader.GetInt32(2),
+                    IsNullable = dataSource.DbType == "Oracle" ? reader.GetBoolean(3) : reader.GetString(3) == "YES" || reader.GetBoolean(3),
+                    ColumnProperty = reader.IsDBNull(4) ? null : reader.GetString(4),
+                    Position = reader.GetInt32(5),
+                    SystemDataType = MapSystemDataType(reader.GetString(1))
+                };
+                columns.Add(column);
+            }
+
+            _logger.LogInformation($"获取表结构成功: {tableName}, 共 {columns.Count} 个字段");
+            return ApiResponse<List<TableColumnDto>>.Ok(columns, "获取表结构成功");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"获取表结构失败: {ex.Message}");
+            return ApiResponse<List<TableColumnDto>>.Fail($"获取表结构失败: {ex.Message}", "GET_TABLE_STRUCTURE_ERROR");
+        }
+    }
 }

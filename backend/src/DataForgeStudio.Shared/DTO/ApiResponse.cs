@@ -647,3 +647,44 @@ public class CreateBackupRequest
     public string? BackupName { get; set; }
     public string? Description { get; set; }
 }
+
+/// <summary>
+/// 表字段 DTO
+/// </summary>
+public class TableColumnDto
+{
+    /// <summary>
+    /// 字段名称
+    /// </summary>
+    public string ColumnName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 数据类型
+    /// </summary>
+    public string DataType { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 最大长度
+    /// </summary>
+    public int? MaxLength { get; set; }
+
+    /// <summary>
+    /// 是否可为空
+    /// </summary>
+    public bool IsNullable { get; set; }
+
+    /// <summary>
+    /// 字段属性（如主键、自增等）
+    /// </summary>
+    public string? ColumnProperty { get; set; }
+
+    /// <summary>
+    /// 字段位置
+    /// </summary>
+    public int Position { get; set; }
+
+    /// <summary>
+    /// 系统数据类型（用于前端查询条件）
+    /// </summary>
+    public string SystemDataType { get; set; } = "String";
+}
