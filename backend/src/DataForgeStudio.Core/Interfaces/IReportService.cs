@@ -61,4 +61,9 @@ public interface IReportService
     /// 导出所有报表配置
     /// </summary>
     Task<ApiResponse<string>> ExportAllReportConfigsAsync();
+
+    /// <summary>
+    /// 切换报表启用状态
+    /// </summary>
+    Task<ApiResponse> ToggleReportAsync(int reportId);
 }
