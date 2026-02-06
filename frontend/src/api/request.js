@@ -229,7 +229,10 @@ export const reportApi = {
   copyReport: (id) => request.post(`/reports/${id}/copy`),
 
   // 导出所有报表配置
-  exportAllConfigs: () => request.get('/reports/export-config')
+  exportAllConfigs: () => request.get('/reports/export-config'),
+
+  // 切换报表启用状态
+  toggleReport: (id) => request.post(`/reports/${id}/toggle`)
 }
 
 export const licenseApi = {
