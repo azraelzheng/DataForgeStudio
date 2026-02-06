@@ -920,6 +920,23 @@ public class ReportService : IReportService
     }
 
     /// <summary>
+    /// 切换报表启用状态
+    /// </summary>
+    public async Task<ApiResponse> ToggleReportAsync(int reportId)
+    {
+        var report = await _context.Reports.FindAsync(reportId);
+        if (report == null)
+        {
+            return ApiResponse.Fail("报表不存在", "NOT_FOUND");
+        }
+
+        report.IsEnabled = !report.IsEnabled;
+        await _context.SaveChangesAsync();
+
+        return ApiResponse.Ok(report.IsEnabled ? "已启用" : "已停用");
+    }
+
+    /// <summary>
     /// 导出所有报表配置
     /// </summary>
     public async Task<ApiResponse<string>> ExportAllReportConfigsAsync()

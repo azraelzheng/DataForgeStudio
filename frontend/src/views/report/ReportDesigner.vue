@@ -229,7 +229,7 @@
                 </el-col>
                 <el-col :span="12">
                   <el-form-item label="Y轴字段">
-                    <el-select v-model="form.chartConfig.yField" multiple>
+                    <el-select v-model="form.chartConfig.yFields" multiple>
                       <el-option
                         v-for="col in form.columns.filter(c => c.dataType === 'Number')"
                         :key="col.fieldName"
@@ -292,7 +292,7 @@ const form = reactive({
   chartConfig: {
     chartType: 'bar',
     xField: '',
-    yField: [],
+    yFields: [],
     title: ''
   }
 })
@@ -338,7 +338,7 @@ const loadReport = async (id) => {
         form.chartConfig = {
           chartType: 'bar',
           xField: '',
-          yField: [],
+          yFields: [],
           title: ''
         }
       }
@@ -519,8 +519,8 @@ const handleSave = async () => {
   try {
     const saveData = {
       ...form,
-      chartConfig: form.enableChart ? JSON.stringify(form.chartConfig) : null,
-      queryConditions: form.queryConditions.length > 0 ? JSON.stringify(form.queryConditions) : null
+      chartConfig: form.enableChart ? form.chartConfig : null,
+      queryConditions: form.queryConditions.length > 0 ? form.queryConditions : null
     }
 
     if (form.reportId) {

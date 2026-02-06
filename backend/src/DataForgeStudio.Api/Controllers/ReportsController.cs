@@ -167,4 +167,14 @@ public class ReportsController : ControllerBase
         var result = await _reportService.ExportAllReportConfigsAsync();
         return Ok(result);
     }
+
+    /// <summary>
+    /// 切换报表启用状态
+    /// </summary>
+    [HttpPost("{id}/toggle")]
+    public async Task<IActionResult> ToggleReport(int id)
+    {
+        var result = await _reportService.ToggleReportAsync(id);
+        return Ok(result);
+    }
 }

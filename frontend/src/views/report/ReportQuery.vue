@@ -203,7 +203,7 @@ const selectReport = async (report) => {
 }
 
 const displayColumns = computed(() => {
-  return selectedReport.value?.fields || []
+  return selectedReport.value?.columns || selectedReport.value?.fields || []
 })
 
 const resetConditions = () => {
