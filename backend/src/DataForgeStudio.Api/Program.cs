@@ -13,10 +13,11 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 配置安全选项（从环境变量读取）
-builder.Services.Configure<SecurityOptions>(builder.Configuration.GetSection(SecurityOptions.SectionName));
-
-var securityOptions = builder.Configuration.GetSection(SecurityOptions.SectionName).Get<SecurityOptions>();
+// 配置安全选项（优先从环境变量读取，其次从配置文件读取）
+var securityOptionsConfig = new SecurityOptions();
+var jwtOptions = securityOptionsConfig.GetJwtOptions(builder.Configuration);
+var encryptionOptions = securityOptionsConfig.GetEncryptionOptions(builder.Configuration);
+var licenseOptions = securityOptionsConfig.GetLicenseOptions(builder.Configuration);
 
 // 验证必需的安全配置（开发环境可以使用默认值，生产环境必须配置）
 var envName = builder.Environment.EnvironmentName;
@@ -25,23 +26,15 @@ Console.WriteLine($"IsDevelopment: {builder.Environment.IsDevelopment()}");
 
 // 对于命令行运行，如果没有设置环境变量，使用默认值
 // 生产环境部署时必须设置环境变量
-var useDefaultsForTesting = true; // 设为 true 以便测试运行
+var useDefaultsForTesting = builder.Configuration.GetValue<bool>("SecurityOptionsUseDefaultsForTesting", true);
 
-if (string.IsNullOrEmpty(securityOptions?.Jwt?.Secret) ||
-    securityOptions.Jwt.Secret.Length < 64)
+if (string.IsNullOrEmpty(jwtOptions.Secret) || jwtOptions.Secret.Length < 64)
 {
     if (useDefaultsForTesting)
     {
         // 测试环境使用默认值
         Console.WriteLine("⚠️  WARNING: Using default JWT Secret for testing. Set DFS_JWT_SECRET environment variable for production!");
-        securityOptions ??= new SecurityOptions();
-        securityOptions.Jwt = new SecurityOptions.JwtOptions
-        {
-            Secret = "DataForgeStudioV4JWTSecretKey256BitsLongSecure2025ChangeThisInProduction",
-            Issuer = "DataForgeStudio",
-            Audience = "DataForgeStudio.Client",
-            ExpirationMinutes = 60
-        };
+        jwtOptions.Secret = "DataForgeStudioV4JWTSecretKey256BitsLongSecure2025ChangeThisInProduction";
     }
     else
     {
@@ -50,33 +43,36 @@ if (string.IsNullOrEmpty(securityOptions?.Jwt?.Secret) ||
     }
 }
 
-if (string.IsNullOrEmpty(securityOptions?.Encryption?.AesKey) ||
-    securityOptions.Encryption.AesKey.Length != 32)
+if (string.IsNullOrEmpty(encryptionOptions.AesKey) || encryptionOptions.AesKey.Length != 32)
 {
     if (useDefaultsForTesting)
     {
         // 测试环境使用默认值
-        Console.WriteLine("⚠️  WARNING: Using default AES Key for testing. Set DFS_ENCRYPTION_AES_KEY environment variable for production!");
-        securityOptions.Encryption ??= new SecurityOptions.EncryptionOptions();
-        securityOptions.Encryption.AesKey = "DataForgeStudioAESKey32BytesLong123456";
-        securityOptions.Encryption.AesIV = securityOptions.Encryption.AesIV ?? "DataForgeIV16Byte!";
+        Console.WriteLine("⚠️  WARNING: Using default AES Key for testing. Set DFS_ENCRYPTION_AESKEY environment variable for production!");
+        encryptionOptions.AesKey = "DataForgeStudioAESKey32BytesLong123456";
+        if (string.IsNullOrEmpty(encryptionOptions.AesIV))
+        {
+            encryptionOptions.AesIV = "DataForgeIV16Byte!";
+        }
     }
     else
     {
         throw new InvalidOperationException(
-            "AES Key 未配置或长度不是32位。请设置环境变量 DFS_ENCRYPTION_AES_KEY (32字符)");
+            "AES Key 未配置或长度不是32位。请设置环境变量 DFS_ENCRYPTION_AESKEY (32字符)");
     }
 }
 
 // 同时也需要为 License 配置设置默认值（用于测试）
-if (string.IsNullOrEmpty(securityOptions?.License?.AesKey))
+if (string.IsNullOrEmpty(licenseOptions.AesKey))
 {
     if (useDefaultsForTesting)
     {
-        Console.WriteLine("⚠️  WARNING: Using default License AES Key for testing.");
-        securityOptions.License ??= new SecurityOptions.LicenseOptions();
-        securityOptions.License.AesKey = "DataForgeStudioV4AESLicenseKey32Bytes!!";
-        securityOptions.License.AesIv = securityOptions.License.AesIv ?? "DataForgeIV16Byte!";
+        Console.WriteLine("⚠️  WARNING: Using default License AES Key for testing. Set DFS_LICENSE_AESKEY environment variable for production!");
+        licenseOptions.AesKey = "DataForgeStudioV4AESLicenseKey32Bytes!!";
+        if (string.IsNullOrEmpty(licenseOptions.AesIv))
+        {
+            licenseOptions.AesIv = "DataForgeIV16Byte!";
+        }
     }
 }
 
@@ -119,7 +115,7 @@ builder.Services.AddScoped<IExportService, ExportService>();
 builder.Services.AddMemoryCache();
 
 // 配置 JWT 认证（从安全选项读取）
-var jwtSecret = securityOptions.Jwt.Secret;
+var jwtSecret = jwtOptions.Secret;
 var secretKey = Encoding.UTF8.GetBytes(jwtSecret);
 
 builder.Services.AddAuthentication(options =>
@@ -137,8 +133,8 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = securityOptions.Jwt.Issuer,
-        ValidAudience = securityOptions.Jwt.Audience,
+        ValidIssuer = jwtOptions.Issuer,
+        ValidAudience = jwtOptions.Audience,
         IssuerSigningKey = new SymmetricSecurityKey(secretKey),
         ClockSkew = TimeSpan.Zero
     };
