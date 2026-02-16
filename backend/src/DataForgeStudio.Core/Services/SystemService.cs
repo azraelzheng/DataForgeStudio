@@ -270,6 +270,51 @@ public class SystemService : ISystemService
         return stream.ToArray();
     }
 
+    public async Task<byte[]> ExportSelectedLogsToExcelAsync(List<int> logIds)
+    {
+        var query = _context.OperationLogs.Where(l => logIds.Contains(l.LogId));
+
+        var logs = await query
+            .OrderByDescending(l => l.CreatedTime)
+            .ToListAsync();
+
+        // 使用 ClosedXML 导出 Excel
+        using var workbook = new ClosedXML.Excel.XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("操作日志");
+
+        // 设置表头
+        worksheet.Cell("A1").Value = "用户名";
+        worksheet.Cell("B1").Value = "操作";
+        worksheet.Cell("C1").Value = "模块";
+        worksheet.Cell("D1").Value = "描述";
+        worksheet.Cell("E1").Value = "IP地址";
+        worksheet.Cell("F1").Value = "操作时间";
+
+        // 填充数据
+        int row = 2;
+        foreach (var log in logs)
+        {
+            worksheet.Cell(row, 1).Value = log.Username ?? "";
+            worksheet.Cell(row, 2).Value = log.Action ?? "";
+            worksheet.Cell(row, 3).Value = log.Module ?? "";
+            worksheet.Cell(row, 4).Value = log.Description ?? "";
+            worksheet.Cell(row, 5).Value = log.IpAddress ?? "";
+            worksheet.Cell(row, 6).Value = log.CreatedTime.ToString("yyyy-MM-dd HH:mm:ss");
+            row++;
+        }
+
+        // 设置表格边框样式
+        var range = worksheet.Range(1, 1, row - 1, 6);
+        range.Style.Border.OutsideBorder = ClosedXML.Excel.XLBorderStyleValues.Thin;
+        range.Style.Border.InsideBorder = ClosedXML.Excel.XLBorderStyleValues.Thin;
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        return stream.ToArray();
+    }
+
     public async Task<ApiResponse<BackupRecordDto>> CreateBackupAsync(CreateBackupRequest request, int createdBy)
     {
         try
@@ -368,13 +413,19 @@ public class SystemService : ISystemService
     private string ExtractDatabaseName(string connectionString)
     {
         // 从连接字符串中提取数据库名称
+        // 支持 "Database" 和 "Initial Catalog" 两种格式
         var parts = connectionString.Split(';', StringSplitOptions.RemoveEmptyEntries);
         foreach (var part in parts)
         {
             var keyValue = part.Split('=', 2);
-            if (keyValue.Length == 2 && keyValue[0].Trim().Equals("Database", StringComparison.OrdinalIgnoreCase))
+            if (keyValue.Length == 2)
             {
-                return keyValue[1].Trim();
+                var key = keyValue[0].Trim();
+                if (key.Equals("Database", StringComparison.OrdinalIgnoreCase) ||
+                    key.Equals("Initial Catalog", StringComparison.OrdinalIgnoreCase))
+                {
+                    return keyValue[1].Trim();
+                }
             }
         }
         return string.Empty;
@@ -414,9 +465,15 @@ public class SystemService : ISystemService
         }
     }
 
-    public async Task<ApiResponse<PagedResponse<BackupRecordDto>>> GetBackupsAsync(PagedRequest request)
+    public async Task<ApiResponse<PagedResponse<BackupRecordDto>>> GetBackupsAsync(PagedRequest request, string? backupName = null)
     {
-        var query = _context.BackupRecords;
+        var query = _context.BackupRecords.AsQueryable();
+
+        // 按备份名称搜索
+        if (!string.IsNullOrWhiteSpace(backupName))
+        {
+            query = query.Where(b => b.BackupName.Contains(backupName));
+        }
 
         var totalCount = await query.CountAsync();
 
@@ -430,6 +487,7 @@ public class SystemService : ISystemService
                 BackupName = b.BackupName,
                 FileName = System.IO.Path.GetFileName(b.BackupPath),
                 FileSize = b.FileSize,
+                Description = b.Description,
                 CreatedBy = b.CreatedBy.ToString(),
                 CreatedTime = b.CreatedTime.ToString("yyyy-MM-dd HH:mm:ss")
             })
@@ -556,4 +614,183 @@ public class SystemService : ISystemService
             return false;
         }
     }
+
+    #region 备份计划管理
+
+    public async Task<ApiResponse<List<BackupScheduleDto>>> GetBackupSchedulesAsync()
+    {
+        var schedules = await _context.BackupSchedules
+            .OrderByDescending(s => s.CreatedTime)
+            .ToListAsync();
+
+        var result = schedules.Select(s => new BackupScheduleDto
+        {
+            ScheduleId = s.ScheduleId,
+            ScheduleName = s.ScheduleName,
+            ScheduleType = s.ScheduleType,
+            RecurringDays = string.IsNullOrEmpty(s.RecurringDays)
+                ? new List<int>()
+                : s.RecurringDays.Split(',').Select(int.Parse).ToList(),
+            ScheduledTime = s.ScheduledTime,
+            OnceDate = s.OnceDate,
+            RetentionCount = s.RetentionCount,
+            IsEnabled = s.IsEnabled,
+            LastRunTime = s.LastRunTime,
+            NextRunTime = s.NextRunTime,
+            CreatedTime = s.CreatedTime.ToString("yyyy-MM-dd HH:mm:ss")
+        }).ToList();
+
+        return ApiResponse<List<BackupScheduleDto>>.Ok(result);
+    }
+
+    public async Task<ApiResponse<BackupScheduleDto>> CreateBackupScheduleAsync(CreateBackupScheduleRequest request)
+    {
+        var schedule = new BackupSchedule
+        {
+            ScheduleName = request.ScheduleName,
+            ScheduleType = request.ScheduleType,
+            RecurringDays = request.RecurringDays != null ? string.Join(",", request.RecurringDays) : null,
+            ScheduledTime = request.ScheduledTime,
+            OnceDate = request.OnceDate,
+            RetentionCount = request.RetentionCount,
+            IsEnabled = request.IsEnabled,
+            CreatedTime = DateTime.UtcNow,
+            NextRunTime = CalculateNextRunTime(request.ScheduleType,
+                request.RecurringDays, request.ScheduledTime, request.OnceDate)
+        };
+
+        _context.BackupSchedules.Add(schedule);
+        await _context.SaveChangesAsync();
+
+        return await GetBackupScheduleDtoAsync(schedule.ScheduleId);
+    }
+
+    public async Task<ApiResponse<BackupScheduleDto>> UpdateBackupScheduleAsync(int scheduleId, CreateBackupScheduleRequest request)
+    {
+        var schedule = await _context.BackupSchedules.FindAsync(scheduleId);
+        if (schedule == null)
+        {
+            return ApiResponse<BackupScheduleDto>.Fail("备份计划不存在", "NOT_FOUND");
+        }
+
+        schedule.ScheduleName = request.ScheduleName;
+        schedule.ScheduleType = request.ScheduleType;
+        schedule.RecurringDays = request.RecurringDays != null ? string.Join(",", request.RecurringDays) : null;
+        schedule.ScheduledTime = request.ScheduledTime;
+        schedule.OnceDate = request.OnceDate;
+        schedule.RetentionCount = request.RetentionCount;
+        schedule.IsEnabled = request.IsEnabled;
+        schedule.UpdatedTime = DateTime.UtcNow;
+        schedule.NextRunTime = CalculateNextRunTime(request.ScheduleType,
+            request.RecurringDays, request.ScheduledTime, request.OnceDate);
+
+        await _context.SaveChangesAsync();
+
+        return await GetBackupScheduleDtoAsync(schedule.ScheduleId);
+    }
+
+    public async Task<ApiResponse> DeleteBackupScheduleAsync(int scheduleId)
+    {
+        var schedule = await _context.BackupSchedules.FindAsync(scheduleId);
+        if (schedule == null)
+        {
+            return ApiResponse.Fail("备份计划不存在", "NOT_FOUND");
+        }
+
+        _context.BackupSchedules.Remove(schedule);
+        await _context.SaveChangesAsync();
+
+        return ApiResponse.Ok("删除成功");
+    }
+
+    public async Task<ApiResponse> ToggleBackupScheduleAsync(int scheduleId)
+    {
+        var schedule = await _context.BackupSchedules.FindAsync(scheduleId);
+        if (schedule == null)
+        {
+            return ApiResponse.Fail("备份计划不存在", "NOT_FOUND");
+        }
+
+        schedule.IsEnabled = !schedule.IsEnabled;
+        schedule.UpdatedTime = DateTime.UtcNow;
+
+        if (schedule.IsEnabled)
+        {
+            var days = string.IsNullOrEmpty(schedule.RecurringDays)
+                ? null
+                : schedule.RecurringDays.Split(',').Select(int.Parse).ToList();
+            schedule.NextRunTime = CalculateNextRunTime(schedule.ScheduleType,
+                days, schedule.ScheduledTime, schedule.OnceDate);
+        }
+
+        await _context.SaveChangesAsync();
+
+        return ApiResponse.Ok(schedule.IsEnabled ? "已启用" : "已禁用");
+    }
+
+    private async Task<ApiResponse<BackupScheduleDto>> GetBackupScheduleDtoAsync(int scheduleId)
+    {
+        var schedule = await _context.BackupSchedules.FindAsync(scheduleId);
+        if (schedule == null)
+        {
+            return ApiResponse<BackupScheduleDto>.Fail("备份计划不存在", "NOT_FOUND");
+        }
+
+        var dto = new BackupScheduleDto
+        {
+            ScheduleId = schedule.ScheduleId,
+            ScheduleName = schedule.ScheduleName,
+            ScheduleType = schedule.ScheduleType,
+            RecurringDays = string.IsNullOrEmpty(schedule.RecurringDays)
+                ? new List<int>()
+                : schedule.RecurringDays.Split(',').Select(int.Parse).ToList(),
+            ScheduledTime = schedule.ScheduledTime,
+            OnceDate = schedule.OnceDate,
+            RetentionCount = schedule.RetentionCount,
+            IsEnabled = schedule.IsEnabled,
+            LastRunTime = schedule.LastRunTime,
+            NextRunTime = schedule.NextRunTime,
+            CreatedTime = schedule.CreatedTime.ToString("yyyy-MM-dd HH:mm:ss")
+        };
+
+        return ApiResponse<BackupScheduleDto>.Ok(dto);
+    }
+
+    private DateTime? CalculateNextRunTime(string scheduleType, List<int>? recurringDays, string? scheduledTime, DateTime? onceDate)
+    {
+        var now = DateTime.UtcNow;
+
+        if (scheduleType == "Once" && onceDate.HasValue)
+        {
+            return onceDate.Value;
+        }
+
+        if (scheduleType == "Recurring" && recurringDays != null && recurringDays.Any() && !string.IsNullOrEmpty(scheduledTime))
+        {
+            // 解析执行时间
+            var timeParts = scheduledTime.Split(':');
+            var hour = int.Parse(timeParts[0]);
+            var minute = timeParts.Length > 1 ? int.Parse(timeParts[1]) : 0;
+
+            // 找到下一个执行日期
+            for (int i = 0; i <= 7; i++)
+            {
+                var checkDate = now.Date.AddDays(i);
+                var dayOfWeek = (int)checkDate.DayOfWeek;
+
+                if (recurringDays.Contains(dayOfWeek))
+                {
+                    var runTime = checkDate.AddHours(hour).AddMinutes(minute);
+                    if (runTime > now)
+                    {
+                        return runTime;
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    #endregion
 }
