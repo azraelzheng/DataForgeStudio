@@ -64,6 +64,9 @@ public class BackupRecord
     [MaxLength(100)]
     public string? DatabaseName { get; set; }
 
+    [MaxLength(500)]
+    public string? Description { get; set; }
+
     public long? FileSize { get; set; }
 
     public DateTime BackupTime { get; set; } = DateTime.UtcNow;
@@ -126,4 +129,57 @@ public class License
     /// 创建时间
     /// </summary>
     public DateTime CreatedTime { get; set; } = DateTime.UtcNow;
+}
+
+/// <summary>
+/// 备份计划表
+/// </summary>
+[Table("BackupSchedules")]
+public class BackupSchedule
+{
+    [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public int ScheduleId { get; set; }
+
+    [Required]
+    [MaxLength(100)]
+    public string ScheduleName { get; set; } = string.Empty;
+
+    [Required]
+    [MaxLength(20)]
+    public string ScheduleType { get; set; } = "Recurring"; // "Recurring" or "Once"
+
+    /// <summary>
+    /// 重复计划的执行日期，逗号分隔的数字
+    /// 0=周日, 1=周一, ..., 6=周六
+    /// 例如: "1,3,5" 表示周一、周三、周五
+    /// </summary>
+    [MaxLength(50)]
+    public string? RecurringDays { get; set; }
+
+    /// <summary>
+    /// 执行时间（时:分）
+    /// </summary>
+    [MaxLength(10)]
+    public string? ScheduledTime { get; set; }
+
+    /// <summary>
+    /// 单次计划的执行日期时间
+    /// </summary>
+    public DateTime? OnceDate { get; set; }
+
+    /// <summary>
+    /// 保留备份数量
+    /// </summary>
+    public int RetentionCount { get; set; } = 10;
+
+    public bool IsEnabled { get; set; } = true;
+
+    public DateTime? LastRunTime { get; set; }
+
+    public DateTime? NextRunTime { get; set; }
+
+    public DateTime CreatedTime { get; set; } = DateTime.UtcNow;
+
+    public DateTime? UpdatedTime { get; set; }
 }
