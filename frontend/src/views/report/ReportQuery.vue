@@ -525,6 +525,44 @@ const handleColumnSort = (field) => {
   }
 }
 
+// Handle popover toggle (close others when opening new)
+const handlePopoverToggle = (fieldName, visible) => {
+  if (visible) {
+    // Close all other popovers
+    Object.keys(filterPopoverVisible).forEach(key => {
+      filterPopoverVisible[key] = false
+    })
+  }
+  filterPopoverVisible[fieldName] = visible
+}
+
+// Handle sort from popover
+const handlePopoverSort = (fieldName, order) => {
+  if (order === null) {
+    sortField.value = null
+    sortOrder.value = null
+  } else {
+    sortField.value = fieldName
+    sortOrder.value = order
+  }
+  filterPopoverVisible[fieldName] = false
+}
+
+// Clear filter for specific column
+const handleClearColumnFilter = (fieldName) => {
+  delete columnFilters[fieldName]
+  delete columnFilters[fieldName + '_min']
+  delete columnFilters[fieldName + '_max']
+  currentPage.value = 1
+  filterPopoverVisible[fieldName] = false
+}
+
+// Apply filter (close popover)
+const handleApplyColumnFilter = (fieldName) => {
+  currentPage.value = 1
+  filterPopoverVisible[fieldName] = false
+}
+
 // 重置列筛选
 const resetColumnFilters = () => {
   Object.keys(columnFilters).forEach(key => delete columnFilters[key])
