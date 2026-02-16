@@ -21,7 +21,7 @@
           </el-input>
 
           <!-- 报表列表 -->
-          <div class="report-list">
+          <div v-if="filteredReports.length > 0" class="report-list">
             <div
               v-for="report in filteredReports"
               :key="report.reportId"
@@ -43,6 +43,9 @@
               </el-icon>
             </div>
           </div>
+          <el-empty v-else description="暂无报表数据" :image-size="80" style="margin-top: 40px;">
+            <el-button type="primary" @click="router.push('/report/design')">创建报表</el-button>
+          </el-empty>
         </el-card>
       </el-col>
 
@@ -70,43 +73,89 @@
                 <span>查询条件</span>
                 <el-button link size="small" @click="resetConditions">重置条件</el-button>
               </div>
-              <el-form :inline="true" :model="queryForm" label-width="100px">
+              <el-form :inline="true" :model="conditionForm" label-width="100px">
                 <el-row :gutter="20">
-                  <el-col :span="12" v-for="qc in queryConditions" :key="qc.fieldName">
+                  <el-col :span="12" v-for="qc in queryConditions" :key="qc.fieldName + qc.operator">
                     <el-form-item :label="qc.displayName">
-                      <!-- 根据数据类型显示不同输入控件 -->
-                      <el-input
-                        v-if="qc.dataType === 'String' && qc.operator !== 'null' && qc.operator !== 'notnull'"
-                        v-model="queryForm[qc.fieldName]"
-                        :placeholder="getOperatorLabel(qc.operator)"
-                        clearable
-                      />
-                      <el-input-number
-                        v-else-if="qc.dataType === 'Number' && qc.operator !== 'null' && qc.operator !== 'notnull'"
-                        v-model="queryForm[qc.fieldName]"
-                        :placeholder="getOperatorLabel(qc.operator)"
-                        :controls-position="'right'"
-                        style="width: 100%;"
-                      />
-                      <el-date-picker
-                        v-else-if="qc.dataType === 'DateTime' && qc.operator !== 'null' && qc.operator !== 'notnull'"
-                        v-model="queryForm[qc.fieldName]"
-                        type="date"
-                        :placeholder="getOperatorLabel(qc.operator)"
-                        value-format="YYYY-MM-DD"
-                        style="width: 100%;"
-                      />
-                      <el-select
-                        v-else-if="qc.dataType === 'Boolean'"
-                        v-model="queryForm[qc.fieldName]"
-                        placeholder="请选择"
-                        clearable
-                        style="width: 100%;"
-                      >
-                        <el-option label="是" :value="true" />
-                        <el-option label="否" :value="false" />
-                      </el-select>
-                      <span v-else class="condition-note">{{ getOperatorLabel(qc.operator) }}</span>
+                      <!-- 不需要输入值的操作符 -->
+                      <template v-if="['null', 'notnull', 'true', 'false'].includes(qc.operator)">
+                        <span style="color: #909399; font-size: 14px;">{{ getOperatorLabel(qc.operator) }}</span>
+                      </template>
+
+                      <!-- DateTime between: 日期范围选择器 -->
+                      <template v-else-if="qc.operator === 'between' && qc.dataType === 'DateTime'">
+                        <el-date-picker
+                          v-model="conditionForm[getFieldKey(qc)]"
+                          type="daterange"
+                          range-separator="至"
+                          start-placeholder="开始日期"
+                          end-placeholder="结束日期"
+                          value-format="YYYY-MM-DD"
+                          style="width: 100%;"
+                        />
+                      </template>
+
+                      <!-- Number between: 两个数字输入框 -->
+                      <template v-else-if="qc.operator === 'between' && qc.dataType === 'Number'">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                          <el-input-number
+                            v-model="conditionForm[getFieldKey(qc) + '_start']"
+                            placeholder="最小值"
+                            :controls-position="'right'"
+                            style="flex: 1;"
+                          />
+                          <span style="color: #909399;">~</span>
+                          <el-input-number
+                            v-model="conditionForm[getFieldKey(qc) + '_end']"
+                            placeholder="最大值"
+                            :controls-position="'right'"
+                            style="flex: 1;"
+                          />
+                        </div>
+                      </template>
+
+                      <!-- String 类型 -->
+                      <template v-else-if="qc.dataType === 'String'">
+                        <el-input
+                          v-model="conditionForm[getFieldKey(qc)]"
+                          :placeholder="getOperatorPlaceholder(qc.operator)"
+                          clearable
+                        />
+                      </template>
+
+                      <!-- Number 类型 -->
+                      <template v-else-if="qc.dataType === 'Number'">
+                        <el-input-number
+                          v-model="conditionForm[getFieldKey(qc)]"
+                          :placeholder="getOperatorPlaceholder(qc.operator)"
+                          :controls-position="'right'"
+                          style="width: 100%;"
+                        />
+                      </template>
+
+                      <!-- DateTime 类型 -->
+                      <template v-else-if="qc.dataType === 'DateTime'">
+                        <el-date-picker
+                          v-model="conditionForm[getFieldKey(qc)]"
+                          type="date"
+                          :placeholder="getOperatorPlaceholder(qc.operator)"
+                          value-format="YYYY-MM-DD"
+                          style="width: 100%;"
+                        />
+                      </template>
+
+                      <!-- Boolean 类型 -->
+                      <template v-else-if="qc.dataType === 'Boolean'">
+                        <el-select
+                          v-model="conditionForm[getFieldKey(qc)]"
+                          placeholder="请选择"
+                          clearable
+                          style="width: 100%;"
+                        >
+                          <el-option label="是" :value="true" />
+                          <el-option label="否" :value="false" />
+                        </el-select>
+                      </template>
                     </el-form-item>
                   </el-col>
                 </el-row>
@@ -152,18 +201,39 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { reportApi } from '../../api/request'
+
+const router = useRouter()
 
 const searchKeyword = ref('')
 const reports = ref([])
 const selectedReportId = ref(null)
 const selectedReport = ref(null)
 const queryConditions = ref([])
-const queryForm = reactive({})
+const conditionForm = reactive({})
 const reportData = ref([])
 const querying = ref(false)
 const exporting = ref(false)
+
+// 操作符标签映射
+const operatorLabels = {
+  'eq': '等于',
+  'ne': '不等于',
+  'gt': '大于',
+  'lt': '小于',
+  'ge': '大于等于',
+  'le': '小于等于',
+  'like': '包含',
+  'start': '开头是',
+  'end': '结尾是',
+  'null': '为空',
+  'notnull': '不为空',
+  'true': '为真',
+  'false': '为假',
+  'between': '两者之间'
+}
 
 onMounted(async () => {
   await loadReports()
@@ -206,40 +276,58 @@ const displayColumns = computed(() => {
   return selectedReport.value?.columns || selectedReport.value?.fields || []
 })
 
-const resetConditions = () => {
-  Object.keys(queryForm).forEach(key => delete queryForm[key])
-  queryConditions.value.forEach(qc => {
-    if (qc.defaultValue) {
-      queryForm[qc.fieldName] = qc.defaultValue
-    }
-  })
+// 获取字段键名（用于表单绑定）
+const getFieldKey = (qc) => {
+  return `${qc.fieldName}_${qc.operator}`
 }
 
+// 获取操作符标签
 const getOperatorLabel = (operator) => {
-  const map = {
-    'eq': '等于',
-    'ne': '不等于',
-    'gt': '大于',
-    'lt': '小于',
-    'ge': '大于等于',
-    'le': '小于等于',
-    'like': '包含',
-    'null': '为空',
-    'notnull': '不为空'
+  return operatorLabels[operator] || operator
+}
+
+// 获取操作符占位符
+const getOperatorPlaceholder = (operator) => {
+  const labels = {
+    'eq': '请输入等于的值',
+    'ne': '请输入不等于的值',
+    'gt': '请输入最小值（不含）',
+    'lt': '请输入最大值（不含）',
+    'ge': '请输入最小值（含）',
+    'le': '请输入最大值（含）',
+    'like': '请输入包含的关键字',
+    'start': '请输入开头文字',
+    'end': '请输入结尾文字'
   }
-  return map[operator] || operator
+  return labels[operator] || '请输入值'
+}
+
+const resetConditions = () => {
+  Object.keys(conditionForm).forEach(key => delete conditionForm[key])
+  queryConditions.value.forEach(qc => {
+    // 不需要输入值的操作符不需要默认值
+    if (['null', 'notnull', 'true', 'false'].includes(qc.operator)) {
+      return
+    }
+    if (qc.defaultValue) {
+      conditionForm[getFieldKey(qc)] = qc.defaultValue
+    }
+  })
 }
 
 const handleQuery = async () => {
   querying.value = true
   try {
     const params = buildQueryParams()
-    const res = await reportApi.executeReport(selectedReport.value.reportId, params)
+    const res = await reportApi.executeReport(selectedReport.value.reportId, { parameters: params })
     if (res.success) {
       reportData.value = res.data
+    } else {
+      ElMessage.error(res.message || '查询失败')
     }
   } catch (error) {
     console.error('查询失败:', error)
+    ElMessage.error('查询失败：网络错误')
   } finally {
     querying.value = false
   }
@@ -248,11 +336,39 @@ const handleQuery = async () => {
 const buildQueryParams = () => {
   const params = {}
   queryConditions.value.forEach(qc => {
-    const value = queryForm[qc.fieldName]
-    if (value === '' || value === null || value === undefined) {
+    const key = getFieldKey(qc)
+
+    // 对于不需要值的操作符，直接传递操作符标记
+    if (['null', 'notnull', 'true', 'false'].includes(qc.operator)) {
+      params[key] = qc.operator
       return
     }
-    params[`${qc.fieldName}_${qc.operator}`] = value
+
+    // between 操作符特殊处理
+    if (qc.operator === 'between') {
+      if (qc.dataType === 'DateTime') {
+        // DateTime: daterange 返回数组
+        const value = conditionForm[key]
+        if (value && Array.isArray(value) && value.length === 2) {
+          params[key] = value
+        }
+      } else if (qc.dataType === 'Number') {
+        // Number: 从两个输入框获取值
+        const startValue = conditionForm[key + '_start']
+        const endValue = conditionForm[key + '_end']
+        if (startValue !== null && startValue !== undefined &&
+            endValue !== null && endValue !== undefined) {
+          params[key] = [startValue, endValue]
+        }
+      }
+      return
+    }
+
+    // 其他操作符：单值处理
+    const value = conditionForm[key]
+    if (value !== '' && value !== null && value !== undefined) {
+      params[key] = value
+    }
   })
   return params
 }
@@ -261,7 +377,7 @@ const handleExportExcel = async () => {
   exporting.value = true
   try {
     const params = buildQueryParams()
-    const res = await reportApi.exportReport(selectedReport.value.reportId, params)
+    const res = await reportApi.exportReport(selectedReport.value.reportId, { parameters: params })
     const blob = new Blob([res], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -272,6 +388,7 @@ const handleExportExcel = async () => {
     ElMessage.success('导出成功')
   } catch (error) {
     console.error('导出失败:', error)
+    ElMessage.error('导出失败')
   } finally {
     exporting.value = false
   }
@@ -380,10 +497,5 @@ const handleExportExcel = async () => {
 .action-buttons {
   display: flex;
   gap: 12px;
-}
-
-.condition-note {
-  color: #909399;
-  font-size: 14px;
 }
 </style>
