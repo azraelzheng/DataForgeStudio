@@ -68,7 +68,8 @@ public class ReportService : IReportService
                 Description = r.Description,
                 ViewCount = r.ViewCount,
                 LastViewTime = r.LastViewTime,
-                CreatedTime = r.CreatedTime
+                CreatedTime = r.CreatedTime,
+                IsEnabled = r.IsEnabled
             })
             .ToListAsync();
 
@@ -397,18 +398,11 @@ public class ReportService : IReportService
 
         try
         {
-            // 准备SQL参数
-            var parameters = new Dictionary<string, object>();
-            if (request.Parameters != null)
-            {
-                foreach (var param in request.Parameters)
-                {
-                    parameters[param.Key] = param.Value;
-                }
-            }
+            // 构建带查询条件的SQL
+            var (modifiedSql, sqlParameters) = BuildQueryWithConditions(report.SqlStatement, request.Parameters);
 
             // 执行查询
-            var result = await _databaseService.ExecuteQueryAsync(report.DataSource, report.SqlStatement, parameters);
+            var result = await _databaseService.ExecuteQueryAsync(report.DataSource, modifiedSql, sqlParameters);
 
             if (!result.Success)
             {
@@ -427,6 +421,93 @@ public class ReportService : IReportService
             _logger.LogError(ex, $"报表执行失败: ReportId={reportId}, Error={ex.Message}");
             return ApiResponse<List<Dictionary<string, object>>>.Fail($"报表执行失败: {ex.Message}", "EXECUTION_ERROR");
         }
+    }
+
+    /// <summary>
+    /// 构建带查询条件的SQL语句
+    /// </summary>
+    private (string sql, Dictionary<string, object> parameters) BuildQueryWithConditions(
+        string originalSql,
+        Dictionary<string, object>? requestParams)
+    {
+        var parameters = new Dictionary<string, object>();
+        var whereClauses = new List<string>();
+        int paramIndex = 0;
+
+        if (requestParams != null)
+        {
+            foreach (var param in requestParams)
+            {
+                // 解析字段名和操作符 (格式: fieldName_operator)
+                var parts = param.Key.Split('_');
+                if (parts.Length < 2)
+                {
+                    // 普通参数，直接添加
+                    parameters[param.Key] = ConvertJsonElement(param.Value);
+                    continue;
+                }
+
+                var fieldName = parts[0];
+                var op = parts[1];
+                var value = ConvertJsonElement(param.Value);
+
+                // 跳过空值
+                if (value == null || (value is string s && string.IsNullOrEmpty(s)))
+                {
+                    continue;
+                }
+
+                var paramName = $"@p{paramIndex++}";
+                var clause = op.ToLower() switch
+                {
+                    "eq" => $"{fieldName} = {paramName}",
+                    "ne" => $"{fieldName} <> {paramName}",
+                    "gt" => $"{fieldName} > {paramName}",
+                    "lt" => $"{fieldName} < {paramName}",
+                    "ge" => $"{fieldName} >= {paramName}",
+                    "le" => $"{fieldName} <= {paramName}",
+                    "like" => $"{fieldName} LIKE '%' + {paramName} + '%'",
+                    "start" => $"{fieldName} LIKE {paramName} + '%'",
+                    "end" => $"{fieldName} LIKE '%' + {paramName}",
+                    "null" => $"{fieldName} IS NULL",
+                    "notnull" => $"{fieldName} IS NOT NULL",
+                    "true" => $"{fieldName} = 1",
+                    "false" => $"{fieldName} = 0",
+                    _ => null
+                };
+
+                if (clause != null)
+                {
+                    whereClauses.Add(clause);
+                    // 对于不需要值的操作符，不添加参数
+                    if (!new[] { "null", "notnull", "true", "false" }.Contains(op.ToLower()))
+                    {
+                        parameters[paramName] = value;
+                    }
+                }
+            }
+        }
+
+        // 如果有查询条件，构建新的SQL
+        if (whereClauses.Count > 0)
+        {
+            var whereClause = string.Join(" AND ", whereClauses);
+
+            // 检查原SQL是否已有WHERE子句
+            var upperSql = originalSql.ToUpperInvariant();
+            if (upperSql.Contains(" WHERE "))
+            {
+                // 已有WHERE，使用AND添加条件
+                return ($"{originalSql} AND {whereClause}", parameters);
+            }
+            else
+            {
+                // 没有WHERE，添加WHERE子句
+                return ($"{originalSql} WHERE {whereClause}", parameters);
+            }
+        }
+
+        return (originalSql, parameters);
     }
 
     /// <summary>
@@ -514,18 +595,11 @@ public class ReportService : IReportService
 
         try
         {
-            // 准备SQL参数
-            var parameters = new Dictionary<string, object>();
-            if (request.Parameters != null)
-            {
-                foreach (var param in request.Parameters)
-                {
-                    parameters[param.Key] = param.Value;
-                }
-            }
+            // 构建带查询条件的SQL
+            var (modifiedSql, sqlParameters) = BuildQueryWithConditions(report.SqlStatement, request.Parameters);
 
             // 执行查询
-            var result = await _databaseService.ExecuteQueryDataTableAsync(report.DataSource, report.SqlStatement, parameters);
+            var result = await _databaseService.ExecuteQueryDataTableAsync(report.DataSource, modifiedSql, sqlParameters);
 
             if (!result.Success)
             {
@@ -931,6 +1005,7 @@ public class ReportService : IReportService
         }
 
         report.IsEnabled = !report.IsEnabled;
+        report.UpdatedTime = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 
         return ApiResponse.Ok(report.IsEnabled ? "已启用" : "已停用");
@@ -989,5 +1064,65 @@ public class ReportService : IReportService
         });
 
         return ApiResponse<string>.Ok(json);
+    }
+
+    /// <summary>
+    /// 获取查询的字段结构信息（用于报表设计器自动识别字段）
+    /// </summary>
+    public async Task<ApiResponse<List<FieldSchemaDto>>> GetQuerySchemaAsync(
+        int dataSourceId,
+        string sql,
+        Dictionary<string, object>? parameters)
+    {
+        // SQL 验证
+        var validationResult = _sqlValidationService.ValidateQuery(sql);
+        if (!validationResult.IsValid)
+        {
+            _logger.LogWarning("获取查询结构时 SQL 验证失败: {Message}, SQL: {Sql}",
+                validationResult.ErrorMessage, sql);
+            return ApiResponse<List<FieldSchemaDto>>.Fail(validationResult.ErrorMessage, "SQL_VALIDATION_FAILED");
+        }
+
+        var dataSource = await _context.DataSources.FindAsync(dataSourceId);
+        if (dataSource == null)
+        {
+            return ApiResponse<List<FieldSchemaDto>>.Fail("数据源不存在", "NOT_FOUND");
+        }
+
+        if (!dataSource.IsActive)
+        {
+            return ApiResponse<List<FieldSchemaDto>>.Fail("数据源已被禁用", "DATASOURCE_DISABLED");
+        }
+
+        try
+        {
+            var result = await _databaseService.GetQuerySchemaAsync(dataSource, sql, parameters);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"获取查询结构失败: DataSourceId={dataSourceId}, Error={ex.Message}");
+            return ApiResponse<List<FieldSchemaDto>>.Fail($"获取查询结构失败: {ex.Message}", "SCHEMA_ERROR");
+        }
+    }
+
+    /// <summary>
+    /// 将 JsonElement 转换为实际的 .NET 类型
+    /// </summary>
+    private object ConvertJsonElement(object value)
+    {
+        if (value is JsonElement jsonElement)
+        {
+            return jsonElement.ValueKind switch
+            {
+                JsonValueKind.String => jsonElement.GetString() ?? string.Empty,
+                JsonValueKind.Number => jsonElement.TryGetInt32(out int intVal) ? intVal : jsonElement.GetDouble(),
+                JsonValueKind.True => true,
+                JsonValueKind.False => false,
+                JsonValueKind.Null => DBNull.Value,
+                _ => jsonElement.ToString()
+            };
+        }
+        return value;
     }
 }
