@@ -201,7 +201,7 @@
         <div v-if="reportData && reportData.length > 0" class="results-container">
           <!-- 表格工具栏 -->
           <div class="table-toolbar">
-            <span class="result-count">共 {{ reportData.length }} 条记录</span>
+            <span class="result-count">共 {{ filteredTableData.length }} 条记录<template v-if="filteredTableData.length !== reportData.length"> (筛选自 {{ reportData.length }} 条)</template></span>
             <div class="toolbar-actions">
               <el-button v-if="queryConditions.length > 0" type="success" size="small" @click="handleExportExcel" :loading="exporting">
                 <el-icon><Download /></el-icon>
@@ -212,18 +212,89 @@
 
           <!-- 表格 -->
           <div class="table-wrapper">
-            <el-table :data="reportData" border stripe style="width: 100%;"
-              :max-height="tableMaxHeight">
+            <el-table :data="paginatedData" border stripe style="width: 100%;" :max-height="tableMaxHeight">
               <el-table-column
                 v-for="col in displayColumns"
                 :key="col.fieldName"
                 :prop="col.fieldName"
-                :label="col.displayName"
                 :width="col.width"
                 :align="col.align || 'left'"
-                sortable
-              />
+              >
+                <template #header>
+                  <div class="column-header">
+                    <div class="column-title" @click="handleColumnSort(col.fieldName)">
+                      {{ col.displayName }}
+                      <span v-if="sortField === col.fieldName" class="sort-icon">
+                        {{ sortOrder === 'asc' ? '▲' : '▼' }}
+                      </span>
+                    </div>
+                    <div class="column-filter" @click.stop>
+                      <!-- 文本筛选 -->
+                      <el-input
+                        v-if="col.dataType === 'String' || !col.dataType"
+                        v-model="columnFilters[col.fieldName]"
+                        placeholder="筛选..."
+                        size="small"
+                        clearable
+                      />
+                      <!-- 数字范围筛选 -->
+                      <div v-else-if="col.dataType === 'Number'" class="range-filter">
+                        <el-input-number
+                          v-model="columnFilters[col.fieldName + '_min']"
+                          placeholder="最小"
+                          size="small"
+                          :controls="false"
+                          style="width: 70px;"
+                        />
+                        <span class="range-separator">-</span>
+                        <el-input-number
+                          v-model="columnFilters[col.fieldName + '_max']"
+                          placeholder="最大"
+                          size="small"
+                          :controls="false"
+                          style="width: 70px;"
+                        />
+                      </div>
+                      <!-- 日期范围筛选 -->
+                      <el-date-picker
+                        v-else-if="col.dataType === 'DateTime'"
+                        v-model="columnFilters[col.fieldName]"
+                        type="daterange"
+                        size="small"
+                        range-separator="-"
+                        start-placeholder="开始"
+                        end-placeholder="结束"
+                        value-format="YYYY-MM-DD"
+                        style="width: 200px;"
+                      />
+                      <!-- 布尔值筛选 -->
+                      <el-select
+                        v-else-if="col.dataType === 'Boolean'"
+                        v-model="columnFilters[col.fieldName]"
+                        placeholder="全部"
+                        size="small"
+                        clearable
+                        style="width: 80px;"
+                      >
+                        <el-option label="是" :value="true" />
+                        <el-option label="否" :value="false" />
+                      </el-select>
+                    </div>
+                  </div>
+                </template>
+              </el-table-column>
             </el-table>
+          </div>
+
+          <!-- 分页 -->
+          <div class="pagination-wrapper">
+            <el-pagination
+              v-model:current-page="currentPage"
+              v-model:page-size="pageSize"
+              :page-sizes="[20, 50, 100, 200]"
+              :total="filteredTableData.length"
+              layout="total, sizes, prev, pager, next, jumper"
+            />
           </div>
         </div>
 
@@ -260,6 +331,13 @@ const exporting = ref(false)
 const conditionsActive = ref(['conditions'])  // 默认展开条件面板
 const hasQueried = ref(false)  // 是否已执行过查询
 const tableMaxHeight = ref(400)  // 表格最大高度
+
+// 表格筛选和排序状态
+const columnFilters = reactive({})
+const sortField = ref(null)
+const sortOrder = ref(null) // 'asc' | 'desc'
+const currentPage = ref(1)
+const pageSize = ref(20)
 
 // 操作符标签映射
 const operatorLabels = {
@@ -332,6 +410,116 @@ const displayColumns = computed(() => {
   return selectedReport.value?.columns || selectedReport.value?.fields || []
 })
 
+// 筛选后的数据
+const filteredTableData = computed(() => {
+  if (!reportData.value || reportData.value.length === 0) return []
+
+  let data = [...reportData.value]
+
+  // 应用列筛选
+  data = data.filter(row => {
+    for (const [key, value] of Object.entries(columnFilters)) {
+      if (value === null || value === undefined || value === '') continue
+
+      // 范围筛选 (数字最小值)
+      if (key.endsWith('_min')) {
+        const field = key.replace('_min', '')
+        const maxKey = field + '_max'
+        const minVal = value
+        const maxVal = columnFilters[maxKey]
+
+        if (minVal !== null && minVal !== undefined && row[field] < minVal) return false
+        if (maxVal !== null && maxVal !== undefined && row[field] > maxVal) return false
+        continue
+      }
+
+      // 范围筛选 (数字最大值) - 已在上面处理
+      if (key.endsWith('_max')) continue
+
+      // 日期范围筛选
+      if (Array.isArray(value) && value.length === 2) {
+        const dateVal = row[key] ? new Date(row[key]) : null
+        if (!dateVal) return false
+        const start = new Date(value[0])
+        const end = new Date(value[1])
+        end.setHours(23, 59, 59, 999)
+        if (dateVal < start || dateVal > end) return false
+        continue
+      }
+
+      // 布尔值筛选
+      if (typeof value === 'boolean') {
+        if (row[key] !== value) return false
+        continue
+      }
+
+      // 文本模糊匹配
+      if (typeof value === 'string') {
+        const cellValue = String(row[key] || '').toLowerCase()
+        if (!cellValue.includes(value.toLowerCase())) return false
+      }
+    }
+    return true
+  })
+
+  // 应用排序
+  if (sortField.value && sortOrder.value) {
+    data.sort((a, b) => {
+      let aVal = a[sortField.value]
+      let bVal = b[sortField.value]
+
+      // 处理 null/undefined
+      if (aVal == null) return 1
+      if (bVal == null) return -1
+
+      // 字符串比较
+      if (typeof aVal === 'string' && typeof bVal === 'string') {
+        aVal = aVal.toLowerCase()
+        bVal = bVal.toLowerCase()
+      }
+
+      let result = 0
+      if (aVal < bVal) result = -1
+      if (aVal > bVal) result = 1
+
+      return sortOrder.value === 'asc' ? result : -result
+    })
+  }
+
+  return data
+})
+
+// 分页后的数据
+const paginatedData = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return filteredTableData.value.slice(start, end)
+})
+
+// 点击列标题排序
+const handleColumnSort = (field) => {
+  if (sortField.value === field) {
+    // 循环: asc -> desc -> 无排序
+    if (sortOrder.value === 'asc') {
+      sortOrder.value = 'desc'
+    } else if (sortOrder.value === 'desc') {
+      sortField.value = null
+      sortOrder.value = null
+    }
+  } else {
+    sortField.value = field
+    sortOrder.value = 'asc'
+  }
+}
+
+// 重置列筛选
+const resetColumnFilters = () => {
+  Object.keys(columnFilters).forEach(key => delete columnFilters[key])
+  sortField.value = null
+  sortOrder.value = null
+  currentPage.value = 1
+}
+
 // 获取字段键名（用于表单绑定）
 const getFieldKey = (qc) => {
   return `${qc.fieldName}_${qc.operator}`
@@ -379,6 +567,8 @@ const handleQuery = async () => {
     const res = await reportApi.executeReport(selectedReport.value.reportId, { parameters: params })
     if (res.success) {
       reportData.value = res.data
+      // 重置筛选和分页
+      resetColumnFilters()
     } else {
       ElMessage.error(res.message || '查询失败')
     }
@@ -733,6 +923,64 @@ const handleExportExcel = async () => {
   flex: 1;
   overflow: auto;
   padding: 0;
+}
+
+/* 列头样式 */
+.column-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.column-title {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  color: #303133;
+  user-select: none;
+}
+
+.column-title:hover {
+  color: var(--primary-color);
+}
+
+.sort-icon {
+  color: var(--primary-color);
+  font-size: 12px;
+}
+
+.column-filter {
+  width: 100%;
+}
+
+.column-filter :deep(.el-input__wrapper) {
+  background: #f5f7fa;
+}
+
+.column-filter :deep(.el-input__wrapper:focus-within) {
+  background: #fff;
+}
+
+.range-filter {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.range-separator {
+  color: #909399;
+  font-size: 12px;
+}
+
+/* 分页 */
+.pagination-wrapper {
+  padding: 12px 0 0 0;
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0;
 }
 
 /* 无数据 */
