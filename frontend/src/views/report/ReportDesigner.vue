@@ -38,15 +38,7 @@
         <!-- SQL编辑器 -->
         <el-card class="design-card" style="margin-top: 20px;">
           <template #header>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span>SQL查询</span>
-              <div>
-                <el-button type="primary" link size="small" @click="handleParseSql">
-                  <el-icon><Search /></el-icon>
-                  解析参数
-                </el-button>
-              </div>
-            </div>
+            <span>SQL查询</span>
           </template>
           <SqlEditor
             ref="sqlEditorRef"
@@ -64,45 +56,6 @@
               格式化SQL
             </el-button>
           </div>
-        </el-card>
-
-        <!-- 参数配置 -->
-        <el-card class="design-card" style="margin-top: 20px;" v-if="form.parameters.length > 0">
-          <template #header>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span>参数配置</span>
-            </div>
-          </template>
-          <el-table :data="form.parameters" border size="small">
-            <el-table-column prop="name" label="参数名" width="100" />
-            <el-table-column prop="label" label="显示名称" width="120">
-              <template #default="{ row }">
-                <el-input v-model="row.label" size="small" />
-              </template>
-            </el-table-column>
-            <el-table-column prop="dataType" label="类型" width="100">
-              <template #default="{ row }">
-                <el-select v-model="row.dataType" size="small">
-                  <el-option label="字符串" value="String" />
-                  <el-option label="数字" value="Number" />
-                  <el-option label="日期" value="DateTime" />
-                  <el-option label="下拉" value="Select" />
-                </el-select>
-              </template>
-            </el-table-column>
-            <el-table-column prop="defaultValue" label="默认值">
-              <template #default="{ row }">
-                <el-input v-model="row.defaultValue" size="small" :placeholder="row.dataType === 'Select' ? '选项用换行分隔' : ''" />
-              </template>
-            </el-table-column>
-            <el-table-column label="" width="50">
-              <template #default="{ $index }">
-                <el-button type="danger" link size="small" @click="handleRemoveParameter($index)">
-                  <el-icon><Delete /></el-icon>
-                </el-button>
-              </template>
-            </el-table-column>
-          </el-table>
         </el-card>
       </el-col>
 
@@ -342,7 +295,6 @@ const form = reactive({
   description: '',
   dataSourceId: null,
   sqlQuery: '',
-  parameters: [],
   columns: [],
   queryConditions: [],
   enableChart: false,
@@ -459,7 +411,6 @@ const handleDataSourceChange = async () => {
   // 数据源切换时清除SQL和字段
   form.sqlQuery = ''
   form.columns = []
-  form.parameters = []
   form.queryConditions = []
 
   // 预加载表结构
@@ -470,36 +421,6 @@ const handleDataSourceChange = async () => {
       console.warn('预加载表结构失败:', error)
     }
   }
-}
-
-const handleParseSql = () => {
-  // 解析SQL中的参数 @参数名
-  const regex = /@(\w+)/g
-  let match
-  let addedCount = 0
-
-  while ((match = regex.exec(form.sqlQuery)) !== null) {
-    const paramName = match[1]
-    if (!form.parameters.find(p => p.name === paramName)) {
-      form.parameters.push({
-        name: paramName,
-        label: paramName,
-        dataType: 'String',
-        defaultValue: ''
-      })
-      addedCount++
-    }
-  }
-
-  if (addedCount > 0) {
-    ElMessage.success(`解析成功，添加了 ${addedCount} 个参数`)
-  } else {
-    ElMessage.info('没有发现新的参数')
-  }
-}
-
-const handleRemoveParameter = (index) => {
-  form.parameters.splice(index, 1)
 }
 
 const handleTestQuery = async () => {
@@ -513,18 +434,9 @@ const handleTestQuery = async () => {
   }
 
   try {
-    // 准备参数
-    const parameters = {}
-    form.parameters.forEach(p => {
-      if (p.defaultValue) {
-        parameters[p.name] = p.defaultValue
-      }
-    })
-
     const res = await reportApi.testQuery({
       dataSourceId: form.dataSourceId,
-      sql: form.sqlQuery,
-      parameters: Object.keys(parameters).length > 0 ? parameters : null
+      sql: form.sqlQuery
     })
 
     if (res.success) {
@@ -565,19 +477,10 @@ const handleAutoDetectFields = async () => {
   }
 
   try {
-    // 准备参数（使用默认值）
-    const parameters = {}
-    form.parameters.forEach(p => {
-      if (p.defaultValue) {
-        parameters[p.name] = p.defaultValue
-      }
-    })
-
-    // 调用新的 getQuerySchema API 只获取字段结构
+    // 调用 getQuerySchema API 只获取字段结构
     const res = await reportApi.getQuerySchema({
       dataSourceId: form.dataSourceId,
-      sql: form.sqlQuery,
-      parameters: Object.keys(parameters).length > 0 ? parameters : null
+      sql: form.sqlQuery
     })
 
     if (res.success && res.data.length > 0) {
