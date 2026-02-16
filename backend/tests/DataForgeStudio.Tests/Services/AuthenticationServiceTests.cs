@@ -40,12 +40,13 @@ public class AuthenticationServiceTests : IDisposable
     public async Task LoginAsync_ValidCredentials_ReturnsSuccess()
     {
         // Arrange
-        var request = new LoginRequest { Username = "admin", Password = "admin123" };
+        var validPassword = "Admin@123";
+        var request = new LoginRequest { Username = "admin", Password = validPassword };
         var user = new User
         {
             UserId = 1,
             Username = "admin",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(validPassword),
             IsActive = true,
             IsLocked = false,
             MustChangePassword = false,
@@ -87,12 +88,13 @@ public class AuthenticationServiceTests : IDisposable
     public async Task LoginAsync_UserLocked_ReturnsFailure()
     {
         // Arrange
-        var request = new LoginRequest { Username = "admin", Password = "admin123" };
+        var validPassword = "Admin@123";
+        var request = new LoginRequest { Username = "admin", Password = validPassword };
         var user = new User
         {
             UserId = 1,
             Username = "admin",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(validPassword),
             IsActive = true,
             IsLocked = true
         };
@@ -111,12 +113,13 @@ public class AuthenticationServiceTests : IDisposable
     public async Task LoginAsync_UserInactive_ReturnsFailure()
     {
         // Arrange
-        var request = new LoginRequest { Username = "admin", Password = "admin123" };
+        var validPassword = "Admin@123";
+        var request = new LoginRequest { Username = "admin", Password = validPassword };
         var user = new User
         {
             UserId = 1,
             Username = "admin",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(validPassword),
             IsActive = false,
             IsLocked = false
         };
@@ -135,12 +138,13 @@ public class AuthenticationServiceTests : IDisposable
     public async Task LoginAsync_WrongPassword_IncreasesFailureCount()
     {
         // Arrange
+        var validPassword = "Admin@123";
         var request = new LoginRequest { Username = "admin", Password = "wrongpassword" };
         var user = new User
         {
             UserId = 1,
             Username = "admin",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(validPassword),
             IsActive = true,
             IsLocked = false,
             PasswordFailCount = 2
@@ -162,12 +166,13 @@ public class AuthenticationServiceTests : IDisposable
     public async Task LoginAsync_MaxFailureCount_LocksAccount()
     {
         // Arrange
+        var validPassword = "Admin@123";
         var request = new LoginRequest { Username = "admin", Password = "wrongpassword" };
         var user = new User
         {
             UserId = 1,
             Username = "admin",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(validPassword),
             IsActive = true,
             IsLocked = false,
             PasswordFailCount = 4
@@ -188,12 +193,13 @@ public class AuthenticationServiceTests : IDisposable
     public async Task LoginAsync_MustChangePassword_ReturnsSpecialResponse()
     {
         // Arrange
-        var request = new LoginRequest { Username = "admin", Password = "admin123" };
+        var validPassword = "Admin@123";
+        var request = new LoginRequest { Username = "admin", Password = validPassword };
         var user = new User
         {
             UserId = 1,
             Username = "admin",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(validPassword),
             IsActive = true,
             IsLocked = false,
             MustChangePassword = true,
@@ -256,17 +262,19 @@ public class AuthenticationServiceTests : IDisposable
     public async Task ChangePassword_ValidPassword_ReturnsSuccess()
     {
         // Arrange
+        var oldPassword = "Admin@123";
+        var newPassword = "NewPass@456";
         var request = new ChangePasswordRequest
         {
-            OldPassword = "admin123",
-            NewPassword = "newpassword123",
-            ConfirmPassword = "newpassword123"
+            OldPassword = oldPassword,
+            NewPassword = newPassword,
+            ConfirmPassword = newPassword
         };
         var user = new User
         {
             UserId = 1,
             Username = "admin",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(oldPassword),
             MustChangePassword = true
         };
 
@@ -287,9 +295,9 @@ public class AuthenticationServiceTests : IDisposable
         // Arrange
         var request = new ChangePasswordRequest
         {
-            OldPassword = "admin123",
-            NewPassword = "newpassword123",
-            ConfirmPassword = "differentpassword"
+            OldPassword = "Admin@123",
+            NewPassword = "NewPass@456",
+            ConfirmPassword = "Different@789"
         };
 
         // Act
@@ -304,17 +312,19 @@ public class AuthenticationServiceTests : IDisposable
     public async Task ChangePassword_WrongOldPassword_ReturnsFailure()
     {
         // Arrange
+        var validPassword = "Admin@123";
+        var newPassword = "NewPass@456";
         var request = new ChangePasswordRequest
         {
             OldPassword = "wrongpassword",
-            NewPassword = "newpassword123",
-            ConfirmPassword = "newpassword123"
+            NewPassword = newPassword,
+            ConfirmPassword = newPassword
         };
         var user = new User
         {
             UserId = 1,
             Username = "admin",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123")
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(validPassword)
         };
 
         _mockUserRepo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(user);

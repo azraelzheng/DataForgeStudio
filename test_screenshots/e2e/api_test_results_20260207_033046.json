@@ -1,0 +1,41 @@
+{
+  "timestamp": "2026-02-07T03:30:58.451345",
+  "results": [
+    {
+      "name": "API健康检查",
+      "status": "passed",
+      "message": "状态: Healthy",
+      "timestamp": "2026-02-07T03:30:47.555522"
+    },
+    {
+      "name": "Root用户登录",
+      "status": "passed",
+      "message": "使用密码: admin123",
+      "timestamp": "2026-02-07T03:30:53.193409"
+    },
+    {
+      "name": "获取用户列表",
+      "status": "passed",
+      "message": "找到 7 个用户",
+      "timestamp": "2026-02-07T03:30:53.594730"
+    },
+    {
+      "name": "创建角色",
+      "status": "passed",
+      "message": "角色ID: 30",
+      "timestamp": "2026-02-07T03:30:53.994685"
+    },
+    {
+      "name": "创建用户",
+      "status": "passed",
+      "message": "用户ID: 21",
+      "timestamp": "2026-02-07T03:30:57.845055"
+    },
+    {
+      "name": "新用户登录",
+      "status": "failed",
+      "message": "cannot access local variable 'data' where it is not associated with a value",
+      "timestamp": "2026-02-07T03:30:58.449341"
+    }
+  ]
+}

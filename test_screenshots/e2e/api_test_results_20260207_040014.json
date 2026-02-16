@@ -1,0 +1,53 @@
+{
+  "timestamp": "2026-02-07T04:01:15.136135",
+  "results": [
+    {
+      "name": "API健康检查",
+      "status": "passed",
+      "message": "状态: Healthy",
+      "timestamp": "2026-02-07T04:00:15.444127"
+    },
+    {
+      "name": "Root用户登录",
+      "status": "passed",
+      "message": "使用密码: admin123",
+      "timestamp": "2026-02-07T04:00:23.200983"
+    },
+    {
+      "name": "获取用户列表",
+      "status": "passed",
+      "message": "找到 9 个用户",
+      "timestamp": "2026-02-07T04:00:24.278447"
+    },
+    {
+      "name": "创建角色",
+      "status": "passed",
+      "message": "角色ID: 32",
+      "timestamp": "2026-02-07T04:00:25.462286"
+    },
+    {
+      "name": "创建用户",
+      "status": "passed",
+      "message": "用户ID: 23",
+      "timestamp": "2026-02-07T04:00:35.409672"
+    },
+    {
+      "name": "创建报表",
+      "status": "passed",
+      "message": "报表ID: 4",
+      "timestamp": "2026-02-07T04:00:37.983919"
+    },
+    {
+      "name": "查询报表",
+      "status": "passed",
+      "message": "返回 3 条记录",
+      "timestamp": "2026-02-07T04:00:43.959828"
+    },
+    {
+      "name": "导出报表",
+      "status": "failed",
+      "message": "响应类型: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "timestamp": "2026-02-07T04:01:15.134134"
+    }
+  ]
+}

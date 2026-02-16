@@ -1,0 +1,41 @@
+{
+  "timestamp": "2026-02-07T03:51:16.869135",
+  "results": [
+    {
+      "name": "API健康检查",
+      "status": "passed",
+      "message": "状态: Healthy",
+      "timestamp": "2026-02-07T03:50:57.230163"
+    },
+    {
+      "name": "Root用户登录",
+      "status": "passed",
+      "message": "使用密码: admin123",
+      "timestamp": "2026-02-07T03:51:02.039537"
+    },
+    {
+      "name": "获取用户列表",
+      "status": "passed",
+      "message": "找到 8 个用户",
+      "timestamp": "2026-02-07T03:51:02.590385"
+    },
+    {
+      "name": "创建角色",
+      "status": "passed",
+      "message": "角色ID: 31",
+      "timestamp": "2026-02-07T03:51:03.282269"
+    },
+    {
+      "name": "创建用户",
+      "status": "passed",
+      "message": "用户ID: 22",
+      "timestamp": "2026-02-07T03:51:06.858169"
+    },
+    {
+      "name": "新用户登录",
+      "status": "failed",
+      "message": "HTTPConnectionPool(host='localhost', port=5000): Read timed out. (read timeout=10)",
+      "timestamp": "2026-02-07T03:51:16.868136"
+    }
+  ]
+}

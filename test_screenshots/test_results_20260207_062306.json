@@ -1,0 +1,157 @@
+{
+  "timestamp": "2026-02-07T06:22:30.883408",
+  "test_duration": "36.06s",
+  "tests": [
+    {
+      "name": "首页重定向到登录页",
+      "status": "passed",
+      "message": "当前URL: http://localhost:5173/",
+      "screenshot": "test_screenshots\\20260207_062237_01_home_redirect.png",
+      "timestamp": "2026-02-07T06:22:37.701274"
+    },
+    {
+      "name": "登录表单显示完整",
+      "status": "passed",
+      "message": "用户名输入框: True, 密码输入框: True, 登录按钮: True",
+      "screenshot": "test_screenshots\\20260207_062239_02_login_form.png",
+      "timestamp": "2026-02-07T06:22:39.615387"
+    },
+    {
+      "name": "用户登录",
+      "status": "passed",
+      "message": "登录成功, URL: http://localhost:5173/home",
+      "screenshot": "test_screenshots\\20260207_062246_04_after_login.png",
+      "timestamp": "2026-02-07T06:22:46.197745"
+    },
+    {
+      "name": "访问用户管理页面",
+      "status": "passed",
+      "message": "URL: http://localhost:5173/system/user, 表格: True, 工具栏: False",
+      "screenshot": "test_screenshots\\20260207_062248_05_user_management.png",
+      "timestamp": "2026-02-07T06:22:48.682429"
+    },
+    {
+      "name": "新增用户功能",
+      "status": "passed",
+      "message": "对话框: True, 用户名输入框: True",
+      "screenshot": "test_screenshots\\20260207_062250_06_add_user_dialog.png",
+      "timestamp": "2026-02-07T06:22:50.871392"
+    },
+    {
+      "name": "访问角色管理页面",
+      "status": "passed",
+      "message": "URL: http://localhost:5173/system/role, 表格: True",
+      "screenshot": "test_screenshots\\20260207_062253_07_role_management.png",
+      "timestamp": "2026-02-07T06:22:53.244484"
+    },
+    {
+      "name": "访问数据源管理页面",
+      "status": "passed",
+      "message": "URL: http://localhost:5173/system/datasource, 表格: True",
+      "screenshot": "test_screenshots\\20260207_062254_08_datasource_management.png",
+      "timestamp": "2026-02-07T06:22:55.106790"
+    },
+    {
+      "name": "访问报表列表页面",
+      "status": "failed",
+      "message": "URL: http://localhost:5173/report, 表格: False, 工具栏: False",
+      "screenshot": "test_screenshots\\20260207_062257_09_report_list.png",
+      "timestamp": "2026-02-07T06:22:57.119390"
+    },
+    {
+      "name": "新增报表功能",
+      "status": "failed",
+      "message": "对话框: False, SQL编辑器: False",
+      "screenshot": "test_screenshots\\20260207_062257_10_add_report.png",
+      "timestamp": "2026-02-07T06:22:57.227387"
+    },
+    {
+      "name": "访问许可证管理页面",
+      "status": "passed",
+      "message": "URL: http://localhost:5173/license, 内容: True",
+      "screenshot": "test_screenshots\\20260207_062258_11_license_management.png",
+      "timestamp": "2026-02-07T06:22:59.077178"
+    },
+    {
+      "name": "访问操作日志页面",
+      "status": "passed",
+      "message": "URL: http://localhost:5173/system/log, 表格: True",
+      "screenshot": "test_screenshots\\20260207_062301_12_operation_logs.png",
+      "timestamp": "2026-02-07T06:23:01.552123"
+    },
+    {
+      "name": "侧边栏导航显示",
+      "status": "passed",
+      "message": "侧边栏: True, 菜单项: 14",
+      "screenshot": "test_screenshots\\20260207_062303_13_home_navigation.png",
+      "timestamp": "2026-02-07T06:23:03.281404"
+    },
+    {
+      "name": "用户信息显示",
+      "status": "passed",
+      "message": "用户信息区域: True",
+      "screenshot": "test_screenshots\\20260207_062303_14_user_info.png",
+      "timestamp": "2026-02-07T06:23:03.381400"
+    }
+  ],
+  "issues": [
+    {
+      "test": "访问报表列表页面",
+      "issue": "页面未正确加载",
+      "screenshot": "test_screenshots\\20260207_062257_09_report_list.png"
+    },
+    {
+      "test": "新增报表功能",
+      "issue": "新增对话框未显示或缺少SQL编辑器",
+      "screenshot": "test_screenshots\\20260207_062257_10_add_report.png"
+    }
+  ],
+  "summary": {
+    "total": 13,
+    "passed": 11,
+    "failed": 2,
+    "skipped": 0
+  },
+  "modules": {
+    "认证登录": {
+      "total": 3,
+      "passed": 3,
+      "failed": 0
+    },
+    "用户管理": {
+      "total": 2,
+      "passed": 2,
+      "failed": 0
+    },
+    "角色管理": {
+      "total": 1,
+      "passed": 1,
+      "failed": 0
+    },
+    "数据源管理": {
+      "total": 1,
+      "passed": 1,
+      "failed": 0
+    },
+    "报表管理": {
+      "total": 2,
+      "passed": 0,
+      "failed": 2
+    },
+    "许可证管理": {
+      "total": 1,
+      "passed": 1,
+      "failed": 0
+    },
+    "操作日志": {
+      "total": 1,
+      "passed": 1,
+      "failed": 0
+    },
+    "导航和UI": {
+      "total": 2,
+      "passed": 2,
+      "failed": 0
+    }
+  }
+}

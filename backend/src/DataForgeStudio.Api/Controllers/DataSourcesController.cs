@@ -127,4 +127,13 @@ public class DataSourcesController : ControllerBase
     {
         return await _dataSourceService.ToggleActiveAsync(id);
     }
+
+    /// <summary>
+    /// 获取数据源的表结构（用于SQL编辑器自动补全）
+    /// </summary>
+    [HttpGet("{id}/tables")]
+    public async Task<ApiResponse<List<TableInfoDto>>> GetTableStructure(int id)
+    {
+        return await _dataSourceService.GetTableStructureAsync(id);
+    }
 }

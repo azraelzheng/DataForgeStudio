@@ -216,9 +216,21 @@ public class DataSourceService : IDataSourceService
             return ApiResponse.Fail("数据源不存在", "NOT_FOUND");
         }
 
+        // 验证必要字段
+        if (string.IsNullOrWhiteSpace(dataSource.Username))
+        {
+            return ApiResponse.Fail("数据源配置不完整：用户名为空，请编辑数据源并填写正确的连接信息", "INVALID_CONFIG");
+        }
+
         var result = await _databaseService.TestConnectionAsync(dataSource);
         if (!result.Success)
         {
+            // 更新测试失败结果
+            dataSource.LastTestTime = DateTime.UtcNow;
+            dataSource.LastTestResult = false;
+            dataSource.LastTestMessage = result.Message;
+            await _context.SaveChangesAsync();
+
             return ApiResponse.Fail(result.Message, result.ErrorCode);
         }
 
@@ -311,6 +323,22 @@ public class DataSourceService : IDataSourceService
 
         await _context.SaveChangesAsync();
         return ApiResponse.Ok(dataSource.IsActive ? "数据源已启用" : "数据源已停用");
+    }
+
+    public async Task<ApiResponse<List<TableInfoDto>>> GetTableStructureAsync(int dataSourceId)
+    {
+        var dataSource = await _context.DataSources.FindAsync(dataSourceId);
+        if (dataSource == null)
+        {
+            return ApiResponse<List<TableInfoDto>>.Fail("数据源不存在", "NOT_FOUND");
+        }
+
+        if (!dataSource.IsActive)
+        {
+            return ApiResponse<List<TableInfoDto>>.Fail("数据源已停用", "DATASOURCE_INACTIVE");
+        }
+
+        return await _databaseService.GetAllTablesAsync(dataSource);
     }
 
     private string BuildConnectionString(DataSource dataSource)

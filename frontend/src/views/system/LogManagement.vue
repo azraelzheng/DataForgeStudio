@@ -266,13 +266,22 @@ const handleSelectionChange = (selection) => {
 const handleExport = async () => {
   exporting.value = true
   try {
-    const params = { ...searchForm }
-    if (dateRange.value && dateRange.value.length === 2) {
-      params.startTime = dateRange.value[0]
-      params.endTime = dateRange.value[1]
-    }
+    let blob
 
-    const blob = await systemApi.exportLogs(params)
+    // 如果有选中的日志，则导出选中的；否则导出全部
+    if (selectedRows.value.length > 0) {
+      const logIds = selectedRows.value.map(row => row.logId)
+      blob = await systemApi.exportSelectedLogs(logIds)
+      ElMessage.success(`已导出选中的 ${logIds.length} 条日志`)
+    } else {
+      const params = { ...searchForm }
+      if (dateRange.value && dateRange.value.length === 2) {
+        params.startTime = dateRange.value[0]
+        params.endTime = dateRange.value[1]
+      }
+      blob = await systemApi.exportLogs(params)
+      ElMessage.success('导出成功')
+    }
 
     // 创建下载链接
     const url = window.URL.createObjectURL(blob)
@@ -281,8 +290,6 @@ const handleExport = async () => {
     link.download = `操作日志_${new Date().getTime()}.xlsx`
     link.click()
     window.URL.revokeObjectURL(url)
-
-    ElMessage.success('导出成功')
   } catch (error) {
     console.error('导出失败:', error)
     ElMessage.error('导出失败')

@@ -80,7 +80,7 @@
           <template #header>
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <span>最近报表</span>
-              <el-button text type="primary" @click="router.push('/report/list')">查看全部</el-button>
+              <el-button text type="primary" @click="router.push('/report')">查看全部</el-button>
             </div>
           </template>
           <el-empty v-if="!recentReports.length" description="暂无报表" />
@@ -134,7 +134,7 @@ const stats = ref({
 // 所有快捷操作
 const allQuickActions = [
   { name: '创建报表', path: '/report/design', icon: 'Plus', type: 'primary', permission: 'report:design' },
-  { name: '报表查询', path: '/report/list', icon: 'Search', type: 'default', permission: 'report:view' },
+  { name: '报表查询', path: '/report', icon: 'Search', type: 'default', permission: 'report:view' },
   { name: '数据源管理', path: '/system/datasource', icon: 'DataBoard', type: 'default', permission: 'datasource:view' },
   { name: '用户管理', path: '/system/user', icon: 'User', type: 'default', permission: 'user:view' },
   { name: '许可管理', path: '/license', icon: 'Key', type: 'warning', permission: 'license:view' },
@@ -178,7 +178,7 @@ const loadRecentReports = async () => {
 }
 
 const viewReport = (row) => {
-  router.push(`/report/list?reportId=${row.reportId}`)
+  router.push(`/report?reportId=${row.reportId}`)
 }
 </script>
 

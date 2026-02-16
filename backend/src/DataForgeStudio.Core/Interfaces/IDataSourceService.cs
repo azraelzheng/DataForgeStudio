@@ -51,4 +51,9 @@ public interface IDataSourceService
     /// 停用/启用数据源
     /// </summary>
     Task<ApiResponse> ToggleActiveAsync(int dataSourceId);
+
+    /// <summary>
+    /// 获取数据源的表结构（用于SQL编辑器自动补全）
+    /// </summary>
+    Task<ApiResponse<List<TableInfoDto>>> GetTableStructureAsync(int dataSourceId);
 }

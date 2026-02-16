@@ -123,6 +123,12 @@ public class AuthenticationService : IAuthenticationService
                 .Distinct()
                 .ToList() ?? new List<string>();
 
+            // 系统用户（如 root）拥有所有权限，添加 '*' 通配符
+            if (user.IsSystem && !permissions.Contains("*"))
+            {
+                permissions.Add("*");
+            }
+
             // 生成 Token
             var token = GenerateJwtToken(user.UserId, user.Username);
 
@@ -219,6 +225,19 @@ public class AuthenticationService : IAuthenticationService
             return null;
         }
 
+        // 收集权限
+        var permissions = user.UserRoles
+            .SelectMany(ur => ur.Role.RolePermissions)
+            .Select(rp => rp.Permission.PermissionCode)
+            .Distinct()
+            .ToList();
+
+        // 系统用户（如 root）拥有所有权限，添加 '*' 通配符
+        if (user.IsSystem && !permissions.Contains("*"))
+        {
+            permissions.Add("*");
+        }
+
         return new UserInfoDto
         {
             UserId = user.UserId,
@@ -226,11 +245,7 @@ public class AuthenticationService : IAuthenticationService
             RealName = user.RealName,
             Email = user.Email,
             Roles = user.UserRoles.Select(ur => ur.Role.RoleName).ToList(),
-            Permissions = user.UserRoles
-                .SelectMany(ur => ur.Role.RolePermissions)
-                .Select(rp => rp.Permission.PermissionCode)
-                .Distinct()
-                .ToList()
+            Permissions = permissions
         };
     }
 

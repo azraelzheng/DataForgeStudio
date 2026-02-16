@@ -125,6 +125,21 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
+  const changePassword = async (data) => {
+    try {
+      const res = await authApi.changePassword(data)
+      if (res.success) {
+        return true
+      }
+      ElMessage.error(res.message || '修改密码失败')
+      return false
+    } catch (error) {
+      console.error('Change password error:', error)
+      ElMessage.error('修改密码失败')
+      return false
+    }
+  }
+
   return {
     // 状态
     token,
@@ -142,6 +157,7 @@ export const useUserStore = defineStore('user', () => {
     login,
     logout,
     getCurrentUser,
+    changePassword,
     checkAuth
   }
 })

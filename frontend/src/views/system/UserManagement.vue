@@ -33,86 +33,89 @@
       </el-form>
 
       <!-- 用户表格 -->
-      <el-table :data="tableData" v-loading="loading" border stripe>
-        <el-table-column prop="username" label="用户名" width="180">
-          <template #default="{ row }">
-            <span>{{ row.username }}</span>
-            <el-tag v-if="row.username === 'root'" type="danger" size="small" style="margin-left: 8px;">系统管理员</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="realName" label="真实姓名" width="150" />
-        <el-table-column prop="email" label="邮箱" min-width="200" />
-        <el-table-column prop="phone" label="手机号" width="150" />
-        <el-table-column label="角色" width="200">
-          <template #default="{ row }">
-            <el-tag
-              v-for="role in row.roles"
-              :key="role.roleId"
-              size="small"
-              style="margin-right: 5px;"
-            >
-              {{ role.roleName }}
-            </el-tag>
-            <el-tag v-if="row.username === 'root'" type="danger" size="small">全部权限</el-tag>
-            <span v-if="(!row.roles || row.roles.length === 0) && row.username !== 'root'">-</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="状态" width="100" align="center">
-          <template #default="{ row }">
-            <el-switch
-              v-model="row.isActive"
-              @change="handleToggleStatus(row)"
-              :disabled="row.username === 'root'"
-            />
-          </template>
-        </el-table-column>
-        <el-table-column prop="lastLoginTime" label="最后登录" width="180" />
-        <el-table-column prop="createdTime" label="创建时间" width="180" />
-        <el-table-column label="操作" width="280" fixed="right">
-          <template #default="{ row }">
-            <el-button
-              type="primary"
-              link
-              size="small"
-              @click="handleEdit(row)"
-              :disabled="row.username === 'root'"
-            >
-              <el-icon><Edit /></el-icon>
-              编辑
-            </el-button>
-            <el-button
-              type="primary"
-              link
-              size="small"
-              @click="handleAssignRoles(row)"
-              :disabled="row.username === 'root'"
-            >
-              <el-icon><UserFilled /></el-icon>
-              分配角色
-            </el-button>
-            <el-button
-              type="warning"
-              link
-              size="small"
-              @click="handleResetPassword(row)"
-              :disabled="row.username === 'root'"
-            >
-              <el-icon><RefreshLeft /></el-icon>
-              重置密码
-            </el-button>
-            <el-button
-              type="danger"
-              link
-              size="small"
-              @click="handleDelete(row)"
-              :disabled="row.username === 'root'"
-            >
-              <el-icon><Delete /></el-icon>
-              删除
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+      <template v-if="tableData && tableData.length > 0">
+        <el-table :data="tableData" v-loading="loading" border stripe>
+          <el-table-column prop="username" label="用户名" width="180">
+            <template #default="{ row }">
+              <span>{{ row.username }}</span>
+              <el-tag v-if="row.username === 'root'" type="danger" size="small" style="margin-left: 8px;">系统管理员</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="realName" label="真实姓名" width="150" />
+          <el-table-column prop="email" label="邮箱" min-width="200" />
+          <el-table-column prop="phone" label="手机号" width="150" />
+          <el-table-column label="角色" width="200">
+            <template #default="{ row }">
+              <el-tag
+                v-for="role in row.roles"
+                :key="role.roleId"
+                size="small"
+                style="margin-right: 5px;"
+              >
+                {{ role.roleName }}
+              </el-tag>
+              <el-tag v-if="row.username === 'root'" type="danger" size="small">全部权限</el-tag>
+              <span v-if="(!row.roles || row.roles.length === 0) && row.username !== 'root'">-</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="状态" width="100" align="center">
+            <template #default="{ row }">
+              <el-switch
+                v-model="row.isActive"
+                @change="handleToggleStatus(row)"
+                :disabled="row.username === 'root'"
+              />
+            </template>
+          </el-table-column>
+          <el-table-column prop="lastLoginTime" label="最后登录" width="180" />
+          <el-table-column prop="createdTime" label="创建时间" width="180" />
+          <el-table-column label="操作" width="280" fixed="right">
+            <template #default="{ row }">
+              <el-button
+                type="primary"
+                link
+                size="small"
+                @click="handleEdit(row)"
+                :disabled="row.username === 'root'"
+              >
+                <el-icon><Edit /></el-icon>
+                编辑
+              </el-button>
+              <el-button
+                type="primary"
+                link
+                size="small"
+                @click="handleAssignRoles(row)"
+                :disabled="row.username === 'root'"
+              >
+                <el-icon><UserFilled /></el-icon>
+                分配角色
+              </el-button>
+              <el-button
+                type="warning"
+                link
+                size="small"
+                @click="handleResetPassword(row)"
+                :disabled="row.username === 'root'"
+              >
+                <el-icon><RefreshLeft /></el-icon>
+                重置密码
+              </el-button>
+              <el-button
+                type="danger"
+                link
+                size="small"
+                @click="handleDelete(row)"
+                :disabled="row.username === 'root'"
+              >
+                <el-icon><Delete /></el-icon>
+                删除
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </template>
+      <el-empty v-else-if="!loading" description="暂无用户数据" />
 
       <!-- 分页 -->
       <el-pagination

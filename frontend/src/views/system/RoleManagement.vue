@@ -26,34 +26,37 @@
       </el-form>
 
       <!-- 角色表格 -->
-      <el-table :data="tableData" v-loading="loading" border stripe>
-        <el-table-column prop="roleName" label="角色名称" width="200" />
-        <el-table-column prop="description" label="描述" min-width="300" />
-        <el-table-column label="系统角色" width="100" align="center">
-          <template #default="{ row }">
-            <el-tag v-if="row.isSystem" type="danger" size="small">系统</el-tag>
-            <el-tag v-else type="success" size="small">自定义</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="userCount" label="用户数" width="100" align="center" />
-        <el-table-column prop="createdTime" label="创建时间" width="180" />
-        <el-table-column label="操作" width="260" fixed="right">
-          <template #default="{ row }">
-            <el-button type="primary" link size="small" @click="handleEdit(row)" :disabled="row.isSystem">
-              <el-icon><Edit /></el-icon>
-              编辑
-            </el-button>
-            <el-button type="primary" link size="small" @click="handleAssignPermissions(row)">
-              <el-icon><Key /></el-icon>
-              配置权限
-            </el-button>
-            <el-button type="danger" link size="small" @click="handleDelete(row)" :disabled="row.isSystem">
-              <el-icon><Delete /></el-icon>
-              删除
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+      <template v-if="tableData && tableData.length > 0">
+        <el-table :data="tableData" v-loading="loading" border stripe>
+          <el-table-column prop="roleName" label="角色名称" width="200" />
+          <el-table-column prop="description" label="描述" min-width="300" />
+          <el-table-column label="系统角色" width="100" align="center">
+            <template #default="{ row }">
+              <el-tag v-if="row.isSystem" type="danger" size="small">系统</el-tag>
+              <el-tag v-else type="success" size="small">自定义</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="userCount" label="用户数" width="100" align="center" />
+          <el-table-column prop="createdTime" label="创建时间" width="180" />
+          <el-table-column label="操作" width="260" fixed="right">
+            <template #default="{ row }">
+              <el-button type="primary" link size="small" @click="handleEdit(row)" :disabled="row.isSystem">
+                <el-icon><Edit /></el-icon>
+                编辑
+              </el-button>
+              <el-button type="primary" link size="small" @click="handleAssignPermissions(row)">
+                <el-icon><Key /></el-icon>
+                配置权限
+              </el-button>
+              <el-button type="danger" link size="small" @click="handleDelete(row)" :disabled="row.isSystem">
+                <el-icon><Delete /></el-icon>
+                删除
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </template>
+      <el-empty v-else-if="!loading" description="暂无角色数据" />
 
       <!-- 分页 -->
       <el-pagination
@@ -112,7 +115,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, nextTick } from 'vue'
+import { ref, reactive, onMounted, onActivated, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { roleApi } from '../../api/request'
 
@@ -235,6 +238,11 @@ const pagination = reactive({
 })
 
 onMounted(() => {
+  loadData()
+})
+
+// 当组件被激活时（从其他页面返回），重新加载数据以确保显示最新信息
+onActivated(() => {
   loadData()
 })
 

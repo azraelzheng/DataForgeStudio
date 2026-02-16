@@ -1,9 +1,15 @@
 <template>
   <ErrorBoundary>
-    <!-- 登录页：独立页面，无侧边栏和顶部栏 -->
-    <router-view v-if="isLoginPage" />
+    <!-- 加载中状态 -->
+    <div v-if="isAuthChecking" class="loading-container">
+      <el-icon class="is-loading" :size="40"><Loading /></el-icon>
+      <p>加载中...</p>
+    </div>
 
-    <!-- 主应用：带侧边栏和顶部栏 -->
+    <!-- 登录页或未认证：显示登录组件 -->
+    <router-view v-else-if="isLoginPage || !isAuthenticated" />
+
+    <!-- 主应用：带侧边栏和顶部栏（仅认证后显示） -->
     <el-container v-else class="layout-container">
     <!-- 侧边栏 -->
     <el-aside :width="isCollapse ? '64px' : '200px'" class="sidebar">
@@ -96,8 +102,7 @@
               {{ userStore.realName || userStore.username }}
             </span>
             <template #dropdown>
-              <el-dropdown-item command="profile">个人资料</el-dropdown-item>
-              <el-dropdown-item command="settings">设置</el-dropdown-item>
+              <el-dropdown-item command="changePassword">修改密码</el-dropdown-item>
               <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
             </template>
           </el-dropdown>
@@ -114,11 +119,35 @@
       </el-main>
     </el-container>
   </el-container>
+
+  <!-- 修改密码对话框 -->
+  <el-dialog
+    v-model="passwordDialogVisible"
+    title="修改密码"
+    width="400px"
+    @closed="handlePasswordDialogClosed"
+  >
+    <el-form :model="passwordForm" :rules="passwordRules" ref="passwordFormRef" label-width="100px">
+      <el-form-item label="旧密码" prop="oldPassword">
+        <el-input v-model="passwordForm.oldPassword" type="password" placeholder="请输入旧密码" show-password />
+      </el-form-item>
+      <el-form-item label="新密码" prop="newPassword">
+        <el-input v-model="passwordForm.newPassword" type="password" placeholder="请输入新密码" show-password />
+      </el-form-item>
+      <el-form-item label="确认密码" prop="confirmPassword">
+        <el-input v-model="passwordForm.confirmPassword" type="password" placeholder="请再次输入新密码" show-password />
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <el-button @click="passwordDialogVisible = false">取消</el-button>
+      <el-button type="primary" @click="handleChangePassword" :loading="passwordSubmitting">确定</el-button>
+    </template>
+  </el-dialog>
   </ErrorBoundary>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from './stores/user'
 import { ElMessageBox, ElMessage } from 'element-plus'
@@ -136,7 +165,8 @@ import {
   UserFilled,
   Coin,
   DocumentCopy,
-  FolderOpened
+  FolderOpened,
+  Loading
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
@@ -144,15 +174,20 @@ const router = useRouter()
 const userStore = useUserStore()
 
 const isCollapse = ref(false)
+const isAuthChecking = ref(true)
 
 const currentRoute = computed(() => route)
 
 // 页面加载时检查认证状态
 onMounted(async () => {
-  // 不在登录页时才检查认证
-  if (route.path !== '/login') {
-    const isValid = await userStore.checkAuth()
-    console.log('App mounted - auth check result:', isValid)
+  // 检查认证状态
+  const isValid = await userStore.checkAuth()
+  console.log('App mounted - auth check result:', isValid)
+  isAuthChecking.value = false
+
+  // 如果未认证且不在登录页，重定向到登录页
+  if (!isValid && route.path !== '/login') {
+    router.push('/login')
   }
 })
 
@@ -164,9 +199,18 @@ const activeMenu = computed(() => {
   return path
 })
 
-// 判断是否为登录页
+// 判断是否为登录页 - 同时检查路由和认证状态
 const isLoginPage = computed(() => {
-  return route.path === '/login'
+  // 登录页始终显示登录组件
+  if (route.path === '/login') return true
+  // 非登录页但未认证时，也显示登录组件（等待重定向）
+  // 这样可以避免布局闪烁
+  return false
+})
+
+// 判断是否已认证（用于显示布局）
+const isAuthenticated = computed(() => {
+  return !!userStore.token && !!userStore.userInfo
 })
 
 const toggleCollapse = () => {
@@ -175,11 +219,8 @@ const toggleCollapse = () => {
 
 const handleCommand = async (command) => {
   switch (command) {
-    case 'profile':
-      ElMessage.info('个人资料功能待开发')
-      break
-    case 'settings':
-      ElMessage.info('设置功能待开发')
+    case 'changePassword':
+      passwordDialogVisible.value = true
       break
     case 'logout':
       try {
@@ -195,6 +236,69 @@ const handleCommand = async (command) => {
         // 用户取消
       }
       break
+  }
+}
+
+// 修改密码相关
+const passwordDialogVisible = ref(false)
+const passwordSubmitting = ref(false)
+const passwordFormRef = ref()
+const passwordForm = reactive({
+  oldPassword: '',
+  newPassword: '',
+  confirmPassword: ''
+})
+
+const passwordRules = {
+  oldPassword: [{ required: true, message: '请输入旧密码', trigger: 'blur' }],
+  newPassword: [
+    { required: true, message: '请输入新密码', trigger: 'blur' },
+    { min: 8, message: '密码长度至少8位', trigger: 'blur' },
+    { pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, message: '密码必须包含大小写字母和数字', trigger: 'blur' }
+  ],
+  confirmPassword: [
+    { required: true, message: '请确认新密码', trigger: 'blur' },
+    {
+      validator: (rule, value, callback) => {
+        if (value !== passwordForm.newPassword) {
+          callback(new Error('两次输入的密码不一致'))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'blur'
+    }
+  ]
+}
+
+const handlePasswordDialogClosed = () => {
+  passwordFormRef.value?.resetFields()
+  passwordForm.oldPassword = ''
+  passwordForm.newPassword = ''
+  passwordForm.confirmPassword = ''
+}
+
+const handleChangePassword = async () => {
+  const valid = await passwordFormRef.value.validate().catch(() => false)
+  if (!valid) return
+
+  passwordSubmitting.value = true
+  try {
+    const res = await userStore.changePassword({
+      oldPassword: passwordForm.oldPassword,
+      newPassword: passwordForm.newPassword
+    })
+    if (res) {
+      ElMessage.success('密码修改成功，请重新登录')
+      passwordDialogVisible.value = false
+      // 退出登录
+      userStore.logout()
+      window.location.href = '/login'
+    }
+  } catch (error) {
+    console.error('修改密码失败:', error)
+  } finally {
+    passwordSubmitting.value = false
   }
 }
 </script>
@@ -274,5 +378,21 @@ const handleCommand = async (command) => {
 .main-content {
   background-color: #f0f2f5;
   padding: 20px;
+  height: calc(100vh - 60px);
+  overflow: hidden;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: #f0f2f5;
+}
+
+.loading-container p {
+  margin-top: 16px;
+  color: #606266;
 }
 </style>

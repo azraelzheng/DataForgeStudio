@@ -35,44 +35,47 @@
       </el-form>
 
       <!-- 数据源表格 -->
-      <el-table :data="tableData" v-loading="loading" border stripe>
-        <el-table-column prop="dataSourceName" label="数据源名称" width="200" />
-        <el-table-column prop="dbType" label="数据库类型" width="120">
-          <template #default="{ row }">
-            <el-tag>{{ getDbTypeText(row.dbType) }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="serverAddress" label="服务器地址" width="200" />
-        <el-table-column prop="databaseName" label="数据库名" width="150" />
-        <el-table-column prop="isActive" label="状态" width="80">
-          <template #default="{ row }">
-            <el-tag :type="row.isActive ? 'success' : 'danger'">
-              {{ row.isActive ? '启用' : '停用' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="createdTime" label="创建时间" width="180" />
-        <el-table-column label="操作" width="300" fixed="right">
-          <template #default="{ row }">
-            <el-button type="primary" link size="small" @click="handleTest(row)" :loading="row.testing">
-              <el-icon><Connection /></el-icon>
-              测试连接
-            </el-button>
-            <el-button type="primary" link size="small" @click="handleEdit(row)">
-              <el-icon><Edit /></el-icon>
-              编辑
-            </el-button>
-            <el-button :type="row.isActive ? 'warning' : 'success'" link size="small" @click="handleToggleActive(row)" :loading="row.toggling">
-              <el-icon><Switch /></el-icon>
-              {{ row.isActive ? '停用' : '启用' }}
-            </el-button>
-            <el-button type="danger" link size="small" @click="handleDelete(row)">
-              <el-icon><Delete /></el-icon>
-              删除
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+      <template v-if="tableData && tableData.length > 0">
+        <el-table :data="tableData" v-loading="loading" border stripe>
+          <el-table-column prop="dataSourceName" label="数据源名称" width="200" />
+          <el-table-column prop="dbType" label="数据库类型" width="120">
+            <template #default="{ row }">
+              <el-tag>{{ getDbTypeText(row.dbType) }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="serverAddress" label="服务器地址" width="200" />
+          <el-table-column prop="databaseName" label="数据库名" width="150" />
+          <el-table-column prop="isActive" label="状态" width="80">
+            <template #default="{ row }">
+              <el-tag :type="row.isActive ? 'success' : 'danger'">
+                {{ row.isActive ? '启用' : '停用' }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="createdTime" label="创建时间" width="180" />
+          <el-table-column label="操作" width="300" fixed="right">
+            <template #default="{ row }">
+              <el-button type="primary" link size="small" @click="handleTest(row)" :loading="row.testing">
+                <el-icon><Connection /></el-icon>
+                测试连接
+              </el-button>
+              <el-button type="primary" link size="small" @click="handleEdit(row)">
+                <el-icon><Edit /></el-icon>
+                编辑
+              </el-button>
+              <el-button :type="row.isActive ? 'warning' : 'success'" link size="small" @click="handleToggleActive(row)" :loading="row.toggling">
+                <el-icon><Switch /></el-icon>
+                {{ row.isActive ? '停用' : '启用' }}
+              </el-button>
+              <el-button type="danger" link size="small" @click="handleDelete(row)">
+                <el-icon><Delete /></el-icon>
+                删除
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </template>
+      <el-empty v-else-if="!loading" description="暂无数据源，请添加数据源" />
 
       <!-- 分页 -->
       <el-pagination

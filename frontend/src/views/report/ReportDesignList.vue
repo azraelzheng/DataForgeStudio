@@ -48,54 +48,59 @@
       </el-form>
 
       <!-- 报表表格 -->
-      <el-table :data="tableData" v-loading="loading" border stripe>
-        <el-table-column prop="reportName" label="报表名称" width="200" />
-        <el-table-column prop="reportCategory" label="分类" width="100" />
-        <el-table-column prop="dataSourceName" label="数据源" width="150" />
-        <el-table-column label="状态" width="80" align="center">
-          <template #default="{ row }">
-            <el-tag :type="row.isEnabled ? 'success' : 'danger'" size="small">
-              {{ row.isEnabled ? '启用' : '停用' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="viewCount" label="查看次数" width="100" align="center" />
-        <el-table-column prop="lastViewTime" label="最后查看" width="180">
-          <template #default="{ row }">
-            {{ row.lastViewTime ? formatDate(row.lastViewTime) : '-' }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="createdTime" label="创建时间" width="180" />
-        <el-table-column label="操作" width="320" fixed="right">
-          <template #default="{ row }">
-            <el-button type="primary" link size="small" @click="handleEdit(row)">
-              <el-icon><Edit /></el-icon>
-              编辑
-            </el-button>
-            <el-button type="info" link size="small" @click="handlePreview(row)">
-              <el-icon><View /></el-icon>
-              预览
-            </el-button>
-            <el-button type="success" link size="small" @click="handleCopy(row)">
-              <el-icon><DocumentCopy /></el-icon>
-              复制
-            </el-button>
-            <el-button
-              :type="row.isEnabled ? 'warning' : 'success'"
-              link
-              size="small"
-              @click="handleToggleStatus(row)"
-            >
-              <el-icon><Switch /></el-icon>
-              {{ row.isEnabled ? '停用' : '启用' }}
-            </el-button>
-            <el-button type="danger" link size="small" @click="handleDelete(row)">
-              <el-icon><Delete /></el-icon>
-              删除
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+      <template v-if="tableData && tableData.length > 0">
+        <el-table :data="tableData" v-loading="loading" border stripe>
+          <el-table-column prop="reportName" label="报表名称" width="200" />
+          <el-table-column prop="reportCategory" label="分类" width="100" />
+          <el-table-column prop="dataSourceName" label="数据源" width="150" />
+          <el-table-column label="状态" width="80" align="center">
+            <template #default="{ row }">
+              <el-tag :type="row.isEnabled ? 'success' : 'danger'" size="small">
+                {{ row.isEnabled ? '启用' : '停用' }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="viewCount" label="查看次数" width="100" align="center" />
+          <el-table-column prop="lastViewTime" label="最后查看" width="180">
+            <template #default="{ row }">
+              {{ row.lastViewTime ? formatDate(row.lastViewTime) : '-' }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="createdTime" label="创建时间" width="180" />
+          <el-table-column label="操作" width="320" fixed="right">
+            <template #default="{ row }">
+              <el-button type="primary" link size="small" @click="handleEdit(row)">
+                <el-icon><Edit /></el-icon>
+                编辑
+              </el-button>
+              <el-button type="info" link size="small" @click="handlePreview(row)">
+                <el-icon><View /></el-icon>
+                预览
+              </el-button>
+              <el-button type="success" link size="small" @click="handleCopy(row)">
+                <el-icon><DocumentCopy /></el-icon>
+                复制
+              </el-button>
+              <el-button
+                :type="row.isEnabled ? 'warning' : 'success'"
+                link
+                size="small"
+                @click="handleToggleStatus(row)"
+              >
+                <el-icon><Switch /></el-icon>
+                {{ row.isEnabled ? '停用' : '启用' }}
+              </el-button>
+              <el-button type="danger" link size="small" @click="handleDelete(row)">
+                <el-icon><Delete /></el-icon>
+                删除
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </template>
+      <el-empty v-else-if="!loading" description="暂无报表数据，点击右上角创建报表">
+        <el-button type="primary" @click="handleAdd">创建报表</el-button>
+      </el-empty>
 
       <!-- 分页 -->
       <el-pagination
@@ -236,11 +241,16 @@ const handleCopy = async (row) => {
 
 const handleToggleStatus = async (row) => {
   try {
-    await reportApi.toggleReport(row.reportId)
-    ElMessage.success(row.isEnabled ? '已停用' : '已启用')
-    loadData()
+    const res = await reportApi.toggleReport(row.reportId)
+    if (res.success) {
+      ElMessage.success(res.message || (row.isEnabled ? '已停用' : '已启用'))
+      loadData()
+    } else {
+      ElMessage.error(res.message || '操作失败')
+    }
   } catch (error) {
     console.error('更新状态失败:', error)
+    ElMessage.error('更新状态失败')
   }
 }
 

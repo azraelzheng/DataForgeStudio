@@ -1,0 +1,2105 @@
+{
+  "config": {
+    "configFile": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\playwright.config.js",
+    "rootDir": "H:/开发项目/DataForgeStudio_V4/frontend/tests/e2e",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "H:/开发项目/DataForgeStudio_V4/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "H:/开发项目/DataForgeStudio_V4/frontend/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "html",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "test-results/results.json"
+        }
+      ],
+      [
+        "list",
+        null
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "runAgents": "none",
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.58.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "app.spec.js",
+      "file": "app.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "DataForgeStudio V4 - 用户认证测试",
+          "file": "app.spec.js",
+          "line": 63,
+          "column": 6,
+          "specs": [
+            {
+              "title": "应该显示登录页面",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 6587,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveTitle\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/登录.*DataForgeStudio/\u001b[39m\nReceived string:  \u001b[31m\"Error response\"\u001b[39m\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveTitle\" with timeout 5000ms\u001b[22m\n\u001b[2m    9 × unexpected value \"Error response\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveTitle\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/登录.*DataForgeStudio/\u001b[39m\nReceived string:  \u001b[31m\"Error response\"\u001b[39m\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveTitle\" with timeout 5000ms\u001b[22m\n\u001b[2m    9 × unexpected value \"Error response\"\u001b[22m\n\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:75:24",
+                        "location": {
+                          "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                          "column": 24,
+                          "line": 75
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 73 |\u001b[39m\n \u001b[90m 74 |\u001b[39m     \u001b[90m// 验证页面标题\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 75 |\u001b[39m     \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mtoHaveTitle(\u001b[35m/登录.*DataForgeStudio/\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 76 |\u001b[39m\n \u001b[90m 77 |\u001b[39m     \u001b[90m// 验证登录表单元素存在\u001b[39m\n \u001b[90m 78 |\u001b[39m     \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mlocator(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"]'\u001b[39m))\u001b[33m.\u001b[39mtoHaveCount(\u001b[35m1\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                            "column": 24,
+                            "line": 75
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveTitle\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/登录.*DataForgeStudio/\u001b[39m\nReceived string:  \u001b[31m\"Error response\"\u001b[39m\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveTitle\" with timeout 5000ms\u001b[22m\n\u001b[2m    9 × unexpected value \"Error response\"\u001b[22m\n\n\n  73 |\n  74 |     // 验证页面标题\n> 75 |     await expect(page).toHaveTitle(/登录.*DataForgeStudio/);\n     |                        ^\n  76 |\n  77 |     // 验证登录表单元素存在\n  78 |     await expect(page.locator('input[type=\"text\"], input[placeholder*=\"用户\"]')).toHaveCount(1);\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:75:24"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-15T13:23:19.306Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---用户认证测试-应该显示登录页面-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---用户认证测试-应该显示登录页面-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---用户认证测试-应该显示登录页面-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                        "column": 24,
+                        "line": 75
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "a510cc93a867214a2ea0-c9c300f1f6a2199fb089",
+              "file": "app.spec.js",
+              "line": 70,
+              "column": 3
+            },
+            {
+              "title": "应该能够成功登录",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 11293,
+                      "error": {
+                        "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n",
+                        "stack": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:84:5",
+                        "location": {
+                          "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                          "column": 14,
+                          "line": 44
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 42 |\u001b[39m\n \u001b[90m 43 |\u001b[39m   \u001b[90m// 等待登录表单加载\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 44 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 45 |\u001b[39m\n \u001b[90m 46 |\u001b[39m   \u001b[90m// 输入用户名 - 尝试多种可能的选择器\u001b[39m\n \u001b[90m 47 |\u001b[39m   \u001b[36mconst\u001b[39m usernameInput \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m)\u001b[33m.\u001b[39mfirst()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                            "column": 14,
+                            "line": 44
+                          },
+                          "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n\n  42 |\n  43 |   // 等待登录表单加载\n> 44 |   await page.waitForSelector('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]', { timeout: 10000 });\n     |              ^\n  45 |\n  46 |   // 输入用户名 - 尝试多种可能的选择器\n  47 |   const usernameInput = page.locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]').first();\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:84:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-15T13:23:30.874Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---用户认证测试-应该能够成功登录-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---用户认证测试-应该能够成功登录-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---用户认证测试-应该能够成功登录-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                        "column": 14,
+                        "line": 44
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "a510cc93a867214a2ea0-56ff5c905c86b7a3cfff",
+              "file": "app.spec.js",
+              "line": 83,
+              "column": 3
+            },
+            {
+              "title": "登录失败应该显示错误消息",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "timedOut",
+                      "duration": 31363,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                            "column": 80,
+                            "line": 96
+                          },
+                          "message": "Error: locator.fill: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"]').first()\u001b[22m\n\n\n  94 |\n  95 |     // 输入错误的凭据\n> 96 |     await page.locator('input[type=\"text\"], input[placeholder*=\"用户\"]').first().fill('wronguser');\n     |                                                                                ^\n  97 |     await page.locator('input[type=\"password\"]').first().fill('wrongpass');\n  98 |\n  99 |     // 点击登录\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:96:80"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-15T13:23:45.033Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---用户认证测试-登录失败应该显示错误消息-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---用户认证测试-登录失败应该显示错误消息-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---用户认证测试-登录失败应该显示错误消息-chromium\\error-context.md"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "a510cc93a867214a2ea0-b4540b2637163f37931f",
+              "file": "app.spec.js",
+              "line": 91,
+              "column": 3
+            },
+            {
+              "title": "应该能够登出",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 11291,
+                      "error": {
+                        "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n",
+                        "stack": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:110:5",
+                        "location": {
+                          "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                          "column": 14,
+                          "line": 44
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 42 |\u001b[39m\n \u001b[90m 43 |\u001b[39m   \u001b[90m// 等待登录表单加载\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 44 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 45 |\u001b[39m\n \u001b[90m 46 |\u001b[39m   \u001b[90m// 输入用户名 - 尝试多种可能的选择器\u001b[39m\n \u001b[90m 47 |\u001b[39m   \u001b[36mconst\u001b[39m usernameInput \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m)\u001b[33m.\u001b[39mfirst()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                            "column": 14,
+                            "line": 44
+                          },
+                          "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n\n  42 |\n  43 |   // 等待登录表单加载\n> 44 |   await page.waitForSelector('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]', { timeout: 10000 });\n     |              ^\n  45 |\n  46 |   // 输入用户名 - 尝试多种可能的选择器\n  47 |   const usernameInput = page.locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]').first();\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:110:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-15T13:24:19.121Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---用户认证测试-应该能够登出-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---用户认证测试-应该能够登出-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---用户认证测试-应该能够登出-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                        "column": 14,
+                        "line": 44
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "a510cc93a867214a2ea0-a9cd08cdf37706ab7b9f",
+              "file": "app.spec.js",
+              "line": 109,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "DataForgeStudio V4 - 首页/仪表盘测试",
+          "file": "app.spec.js",
+          "line": 126,
+          "column": 6,
+          "specs": [
+            {
+              "title": "应该显示首页",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 11302,
+                      "error": {
+                        "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n",
+                        "stack": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:128:5",
+                        "location": {
+                          "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                          "column": 14,
+                          "line": 44
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 42 |\u001b[39m\n \u001b[90m 43 |\u001b[39m   \u001b[90m// 等待登录表单加载\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 44 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 45 |\u001b[39m\n \u001b[90m 46 |\u001b[39m   \u001b[90m// 输入用户名 - 尝试多种可能的选择器\u001b[39m\n \u001b[90m 47 |\u001b[39m   \u001b[36mconst\u001b[39m usernameInput \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m)\u001b[33m.\u001b[39mfirst()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                            "column": 14,
+                            "line": 44
+                          },
+                          "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n\n  42 |\n  43 |   // 等待登录表单加载\n> 44 |   await page.waitForSelector('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]', { timeout: 10000 });\n     |              ^\n  45 |\n  46 |   // 输入用户名 - 尝试多种可能的选择器\n  47 |   const usernameInput = page.locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]').first();\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:128:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-15T13:24:33.206Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---首页-仪表盘测试-应该显示首页-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---首页-仪表盘测试-应该显示首页-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---首页-仪表盘测试-应该显示首页-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                        "column": 14,
+                        "line": 44
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "a510cc93a867214a2ea0-529b691584b7bfbe9ca1",
+              "file": "app.spec.js",
+              "line": 131,
+              "column": 3
+            },
+            {
+              "title": "侧边栏导航应该可点击",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 11284,
+                      "error": {
+                        "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n",
+                        "stack": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:128:5",
+                        "location": {
+                          "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                          "column": 14,
+                          "line": 44
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 42 |\u001b[39m\n \u001b[90m 43 |\u001b[39m   \u001b[90m// 等待登录表单加载\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 44 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 45 |\u001b[39m\n \u001b[90m 46 |\u001b[39m   \u001b[90m// 输入用户名 - 尝试多种可能的选择器\u001b[39m\n \u001b[90m 47 |\u001b[39m   \u001b[36mconst\u001b[39m usernameInput \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m)\u001b[33m.\u001b[39mfirst()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                            "column": 14,
+                            "line": 44
+                          },
+                          "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n\n  42 |\n  43 |   // 等待登录表单加载\n> 44 |   await page.waitForSelector('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]', { timeout: 10000 });\n     |              ^\n  45 |\n  46 |   // 输入用户名 - 尝试多种可能的选择器\n  47 |   const usernameInput = page.locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]').first();\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:128:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-15T13:24:47.299Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---首页-仪表盘测试-侧边栏导航应该可点击-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---首页-仪表盘测试-侧边栏导航应该可点击-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---首页-仪表盘测试-侧边栏导航应该可点击-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                        "column": 14,
+                        "line": 44
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "a510cc93a867214a2ea0-f1072a05e7e43ad16da4",
+              "file": "app.spec.js",
+              "line": 144,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "DataForgeStudio V4 - 用户管理测试",
+          "file": "app.spec.js",
+          "line": 158,
+          "column": 6,
+          "specs": [
+            {
+              "title": "应该能够访问用户管理页面",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 11268,
+                      "error": {
+                        "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n",
+                        "stack": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:160:5",
+                        "location": {
+                          "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                          "column": 14,
+                          "line": 44
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 42 |\u001b[39m\n \u001b[90m 43 |\u001b[39m   \u001b[90m// 等待登录表单加载\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 44 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 45 |\u001b[39m\n \u001b[90m 46 |\u001b[39m   \u001b[90m// 输入用户名 - 尝试多种可能的选择器\u001b[39m\n \u001b[90m 47 |\u001b[39m   \u001b[36mconst\u001b[39m usernameInput \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m)\u001b[33m.\u001b[39mfirst()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                            "column": 14,
+                            "line": 44
+                          },
+                          "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n\n  42 |\n  43 |   // 等待登录表单加载\n> 44 |   await page.waitForSelector('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]', { timeout: 10000 });\n     |              ^\n  45 |\n  46 |   // 输入用户名 - 尝试多种可能的选择器\n  47 |   const usernameInput = page.locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]').first();\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:160:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-15T13:25:01.422Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---用户管理测试-应该能够访问用户管理页面-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---用户管理测试-应该能够访问用户管理页面-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---用户管理测试-应该能够访问用户管理页面-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                        "column": 14,
+                        "line": 44
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "a510cc93a867214a2ea0-377b94f9e9310e41ba16",
+              "file": "app.spec.js",
+              "line": 163,
+              "column": 3
+            },
+            {
+              "title": "用户管理页面应该有添加用户按钮",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 11338,
+                      "error": {
+                        "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n",
+                        "stack": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:160:5",
+                        "location": {
+                          "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                          "column": 14,
+                          "line": 44
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 42 |\u001b[39m\n \u001b[90m 43 |\u001b[39m   \u001b[90m// 等待登录表单加载\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 44 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 45 |\u001b[39m\n \u001b[90m 46 |\u001b[39m   \u001b[90m// 输入用户名 - 尝试多种可能的选择器\u001b[39m\n \u001b[90m 47 |\u001b[39m   \u001b[36mconst\u001b[39m usernameInput \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m)\u001b[33m.\u001b[39mfirst()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                            "column": 14,
+                            "line": 44
+                          },
+                          "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n\n  42 |\n  43 |   // 等待登录表单加载\n> 44 |   await page.waitForSelector('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]', { timeout: 10000 });\n     |              ^\n  45 |\n  46 |   // 输入用户名 - 尝试多种可能的选择器\n  47 |   const usernameInput = page.locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]').first();\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:160:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-15T13:25:15.486Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---用户管理测试-用户管理页面应该有添加用户按钮-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---用户管理测试-用户管理页面应该有添加用户按钮-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---用户管理测试-用户管理页面应该有添加用户按钮-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                        "column": 14,
+                        "line": 44
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "a510cc93a867214a2ea0-ad5140096d5ac19b59ae",
+              "file": "app.spec.js",
+              "line": 180,
+              "column": 3
+            },
+            {
+              "title": "应该能够打开新增用户对话框",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 11296,
+                      "error": {
+                        "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n",
+                        "stack": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:160:5",
+                        "location": {
+                          "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                          "column": 14,
+                          "line": 44
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 42 |\u001b[39m\n \u001b[90m 43 |\u001b[39m   \u001b[90m// 等待登录表单加载\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 44 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 45 |\u001b[39m\n \u001b[90m 46 |\u001b[39m   \u001b[90m// 输入用户名 - 尝试多种可能的选择器\u001b[39m\n \u001b[90m 47 |\u001b[39m   \u001b[36mconst\u001b[39m usernameInput \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m)\u001b[33m.\u001b[39mfirst()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                            "column": 14,
+                            "line": 44
+                          },
+                          "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n\n  42 |\n  43 |   // 等待登录表单加载\n> 44 |   await page.waitForSelector('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]', { timeout: 10000 });\n     |              ^\n  45 |\n  46 |   // 输入用户名 - 尝试多种可能的选择器\n  47 |   const usernameInput = page.locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]').first();\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:160:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-15T13:25:29.578Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---用户管理测试-应该能够打开新增用户对话框-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---用户管理测试-应该能够打开新增用户对话框-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---用户管理测试-应该能够打开新增用户对话框-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                        "column": 14,
+                        "line": 44
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "a510cc93a867214a2ea0-7c233293b4257bc108ce",
+              "file": "app.spec.js",
+              "line": 194,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "DataForgeStudio V4 - 角色管理测试",
+          "file": "app.spec.js",
+          "line": 217,
+          "column": 6,
+          "specs": [
+            {
+              "title": "应该能够访问角色管理页面",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 11325,
+                      "error": {
+                        "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n",
+                        "stack": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:219:5",
+                        "location": {
+                          "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                          "column": 14,
+                          "line": 44
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 42 |\u001b[39m\n \u001b[90m 43 |\u001b[39m   \u001b[90m// 等待登录表单加载\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 44 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 45 |\u001b[39m\n \u001b[90m 46 |\u001b[39m   \u001b[90m// 输入用户名 - 尝试多种可能的选择器\u001b[39m\n \u001b[90m 47 |\u001b[39m   \u001b[36mconst\u001b[39m usernameInput \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m)\u001b[33m.\u001b[39mfirst()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                            "column": 14,
+                            "line": 44
+                          },
+                          "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n\n  42 |\n  43 |   // 等待登录表单加载\n> 44 |   await page.waitForSelector('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]', { timeout: 10000 });\n     |              ^\n  45 |\n  46 |   // 输入用户名 - 尝试多种可能的选择器\n  47 |   const usernameInput = page.locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]').first();\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:219:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-15T13:25:43.708Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---角色管理测试-应该能够访问角色管理页面-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---角色管理测试-应该能够访问角色管理页面-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---角色管理测试-应该能够访问角色管理页面-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                        "column": 14,
+                        "line": 44
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "a510cc93a867214a2ea0-1d026d37ebfdcc74c44d",
+              "file": "app.spec.js",
+              "line": 222,
+              "column": 3
+            },
+            {
+              "title": "角色管理页面应该显示角色列表",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 10,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 11309,
+                      "error": {
+                        "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n",
+                        "stack": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:219:5",
+                        "location": {
+                          "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                          "column": 14,
+                          "line": 44
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 42 |\u001b[39m\n \u001b[90m 43 |\u001b[39m   \u001b[90m// 等待登录表单加载\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 44 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 45 |\u001b[39m\n \u001b[90m 46 |\u001b[39m   \u001b[90m// 输入用户名 - 尝试多种可能的选择器\u001b[39m\n \u001b[90m 47 |\u001b[39m   \u001b[36mconst\u001b[39m usernameInput \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m)\u001b[33m.\u001b[39mfirst()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                            "column": 14,
+                            "line": 44
+                          },
+                          "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n\n  42 |\n  43 |   // 等待登录表单加载\n> 44 |   await page.waitForSelector('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]', { timeout: 10000 });\n     |              ^\n  45 |\n  46 |   // 输入用户名 - 尝试多种可能的选择器\n  47 |   const usernameInput = page.locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]').first();\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:219:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-15T13:25:57.808Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---角色管理测试-角色管理页面应该显示角色列表-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---角色管理测试-角色管理页面应该显示角色列表-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---角色管理测试-角色管理页面应该显示角色列表-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                        "column": 14,
+                        "line": 44
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "a510cc93a867214a2ea0-59853c5cf45553015cb9",
+              "file": "app.spec.js",
+              "line": 235,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "DataForgeStudio V4 - 数据源管理测试",
+          "file": "app.spec.js",
+          "line": 249,
+          "column": 6,
+          "specs": [
+            {
+              "title": "应该能够访问数据源管理页面",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 11,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 11230,
+                      "error": {
+                        "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n",
+                        "stack": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:251:5",
+                        "location": {
+                          "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                          "column": 14,
+                          "line": 44
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 42 |\u001b[39m\n \u001b[90m 43 |\u001b[39m   \u001b[90m// 等待登录表单加载\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 44 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 45 |\u001b[39m\n \u001b[90m 46 |\u001b[39m   \u001b[90m// 输入用户名 - 尝试多种可能的选择器\u001b[39m\n \u001b[90m 47 |\u001b[39m   \u001b[36mconst\u001b[39m usernameInput \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m)\u001b[33m.\u001b[39mfirst()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                            "column": 14,
+                            "line": 44
+                          },
+                          "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n\n  42 |\n  43 |   // 等待登录表单加载\n> 44 |   await page.waitForSelector('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]', { timeout: 10000 });\n     |              ^\n  45 |\n  46 |   // 输入用户名 - 尝试多种可能的选择器\n  47 |   const usernameInput = page.locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]').first();\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:251:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-15T13:26:11.905Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---数据源管理测试-应该能够访问数据源管理页面-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---数据源管理测试-应该能够访问数据源管理页面-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---数据源管理测试-应该能够访问数据源管理页面-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                        "column": 14,
+                        "line": 44
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "a510cc93a867214a2ea0-da8c03b143b69d6e9998",
+              "file": "app.spec.js",
+              "line": 254,
+              "column": 3
+            },
+            {
+              "title": "应该有添加数据源按钮",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 12,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 11353,
+                      "error": {
+                        "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n",
+                        "stack": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:251:5",
+                        "location": {
+                          "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                          "column": 14,
+                          "line": 44
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 42 |\u001b[39m\n \u001b[90m 43 |\u001b[39m   \u001b[90m// 等待登录表单加载\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 44 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 45 |\u001b[39m\n \u001b[90m 46 |\u001b[39m   \u001b[90m// 输入用户名 - 尝试多种可能的选择器\u001b[39m\n \u001b[90m 47 |\u001b[39m   \u001b[36mconst\u001b[39m usernameInput \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m)\u001b[33m.\u001b[39mfirst()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                            "column": 14,
+                            "line": 44
+                          },
+                          "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n\n  42 |\n  43 |   // 等待登录表单加载\n> 44 |   await page.waitForSelector('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]', { timeout: 10000 });\n     |              ^\n  45 |\n  46 |   // 输入用户名 - 尝试多种可能的选择器\n  47 |   const usernameInput = page.locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]').first();\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:251:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-15T13:26:25.946Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---数据源管理测试-应该有添加数据源按钮-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---数据源管理测试-应该有添加数据源按钮-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---数据源管理测试-应该有添加数据源按钮-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                        "column": 14,
+                        "line": 44
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "a510cc93a867214a2ea0-a5bda047cdc39e3b6619",
+              "file": "app.spec.js",
+              "line": 267,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "DataForgeStudio V4 - 报表查询测试",
+          "file": "app.spec.js",
+          "line": 281,
+          "column": 6,
+          "specs": [
+            {
+              "title": "应该能够访问报表查询页面",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 13,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 11325,
+                      "error": {
+                        "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n",
+                        "stack": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:283:5",
+                        "location": {
+                          "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                          "column": 14,
+                          "line": 44
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 42 |\u001b[39m\n \u001b[90m 43 |\u001b[39m   \u001b[90m// 等待登录表单加载\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 44 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 45 |\u001b[39m\n \u001b[90m 46 |\u001b[39m   \u001b[90m// 输入用户名 - 尝试多种可能的选择器\u001b[39m\n \u001b[90m 47 |\u001b[39m   \u001b[36mconst\u001b[39m usernameInput \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m)\u001b[33m.\u001b[39mfirst()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                            "column": 14,
+                            "line": 44
+                          },
+                          "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n\n  42 |\n  43 |   // 等待登录表单加载\n> 44 |   await page.waitForSelector('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]', { timeout: 10000 });\n     |              ^\n  45 |\n  46 |   // 输入用户名 - 尝试多种可能的选择器\n  47 |   const usernameInput = page.locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]').first();\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:283:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-15T13:26:40.082Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---报表查询测试-应该能够访问报表查询页面-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---报表查询测试-应该能够访问报表查询页面-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---报表查询测试-应该能够访问报表查询页面-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                        "column": 14,
+                        "line": 44
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "a510cc93a867214a2ea0-2da5ac6c55dab19b66fc",
+              "file": "app.spec.js",
+              "line": 286,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "DataForgeStudio V4 - 报表设计测试",
+          "file": "app.spec.js",
+          "line": 300,
+          "column": 6,
+          "specs": [
+            {
+              "title": "应该能够访问报表设计列表页面",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 14,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 11293,
+                      "error": {
+                        "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n",
+                        "stack": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:302:5",
+                        "location": {
+                          "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                          "column": 14,
+                          "line": 44
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 42 |\u001b[39m\n \u001b[90m 43 |\u001b[39m   \u001b[90m// 等待登录表单加载\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 44 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 45 |\u001b[39m\n \u001b[90m 46 |\u001b[39m   \u001b[90m// 输入用户名 - 尝试多种可能的选择器\u001b[39m\n \u001b[90m 47 |\u001b[39m   \u001b[36mconst\u001b[39m usernameInput \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m)\u001b[33m.\u001b[39mfirst()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                            "column": 14,
+                            "line": 44
+                          },
+                          "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n\n  42 |\n  43 |   // 等待登录表单加载\n> 44 |   await page.waitForSelector('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]', { timeout: 10000 });\n     |              ^\n  45 |\n  46 |   // 输入用户名 - 尝试多种可能的选择器\n  47 |   const usernameInput = page.locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]').first();\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:302:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-15T13:26:54.214Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---报表设计测试-应该能够访问报表设计列表页面-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---报表设计测试-应该能够访问报表设计列表页面-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---报表设计测试-应该能够访问报表设计列表页面-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                        "column": 14,
+                        "line": 44
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "a510cc93a867214a2ea0-6d06a26875a64d0e8c6a",
+              "file": "app.spec.js",
+              "line": 305,
+              "column": 3
+            },
+            {
+              "title": "报表设计页面应该有创建报表按钮",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 15,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 11253,
+                      "error": {
+                        "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n",
+                        "stack": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:302:5",
+                        "location": {
+                          "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                          "column": 14,
+                          "line": 44
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 42 |\u001b[39m\n \u001b[90m 43 |\u001b[39m   \u001b[90m// 等待登录表单加载\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 44 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 45 |\u001b[39m\n \u001b[90m 46 |\u001b[39m   \u001b[90m// 输入用户名 - 尝试多种可能的选择器\u001b[39m\n \u001b[90m 47 |\u001b[39m   \u001b[36mconst\u001b[39m usernameInput \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m)\u001b[33m.\u001b[39mfirst()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                            "column": 14,
+                            "line": 44
+                          },
+                          "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n\n  42 |\n  43 |   // 等待登录表单加载\n> 44 |   await page.waitForSelector('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]', { timeout: 10000 });\n     |              ^\n  45 |\n  46 |   // 输入用户名 - 尝试多种可能的选择器\n  47 |   const usernameInput = page.locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]').first();\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:302:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-15T13:27:08.320Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---报表设计测试-报表设计页面应该有创建报表按钮-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---报表设计测试-报表设计页面应该有创建报表按钮-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---报表设计测试-报表设计页面应该有创建报表按钮-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                        "column": 14,
+                        "line": 44
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "a510cc93a867214a2ea0-8e54d7fef7993fd0e0b0",
+              "file": "app.spec.js",
+              "line": 318,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "DataForgeStudio V4 - 许可管理测试",
+          "file": "app.spec.js",
+          "line": 332,
+          "column": 6,
+          "specs": [
+            {
+              "title": "应该能够访问许可管理页面",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 16,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 11284,
+                      "error": {
+                        "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n",
+                        "stack": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:334:5",
+                        "location": {
+                          "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                          "column": 14,
+                          "line": 44
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 42 |\u001b[39m\n \u001b[90m 43 |\u001b[39m   \u001b[90m// 等待登录表单加载\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 44 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 45 |\u001b[39m\n \u001b[90m 46 |\u001b[39m   \u001b[90m// 输入用户名 - 尝试多种可能的选择器\u001b[39m\n \u001b[90m 47 |\u001b[39m   \u001b[36mconst\u001b[39m usernameInput \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m)\u001b[33m.\u001b[39mfirst()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                            "column": 14,
+                            "line": 44
+                          },
+                          "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n\n  42 |\n  43 |   // 等待登录表单加载\n> 44 |   await page.waitForSelector('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]', { timeout: 10000 });\n     |              ^\n  45 |\n  46 |   // 输入用户名 - 尝试多种可能的选择器\n  47 |   const usernameInput = page.locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]').first();\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:334:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-15T13:27:22.347Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---许可管理测试-应该能够访问许可管理页面-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---许可管理测试-应该能够访问许可管理页面-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---许可管理测试-应该能够访问许可管理页面-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                        "column": 14,
+                        "line": 44
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "a510cc93a867214a2ea0-405c3e9aa8cf21a36dfc",
+              "file": "app.spec.js",
+              "line": 337,
+              "column": 3
+            },
+            {
+              "title": "许可页面应该显示许可信息",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 17,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 11398,
+                      "error": {
+                        "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n",
+                        "stack": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:334:5",
+                        "location": {
+                          "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                          "column": 14,
+                          "line": 44
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 42 |\u001b[39m\n \u001b[90m 43 |\u001b[39m   \u001b[90m// 等待登录表单加载\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 44 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 45 |\u001b[39m\n \u001b[90m 46 |\u001b[39m   \u001b[90m// 输入用户名 - 尝试多种可能的选择器\u001b[39m\n \u001b[90m 47 |\u001b[39m   \u001b[36mconst\u001b[39m usernameInput \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m)\u001b[33m.\u001b[39mfirst()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                            "column": 14,
+                            "line": 44
+                          },
+                          "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n\n  42 |\n  43 |   // 等待登录表单加载\n> 44 |   await page.waitForSelector('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]', { timeout: 10000 });\n     |              ^\n  45 |\n  46 |   // 输入用户名 - 尝试多种可能的选择器\n  47 |   const usernameInput = page.locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]').first();\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:334:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-15T13:27:36.451Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---许可管理测试-许可页面应该显示许可信息-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---许可管理测试-许可页面应该显示许可信息-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---许可管理测试-许可页面应该显示许可信息-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                        "column": 14,
+                        "line": 44
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "a510cc93a867214a2ea0-a9f194a76bb3116c8cde",
+              "file": "app.spec.js",
+              "line": 350,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "DataForgeStudio V4 - 日志管理测试",
+          "file": "app.spec.js",
+          "line": 362,
+          "column": 6,
+          "specs": [
+            {
+              "title": "应该能够访问日志管理页面",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 18,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 11278,
+                      "error": {
+                        "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n",
+                        "stack": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:364:5",
+                        "location": {
+                          "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                          "column": 14,
+                          "line": 44
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 42 |\u001b[39m\n \u001b[90m 43 |\u001b[39m   \u001b[90m// 等待登录表单加载\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 44 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 45 |\u001b[39m\n \u001b[90m 46 |\u001b[39m   \u001b[90m// 输入用户名 - 尝试多种可能的选择器\u001b[39m\n \u001b[90m 47 |\u001b[39m   \u001b[36mconst\u001b[39m usernameInput \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m)\u001b[33m.\u001b[39mfirst()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                            "column": 14,
+                            "line": 44
+                          },
+                          "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n\n  42 |\n  43 |   // 等待登录表单加载\n> 44 |   await page.waitForSelector('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]', { timeout: 10000 });\n     |              ^\n  45 |\n  46 |   // 输入用户名 - 尝试多种可能的选择器\n  47 |   const usernameInput = page.locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]').first();\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:364:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-15T13:27:50.628Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---日志管理测试-应该能够访问日志管理页面-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---日志管理测试-应该能够访问日志管理页面-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---日志管理测试-应该能够访问日志管理页面-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                        "column": 14,
+                        "line": 44
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "a510cc93a867214a2ea0-da25b131c008348eab26",
+              "file": "app.spec.js",
+              "line": 367,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "DataForgeStudio V4 - 备份管理测试",
+          "file": "app.spec.js",
+          "line": 381,
+          "column": 6,
+          "specs": [
+            {
+              "title": "应该能够访问备份管理页面",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 19,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 11270,
+                      "error": {
+                        "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n",
+                        "stack": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:383:5",
+                        "location": {
+                          "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                          "column": 14,
+                          "line": 44
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 42 |\u001b[39m\n \u001b[90m 43 |\u001b[39m   \u001b[90m// 等待登录表单加载\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 44 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 45 |\u001b[39m\n \u001b[90m 46 |\u001b[39m   \u001b[90m// 输入用户名 - 尝试多种可能的选择器\u001b[39m\n \u001b[90m 47 |\u001b[39m   \u001b[36mconst\u001b[39m usernameInput \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m)\u001b[33m.\u001b[39mfirst()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                            "column": 14,
+                            "line": 44
+                          },
+                          "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n\n  42 |\n  43 |   // 等待登录表单加载\n> 44 |   await page.waitForSelector('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]', { timeout: 10000 });\n     |              ^\n  45 |\n  46 |   // 输入用户名 - 尝试多种可能的选择器\n  47 |   const usernameInput = page.locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]').first();\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:383:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-15T13:28:04.741Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---备份管理测试-应该能够访问备份管理页面-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---备份管理测试-应该能够访问备份管理页面-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---备份管理测试-应该能够访问备份管理页面-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                        "column": 14,
+                        "line": 44
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "a510cc93a867214a2ea0-abd63aa92149b05837a7",
+              "file": "app.spec.js",
+              "line": 386,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "DataForgeStudio V4 - 响应式设计测试",
+          "file": "app.spec.js",
+          "line": 400,
+          "column": 6,
+          "specs": [
+            {
+              "title": "首页在移动设备上应该正常显示",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 20,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 11315,
+                      "error": {
+                        "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n",
+                        "stack": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:402:5",
+                        "location": {
+                          "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                          "column": 14,
+                          "line": 44
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 42 |\u001b[39m\n \u001b[90m 43 |\u001b[39m   \u001b[90m// 等待登录表单加载\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 44 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 45 |\u001b[39m\n \u001b[90m 46 |\u001b[39m   \u001b[90m// 输入用户名 - 尝试多种可能的选择器\u001b[39m\n \u001b[90m 47 |\u001b[39m   \u001b[36mconst\u001b[39m usernameInput \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m)\u001b[33m.\u001b[39mfirst()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                            "column": 14,
+                            "line": 44
+                          },
+                          "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n\n  42 |\n  43 |   // 等待登录表单加载\n> 44 |   await page.waitForSelector('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]', { timeout: 10000 });\n     |              ^\n  45 |\n  46 |   // 输入用户名 - 尝试多种可能的选择器\n  47 |   const usernameInput = page.locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]').first();\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:402:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-15T13:28:18.786Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---响应式设计测试-首页在移动设备上应该正常显示-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---响应式设计测试-首页在移动设备上应该正常显示-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---响应式设计测试-首页在移动设备上应该正常显示-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                        "column": 14,
+                        "line": 44
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "a510cc93a867214a2ea0-f8761cc300836b539827",
+              "file": "app.spec.js",
+              "line": 405,
+              "column": 3
+            },
+            {
+              "title": "首页在平板设备上应该正常显示",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 21,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 11292,
+                      "error": {
+                        "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n",
+                        "stack": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:402:5",
+                        "location": {
+                          "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                          "column": 14,
+                          "line": 44
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 42 |\u001b[39m\n \u001b[90m 43 |\u001b[39m   \u001b[90m// 等待登录表单加载\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 44 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 45 |\u001b[39m\n \u001b[90m 46 |\u001b[39m   \u001b[90m// 输入用户名 - 尝试多种可能的选择器\u001b[39m\n \u001b[90m 47 |\u001b[39m   \u001b[36mconst\u001b[39m usernameInput \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m)\u001b[33m.\u001b[39mfirst()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                            "column": 14,
+                            "line": 44
+                          },
+                          "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n\n  42 |\n  43 |   // 等待登录表单加载\n> 44 |   await page.waitForSelector('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]', { timeout: 10000 });\n     |              ^\n  45 |\n  46 |   // 输入用户名 - 尝试多种可能的选择器\n  47 |   const usernameInput = page.locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]').first();\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:402:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-15T13:28:33.086Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---响应式设计测试-首页在平板设备上应该正常显示-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---响应式设计测试-首页在平板设备上应该正常显示-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---响应式设计测试-首页在平板设备上应该正常显示-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                        "column": 14,
+                        "line": 44
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "a510cc93a867214a2ea0-854d6513f041183684c5",
+              "file": "app.spec.js",
+              "line": 415,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "DataForgeStudio V4 - 无障碍测试",
+          "file": "app.spec.js",
+          "line": 426,
+          "column": 6,
+          "specs": [
+            {
+              "title": "页面应该有适当的标题",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 22,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 11275,
+                      "error": {
+                        "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n",
+                        "stack": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:428:5",
+                        "location": {
+                          "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                          "column": 14,
+                          "line": 44
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 42 |\u001b[39m\n \u001b[90m 43 |\u001b[39m   \u001b[90m// 等待登录表单加载\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 44 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 45 |\u001b[39m\n \u001b[90m 46 |\u001b[39m   \u001b[90m// 输入用户名 - 尝试多种可能的选择器\u001b[39m\n \u001b[90m 47 |\u001b[39m   \u001b[36mconst\u001b[39m usernameInput \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m)\u001b[33m.\u001b[39mfirst()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                            "column": 14,
+                            "line": 44
+                          },
+                          "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n\n  42 |\n  43 |   // 等待登录表单加载\n> 44 |   await page.waitForSelector('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]', { timeout: 10000 });\n     |              ^\n  45 |\n  46 |   // 输入用户名 - 尝试多种可能的选择器\n  47 |   const usernameInput = page.locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]').first();\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:428:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-15T13:28:47.096Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---无障碍测试-页面应该有适当的标题-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---无障碍测试-页面应该有适当的标题-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---无障碍测试-页面应该有适当的标题-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                        "column": 14,
+                        "line": 44
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "a510cc93a867214a2ea0-c5ab22cda262c524f4de",
+              "file": "app.spec.js",
+              "line": 431,
+              "column": 3
+            },
+            {
+              "title": "重要交互元素应该是可访问的",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 23,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 11246,
+                      "error": {
+                        "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n",
+                        "stack": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:428:5",
+                        "location": {
+                          "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                          "column": 14,
+                          "line": 44
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 42 |\u001b[39m\n \u001b[90m 43 |\u001b[39m   \u001b[90m// 等待登录表单加载\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 44 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 45 |\u001b[39m\n \u001b[90m 46 |\u001b[39m   \u001b[90m// 输入用户名 - 尝试多种可能的选择器\u001b[39m\n \u001b[90m 47 |\u001b[39m   \u001b[36mconst\u001b[39m usernameInput \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m)\u001b[33m.\u001b[39mfirst()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                            "column": 14,
+                            "line": 44
+                          },
+                          "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n\n  42 |\n  43 |   // 等待登录表单加载\n> 44 |   await page.waitForSelector('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]', { timeout: 10000 });\n     |              ^\n  45 |\n  46 |   // 输入用户名 - 尝试多种可能的选择器\n  47 |   const usernameInput = page.locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]').first();\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:428:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-15T13:29:01.116Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---无障碍测试-重要交互元素应该是可访问的-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---无障碍测试-重要交互元素应该是可访问的-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---无障碍测试-重要交互元素应该是可访问的-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                        "column": 14,
+                        "line": 44
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "a510cc93a867214a2ea0-e379a1d1b141572f2ce7",
+              "file": "app.spec.js",
+              "line": 440,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "DataForgeStudio V4 - 性能测试",
+          "file": "app.spec.js",
+          "line": 456,
+          "column": 6,
+          "specs": [
+            {
+              "title": "首页加载应该在合理时间内完成",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 24,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 11326,
+                      "error": {
+                        "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n",
+                        "stack": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:458:5",
+                        "location": {
+                          "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                          "column": 14,
+                          "line": 44
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 42 |\u001b[39m\n \u001b[90m 43 |\u001b[39m   \u001b[90m// 等待登录表单加载\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 44 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 45 |\u001b[39m\n \u001b[90m 46 |\u001b[39m   \u001b[90m// 输入用户名 - 尝试多种可能的选择器\u001b[39m\n \u001b[90m 47 |\u001b[39m   \u001b[36mconst\u001b[39m usernameInput \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m)\u001b[33m.\u001b[39mfirst()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                            "column": 14,
+                            "line": 44
+                          },
+                          "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n\n  42 |\n  43 |   // 等待登录表单加载\n> 44 |   await page.waitForSelector('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]', { timeout: 10000 });\n     |              ^\n  45 |\n  46 |   // 输入用户名 - 尝试多种可能的选择器\n  47 |   const usernameInput = page.locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]').first();\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:458:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-15T13:29:15.106Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---性能测试-首页加载应该在合理时间内完成-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---性能测试-首页加载应该在合理时间内完成-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---性能测试-首页加载应该在合理时间内完成-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                        "column": 14,
+                        "line": 44
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "a510cc93a867214a2ea0-0bd194e4dfba3ec4c178",
+              "file": "app.spec.js",
+              "line": 461,
+              "column": 3
+            },
+            {
+              "title": "用户管理页面加载应该在合理时间内完成",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 25,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 11254,
+                      "error": {
+                        "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n",
+                        "stack": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:458:5",
+                        "location": {
+                          "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                          "column": 14,
+                          "line": 44
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 42 |\u001b[39m\n \u001b[90m 43 |\u001b[39m   \u001b[90m// 等待登录表单加载\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 44 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 45 |\u001b[39m\n \u001b[90m 46 |\u001b[39m   \u001b[90m// 输入用户名 - 尝试多种可能的选择器\u001b[39m\n \u001b[90m 47 |\u001b[39m   \u001b[36mconst\u001b[39m usernameInput \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]'\u001b[39m)\u001b[33m.\u001b[39mfirst()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                            "column": 14,
+                            "line": 44
+                          },
+                          "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]') to be visible\u001b[22m\n\n\n  42 |\n  43 |   // 等待登录表单加载\n> 44 |   await page.waitForSelector('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]', { timeout: 10000 });\n     |              ^\n  45 |\n  46 |   // 输入用户名 - 尝试多种可能的选择器\n  47 |   const usernameInput = page.locator('input[type=\"text\"], input[placeholder*=\"用户\"], input[name=\"username\"]').first();\n    at login (H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:44:14)\n    at H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js:458:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-15T13:29:29.224Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---性能测试-用户管理页面加载应该在合理时间内完成-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---性能测试-用户管理页面加载应该在合理时间内完成-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\test-results\\app-DataForgeStudio-V4---性能测试-用户管理页面加载应该在合理时间内完成-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "H:\\开发项目\\DataForgeStudio_V4\\frontend\\tests\\e2e\\app.spec.js",
+                        "column": 14,
+                        "line": 44
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "a510cc93a867214a2ea0-7c88160d2ea36402bb99",
+              "file": "app.spec.js",
+              "line": 471,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-02-15T13:23:17.365Z",
+    "duration": 384057.55299999996,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 26,
+    "flaky": 0
+  }
+}

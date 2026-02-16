@@ -1,0 +1,96 @@
+{
+  "passed": [
+    {
+      "name": "访问首页页面",
+      "details": "标题: 登录 - DataForgeStudio V4"
+    },
+    {
+      "name": "访问报表查询页面页面",
+      "details": "标题: 登录 - DataForgeStudio V4"
+    },
+    {
+      "name": "访问报表设计列表页面",
+      "details": "标题: 登录 - DataForgeStudio V4"
+    },
+    {
+      "name": "访问用户管理页面",
+      "details": "标题: 登录 - DataForgeStudio V4"
+    },
+    {
+      "name": "访问角色管理页面",
+      "details": "标题: 登录 - DataForgeStudio V4"
+    },
+    {
+      "name": "访问数据源管理页面",
+      "details": "标题: 登录 - DataForgeStudio V4"
+    },
+    {
+      "name": "访问许可管理页面",
+      "details": "标题: 登录 - DataForgeStudio V4"
+    },
+    {
+      "name": "移动设备显示 (375x667)",
+      "details": ""
+    },
+    {
+      "name": "平板设备显示 (768x1024)",
+      "details": ""
+    }
+  ],
+  "failed": [
+    {
+      "name": "用户登录",
+      "details": ""
+    }
+  ],
+  "findings": [
+    {
+      "category": "首页缺失元素",
+      "details": "缺失: .stat-card, .quick-actions, .el-table, .el-empty"
+    },
+    {
+      "category": "报表查询页面元素",
+      "details": "找到: 1 个关键元素"
+    },
+    {
+      "category": "报表查询页面缺失元素",
+      "details": "缺失: .report-list, .el-empty"
+    },
+    {
+      "category": "报表设计列表元素",
+      "details": "找到: 1 个关键元素"
+    },
+    {
+      "category": "报表设计列表缺失元素",
+      "details": "缺失: .el-table, .el-empty"
+    },
+    {
+      "category": "用户管理元素",
+      "details": "找到: 1 个关键元素"
+    },
+    {
+      "category": "用户管理缺失元素",
+      "details": "缺失: .el-table, .el-pagination"
+    },
+    {
+      "category": "角色管理元素",
+      "details": "找到: 1 个关键元素"
+    },
+    {
+      "category": "角色管理缺失元素",
+      "details": "缺失: .el-table, .el-pagination"
+    },
+    {
+      "category": "数据源管理元素",
+      "details": "找到: 1 个关键元素"
+    },
+    {
+      "category": "数据源管理缺失元素",
+      "details": "缺失: .el-table, .el-pagination"
+    },
+    {
+      "category": "许可管理缺失元素",
+      "details": "缺失: .el-card, .el-descriptions"
+    }
+  ]
+}

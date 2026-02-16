@@ -1,0 +1,47 @@
+{
+  "timestamp": "2026-02-07T03:17:39.330663",
+  "results": [
+    {
+      "name": "API健康检查",
+      "status": "passed",
+      "message": "状态: Healthy",
+      "timestamp": "2026-02-07T03:17:17.970484"
+    },
+    {
+      "name": "Root用户登录",
+      "status": "passed",
+      "message": "使用密码: admin123",
+      "timestamp": "2026-02-07T03:17:21.578337"
+    },
+    {
+      "name": "获取用户列表",
+      "status": "passed",
+      "message": "找到 4 个用户",
+      "timestamp": "2026-02-07T03:17:21.960223"
+    },
+    {
+      "name": "创建角色",
+      "status": "passed",
+      "message": "角色ID: 27",
+      "timestamp": "2026-02-07T03:17:22.307534"
+    },
+    {
+      "name": "创建用户",
+      "status": "passed",
+      "message": "用户ID: 18",
+      "timestamp": "2026-02-07T03:17:30.992585"
+    },
+    {
+      "name": "新用户登录",
+      "status": "passed",
+      "message": "",
+      "timestamp": "2026-02-07T03:17:38.682055"
+    },
+    {
+      "name": "创建报表",
+      "status": "failed",
+      "message": "状态码: 400, 响应: {\r\n  \"type\": \"https://tools.ietf.org/html/rfc9110#section-15.5.1\",\r\n  \"title\": \"One or more validation errors occurred.\",\r\n  \"status\": 400,\r\n  \"errors\": {\r\n    \"SqlQuery\": [\r\n      \"The SqlQuery field is required.\"\r\n    ],\r\n    \"Parameters\": [\r\n      \"The Parameters field is required.\"\r\n    ],\r\n    ",
+      "timestamp": "2026-02-07T03:17:39.327666"
+    }
+  ]
+}
