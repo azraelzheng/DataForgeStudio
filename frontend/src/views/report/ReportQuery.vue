@@ -221,63 +221,124 @@
                 :align="col.align || 'left'"
               >
                 <template #header>
-                  <div class="column-header">
-                    <div class="column-title" @click="handleColumnSort(col.fieldName)">
+                  <div class="column-header-compact">
+                    <span class="column-name" @click="handleColumnSort(col.fieldName)">
                       {{ col.displayName }}
-                      <span v-if="sortField === col.fieldName" class="sort-icon">
+                      <span v-if="sortField === col.fieldName" class="sort-indicator">
                         {{ sortOrder === 'asc' ? '▲' : '▼' }}
                       </span>
-                    </div>
-                    <div class="column-filter" @click.stop>
-                      <!-- 文本筛选 -->
-                      <el-input
-                        v-if="col.dataType === 'String' || !col.dataType"
-                        v-model="columnFilters[col.fieldName]"
-                        placeholder="筛选..."
-                        size="small"
-                        clearable
-                      />
-                      <!-- 数字范围筛选 -->
-                      <div v-else-if="col.dataType === 'Number'" class="range-filter">
-                        <el-input-number
-                          v-model="columnFilters[col.fieldName + '_min']"
-                          placeholder="最小"
-                          size="small"
-                          :controls="false"
-                        />
-                        <span class="range-separator">-</span>
-                        <el-input-number
-                          v-model="columnFilters[col.fieldName + '_max']"
-                          placeholder="最大"
-                          size="small"
-                          :controls="false"
-                        />
+                    </span>
+                    <el-popover
+                      :visible="filterPopoverVisible[col.fieldName]"
+                      placement="bottom-start"
+                      :width="280"
+                      trigger="click"
+                      @update:visible="(v) => handlePopoverToggle(col.fieldName, v)"
+                    >
+                      <template #reference>
+                        <el-icon
+                          class="filter-icon"
+                          :class="{ active: hasColumnFilter(col.fieldName) }"
+                          @click.stop
+                        >
+                          <Filter />
+                        </el-icon>
+                      </template>
+
+                      <!-- Popover content -->
+                      <div class="filter-popover-content">
+                        <!-- Sort section -->
+                        <div class="filter-section">
+                          <div class="filter-section-title">排序</div>
+                          <div class="sort-buttons">
+                            <el-button
+                              size="small"
+                              :type="sortField === col.fieldName && sortOrder === 'asc' ? 'primary' : 'default'"
+                              @click="handlePopoverSort(col.fieldName, 'asc')"
+                            >
+                              升序
+                            </el-button>
+                            <el-button
+                              size="small"
+                              :type="sortField === col.fieldName && sortOrder === 'desc' ? 'primary' : 'default'"
+                              @click="handlePopoverSort(col.fieldName, 'desc')"
+                            >
+                              降序
+                            </el-button>
+                            <el-button
+                              v-if="sortField === col.fieldName"
+                              size="small"
+                              @click="handlePopoverSort(col.fieldName, null)"
+                            >
+                              取消
+                            </el-button>
+                          </div>
+                        </div>
+
+                        <!-- Filter section - varies by data type -->
+                        <div class="filter-section">
+                          <div class="filter-section-title">筛选</div>
+                          <div class="filter-input-wrapper">
+                            <!-- String -->
+                            <el-input
+                              v-if="col.dataType === 'String' || !col.dataType"
+                              v-model="columnFilters[col.fieldName]"
+                              placeholder="输入筛选文本..."
+                              size="small"
+                              clearable
+                            />
+                            <!-- Number range -->
+                            <div v-else-if="col.dataType === 'Number'" class="range-filter">
+                              <el-input-number
+                                v-model="columnFilters[col.fieldName + '_min']"
+                                placeholder="最小"
+                                size="small"
+                                :controls="false"
+                              />
+                              <span class="range-separator">~</span>
+                              <el-input-number
+                                v-model="columnFilters[col.fieldName + '_max']"
+                                placeholder="最大"
+                                size="small"
+                                :controls="false"
+                              />
+                            </div>
+                            <!-- DateTime range -->
+                            <el-date-picker
+                              v-else-if="col.dataType === 'DateTime'"
+                              v-model="columnFilters[col.fieldName]"
+                              type="daterange"
+                              size="small"
+                              range-separator="-"
+                              start-placeholder="开始"
+                              end-placeholder="结束"
+                              value-format="YYYY-MM-DD"
+                            />
+                            <!-- Boolean select -->
+                            <el-select
+                              v-else-if="col.dataType === 'Boolean'"
+                              v-model="columnFilters[col.fieldName]"
+                              placeholder="全部"
+                              size="small"
+                              clearable
+                            >
+                              <el-option label="是" :value="true" />
+                              <el-option label="否" :value="false" />
+                            </el-select>
+                          </div>
+                        </div>
+
+                        <!-- Action buttons -->
+                        <div class="filter-actions">
+                          <el-button size="small" @click="handleClearColumnFilter(col.fieldName)">
+                            清除
+                          </el-button>
+                          <el-button type="primary" size="small" @click="handleApplyColumnFilter(col.fieldName)">
+                            应用
+                          </el-button>
+                        </div>
                       </div>
-                      <!-- 日期范围筛选 -->
-                      <el-date-picker
-                        v-else-if="col.dataType === 'DateTime'"
-                        v-model="columnFilters[col.fieldName]"
-                        type="daterange"
-                        size="small"
-                        range-separator="-"
-                        start-placeholder="开始"
-                        end-placeholder="结束"
-                        value-format="YYYY-MM-DD"
-                        style="width: 200px;"
-                      />
-                      <!-- 布尔值筛选 -->
-                      <el-select
-                        v-else-if="col.dataType === 'Boolean'"
-                        v-model="columnFilters[col.fieldName]"
-                        placeholder="全部"
-                        size="small"
-                        clearable
-                        style="width: 80px;"
-                      >
-                        <el-option label="是" :value="true" />
-                        <el-option label="否" :value="false" />
-                      </el-select>
-                    </div>
+                    </el-popover>
                   </div>
                 </template>
               </el-table-column>
@@ -1001,15 +1062,17 @@ const handleExportExcel = async () => {
   padding: 0;
 }
 
-/* 列头样式 */
-.column-header {
+/* 列头样式 - Excel风格 */
+.column-header-compact {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
   gap: 8px;
   padding: 4px 0;
+  min-height: 24px;
 }
 
-.column-title {
+.column-name {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -1017,46 +1080,91 @@ const handleExportExcel = async () => {
   font-weight: 600;
   color: #303133;
   user-select: none;
+  flex: 1;
 }
 
-.column-title:hover {
+.column-name:hover {
   color: var(--primary-color);
 }
 
-.sort-icon {
+.sort-indicator {
   color: var(--primary-color);
   font-size: 12px;
 }
 
-.column-filter {
+.filter-icon {
+  cursor: pointer;
+  color: #909399;
+  font-size: 14px;
+  padding: 2px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.filter-icon:hover {
+  color: var(--primary-color);
+  background-color: var(--primary-light);
+}
+
+.filter-icon.active {
+  color: var(--primary-color);
+}
+
+/* Popover 内容样式 */
+.filter-popover-content {
+  padding: 4px 0;
+}
+
+.filter-section {
+  margin-bottom: 12px;
+}
+
+.filter-section:last-of-type {
+  margin-bottom: 8px;
+}
+
+.filter-section-title {
+  font-size: 12px;
+  color: #909399;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.sort-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filter-input-wrapper {
   width: 100%;
 }
 
-.column-filter :deep(.el-input__wrapper) {
-  background: #f5f7fa;
-}
-
-.column-filter :deep(.el-input__wrapper:focus-within) {
-  background: #fff;
-}
-
-.range-filter {
+.filter-input-wrapper .range-filter {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
 }
 
-.range-filter :deep(.el-input-number) {
-  width: 80px;
+.filter-input-wrapper .range-filter :deep(.el-input-number) {
+  flex: 1;
+  min-width: 80px;
 }
 
-.range-filter span {
-  color: #909399;
+.filter-input-wrapper :deep(.el-date-editor) {
+  width: 100%;
 }
 
-.range-separator {
-  color: #909399;
-  font-size: 12px;
+.filter-input-wrapper :deep(.el-select) {
+  width: 100%;
+}
+
+.filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-light);
 }
 
 /* 分页 */
