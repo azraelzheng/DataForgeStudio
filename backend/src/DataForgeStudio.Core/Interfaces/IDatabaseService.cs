@@ -37,4 +37,21 @@ public interface IDatabaseService
     /// 获取表结构信息
     /// </summary>
     Task<ApiResponse<List<TableColumnDto>>> GetTableStructureAsync(DataSource dataSource, string tableName);
+
+    /// <summary>
+    /// 获取所有表及其列信息（用于SQL编辑器自动补全）
+    /// </summary>
+    Task<ApiResponse<List<TableInfoDto>>> GetAllTablesAsync(DataSource dataSource);
+
+    /// <summary>
+    /// 获取查询的字段结构信息（不返回数据行）
+    /// </summary>
+    /// <param name="dataSource">数据源</param>
+    /// <param name="sql">SQL 查询语句</param>
+    /// <param name="parameters">查询参数</param>
+    /// <returns>字段结构列表</returns>
+    Task<ApiResponse<List<FieldSchemaDto>>> GetQuerySchemaAsync(
+        DataSource dataSource,
+        string sql,
+        Dictionary<string, object>? parameters);
 }
