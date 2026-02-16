@@ -571,4 +571,174 @@ public class DatabaseService : IDatabaseService
             return ApiResponse<List<TableColumnDto>>.Fail($"获取表结构失败: {ex.Message}", "GET_TABLE_STRUCTURE_ERROR");
         }
     }
+
+    /// <summary>
+    /// 获取所有表及其列信息（用于SQL编辑器自动补全）
+    /// </summary>
+    public async Task<ApiResponse<List<TableInfoDto>>> GetAllTablesAsync(DataSource dataSource)
+    {
+        try
+        {
+            _logger.LogInformation($"获取所有表: {dataSource.DbType}");
+
+            using var connection = CreateConnection(dataSource);
+            await connection.OpenAsync();
+
+            // 根据数据库类型构建不同的查询获取表列表
+            var tableQuery = dataSource.DbType switch
+            {
+                "SqlServer" => "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' ORDER BY TABLE_NAME",
+                "MySql" => "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_TYPE = 'BASE TABLE' ORDER BY TABLE_NAME",
+                "PostgreSQL" => "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE' ORDER BY table_name",
+                "Oracle" => "SELECT TABLE_NAME FROM USER_TABLES ORDER BY TABLE_NAME",
+                "SQLite" => "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name",
+                _ => throw new NotSupportedException($"不支持的数据库类型: {dataSource.DbType}")
+            };
+
+            var tables = new List<TableInfoDto>();
+
+            using (var tableCommand = connection.CreateCommand())
+            {
+                tableCommand.CommandText = tableQuery;
+                tableCommand.CommandTimeout = _options.DefaultCommandTimeout;
+
+                using var tableReader = await tableCommand.ExecuteReaderAsync();
+                var tableNames = new List<string>();
+                while (await tableReader.ReadAsync())
+                {
+                    tableNames.Add(tableReader.GetString(0));
+                }
+                tableReader.Close();
+
+                // 对每个表获取列信息
+                foreach (var tableName in tableNames)
+                {
+                    try
+                    {
+                        var columns = await GetTableColumnsForAutocompleteAsync(connection, dataSource.DbType, tableName);
+                        tables.Add(new TableInfoDto
+                        {
+                            TableName = tableName,
+                            Columns = columns
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, $"获取表 {tableName} 的列信息失败，跳过");
+                    }
+                }
+            }
+
+            _logger.LogInformation($"获取所有表成功: 共 {tables.Count} 个表");
+            return ApiResponse<List<TableInfoDto>>.Ok(tables, "获取表列表成功");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"获取所有表失败: {ex.Message}");
+            return ApiResponse<List<TableInfoDto>>.Fail($"获取表列表失败: {ex.Message}", "GET_TABLES_ERROR");
+        }
+    }
+
+    /// <summary>
+    /// 获取查询的字段结构信息（不返回数据行）
+    /// </summary>
+    public async Task<ApiResponse<List<FieldSchemaDto>>> GetQuerySchemaAsync(
+        DataSource dataSource,
+        string sql,
+        Dictionary<string, object>? parameters)
+    {
+        try
+        {
+            _logger.LogInformation($"获取查询结构: {dataSource.DbType}");
+
+            using var connection = CreateConnection(dataSource);
+            await connection.OpenAsync();
+
+            // 根据数据库类型调整 SQL 以只获取元数据
+            var schemaSql = dataSource.DbType switch
+            {
+                "SqlServer" => $"SET FMTONLY ON; {sql}; SET FMTONLY OFF;",
+                "MySql" => sql.Contains(" WHERE ", StringComparison.OrdinalIgnoreCase)
+                    ? sql.Replace(" WHERE ", " WHERE 1=0 AND ", StringComparison.OrdinalIgnoreCase)
+                    : sql + " WHERE 1=0",
+                "PostgreSQL" => sql.Contains(" WHERE ", StringComparison.OrdinalIgnoreCase)
+                    ? sql.Replace(" WHERE ", " WHERE 1=0 AND ", StringComparison.OrdinalIgnoreCase)
+                    : sql + " WHERE 1=0",
+                "Oracle" => sql.Contains(" WHERE ", StringComparison.OrdinalIgnoreCase)
+                    ? sql.Replace(" WHERE ", " WHERE 1=0 AND ", StringComparison.OrdinalIgnoreCase)
+                    : sql + " WHERE 1=0",
+                "SQLite" => sql.Contains(" WHERE ", StringComparison.OrdinalIgnoreCase)
+                    ? sql.Replace(" WHERE ", " WHERE 1=0 AND ", StringComparison.OrdinalIgnoreCase)
+                    : sql + " WHERE 1=0",
+                _ => sql.Contains(" WHERE ", StringComparison.OrdinalIgnoreCase)
+                    ? sql.Replace(" WHERE ", " WHERE 1=0 AND ", StringComparison.OrdinalIgnoreCase)
+                    : sql + " WHERE 1=0"
+            };
+
+            using var command = CreateCommand(schemaSql, connection, parameters);
+            using var reader = await command.ExecuteReaderAsync(CommandBehavior.SchemaOnly);
+
+            var fields = new List<FieldSchemaDto>();
+
+            // 获取列结构
+            var schemaTable = reader.GetColumnSchema();
+            foreach (var column in schemaTable)
+            {
+                var sqlDataType = column.DataTypeName ?? "unknown";
+                var systemDataType = MapSystemDataType(sqlDataType);
+
+                fields.Add(new FieldSchemaDto
+                {
+                    FieldName = column.ColumnName,
+                    SqlDataType = sqlDataType,
+                    SystemDataType = systemDataType
+                });
+            }
+
+            _logger.LogInformation($"获取查询结构成功: 共 {fields.Count} 个字段");
+            return ApiResponse<List<FieldSchemaDto>>.Ok(fields);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"获取查询结构失败: {ex.Message}");
+            return ApiResponse<List<FieldSchemaDto>>.Fail($"获取查询结构失败: {ex.Message}", "SCHEMA_ERROR");
+        }
+    }
+
+    /// <summary>
+    /// 获取表的列信息（用于自动补全）
+    /// </summary>
+    private async Task<List<TableColumnInfoDto>> GetTableColumnsForAutocompleteAsync(DbConnection connection, string dbType, string tableName)
+    {
+        var columnQuery = dbType switch
+        {
+            "SqlServer" => "SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = @tableName ORDER BY ORDINAL_POSITION",
+            "MySql" => "SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = @tableName ORDER BY ORDINAL_POSITION",
+            "PostgreSQL" => "SELECT column_name, data_type FROM information_schema.columns WHERE table_schema = 'public' AND table_name = @tableName ORDER BY ordinal_position",
+            "Oracle" => "SELECT COLUMN_NAME, DATA_TYPE FROM USER_TAB_COLUMNS WHERE TABLE_NAME = UPPER(@tableName) ORDER BY COLUMN_ID",
+            "SQLite" => "SELECT name, type FROM pragma_table_info(@tableName) ORDER BY cid",
+            _ => throw new NotSupportedException($"不支持的数据库类型: {dbType}")
+        };
+
+        using var command = connection.CreateCommand();
+        command.CommandText = columnQuery;
+
+        var param = command.CreateParameter();
+        param.ParameterName = "@tableName";
+        param.Value = tableName;
+        command.Parameters.Add(param);
+
+        var columns = new List<TableColumnInfoDto>();
+        using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            columns.Add(new TableColumnInfoDto
+            {
+                ColumnName = reader.GetString(0),
+                DataType = reader.GetString(1)
+            });
+        }
+
+        return columns;
+    }
 }
