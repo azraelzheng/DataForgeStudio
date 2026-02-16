@@ -107,6 +107,36 @@ public class ReportsController : ControllerBase
     }
 
     /// <summary>
+    /// 获取查询的字段结构信息（用于自动识别字段）
+    /// </summary>
+    /// <param name="request">查询请求，包含数据源 ID 和 SQL 语句</param>
+    /// <returns>字段结构列表</returns>
+    /// <remarks>
+    /// 限制条件:
+    /// - 必须以 SELECT 开头
+    /// - 不允许 DROP, DELETE, INSERT, UPDATE 等危险关键字
+    /// - 不允许注释字符 (-- 和 /* */)
+    /// - 不允许分号（多语句）
+    /// - 不允许 UNION 注入
+    /// </remarks>
+    [HttpPost("query-schema")]
+    [ProducesResponseType(typeof(ApiResponse<List<FieldSchemaDto>>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetQuerySchema([FromBody] TestQueryRequest request)
+    {
+        var result = await _reportService.GetQuerySchemaAsync(
+            request.DataSourceId,
+            request.Sql,
+            request.Parameters);
+
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
+    }
+
+    /// <summary>
     /// 导出报表为 Excel 文件
     /// </summary>
     /// <param name="id">报表 ID</param>
