@@ -38,6 +38,11 @@ public interface ISystemService
     Task<byte[]> ExportLogsToExcelAsync(string? username = null, string? action = null, string? module = null, string? startTime = null, string? endTime = null);
 
     /// <summary>
+    /// 导出选中的操作日志到 Excel
+    /// </summary>
+    Task<byte[]> ExportSelectedLogsToExcelAsync(List<int> logIds);
+
+    /// <summary>
     /// 创建备份
     /// </summary>
     Task<ApiResponse<BackupRecordDto>> CreateBackupAsync(CreateBackupRequest request, int createdBy);
@@ -45,7 +50,7 @@ public interface ISystemService
     /// <summary>
     /// 获取备份列表
     /// </summary>
-    Task<ApiResponse<PagedResponse<BackupRecordDto>>> GetBackupsAsync(PagedRequest request);
+    Task<ApiResponse<PagedResponse<BackupRecordDto>>> GetBackupsAsync(PagedRequest request, string? backupName = null);
 
     /// <summary>
     /// 删除备份
@@ -56,4 +61,29 @@ public interface ISystemService
     /// 恢复备份
     /// </summary>
     Task<ApiResponse> RestoreBackupAsync(int backupId);
+
+    /// <summary>
+    /// 获取备份计划列表
+    /// </summary>
+    Task<ApiResponse<List<BackupScheduleDto>>> GetBackupSchedulesAsync();
+
+    /// <summary>
+    /// 创建备份计划
+    /// </summary>
+    Task<ApiResponse<BackupScheduleDto>> CreateBackupScheduleAsync(CreateBackupScheduleRequest request);
+
+    /// <summary>
+    /// 更新备份计划
+    /// </summary>
+    Task<ApiResponse<BackupScheduleDto>> UpdateBackupScheduleAsync(int scheduleId, CreateBackupScheduleRequest request);
+
+    /// <summary>
+    /// 删除备份计划
+    /// </summary>
+    Task<ApiResponse> DeleteBackupScheduleAsync(int scheduleId);
+
+    /// <summary>
+    /// 切换备份计划启用状态
+    /// </summary>
+    Task<ApiResponse> ToggleBackupScheduleAsync(int scheduleId);
 }
