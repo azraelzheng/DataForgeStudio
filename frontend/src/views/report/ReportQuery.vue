@@ -220,8 +220,6 @@ const selectReport = async (report) => {
     if (res.success) {
       selectedReport.value = res.data
       queryConditions.value = res.data.queryConditions || []
-      // 调试：打印查询条件数据
-      console.log('查询条件数据:', JSON.stringify(queryConditions.value, null, 2))
       resetConditions()
       reportData.value = []
     }
