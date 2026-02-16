@@ -25,8 +25,8 @@ public class RoleService : IRoleService
 
     public async Task<ApiResponse<PagedResponse<RoleDto>>> GetRolesAsync(PagedRequest request, string? roleName = null)
     {
-        // 显示所有角色（包括系统预置角色），用户可以看到但不能编辑/删除系统角色
-        var query = _context.Roles.AsQueryable();
+        // 隐藏超级管理员角色，显示其他所有角色（包括系统预置角色）
+        var query = _context.Roles.Where(r => r.RoleCode != "ROLE_SUPER_ADMIN");
 
         if (!string.IsNullOrWhiteSpace(roleName))
         {
@@ -71,8 +71,9 @@ public class RoleService : IRoleService
 
     public async Task<ApiResponse<List<RoleDto>>> GetAllRolesAsync()
     {
-        // 显示所有角色（包括系统预置角色），用于用户分配角色时选择
+        // 隐藏超级管理员角色，显示其他所有角色（用于用户分配角色时选择）
         var roles = await _context.Roles
+            .Where(r => r.RoleCode != "ROLE_SUPER_ADMIN")
             .OrderBy(r => r.SortOrder)
             .ThenBy(r => r.RoleName)
             .Select(r => new RoleDto
