@@ -469,6 +469,7 @@ public class ReportDto
     public int ViewCount { get; set; }
     public DateTime? LastViewTime { get; set; }
     public DateTime CreatedTime { get; set; }
+    public bool IsEnabled { get; set; }
 }
 
 /// <summary>
@@ -708,4 +709,68 @@ public class TableColumnDto
     /// 系统数据类型（用于前端查询条件）
     /// </summary>
     public string SystemDataType { get; set; } = "String";
+}
+
+/// <summary>
+/// 表信息 DTO（用于SQL编辑器自动补全）
+/// </summary>
+public class TableInfoDto
+{
+    /// <summary>
+    /// 表名称
+    /// </summary>
+    public string TableName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 列信息
+    /// </summary>
+    public List<TableColumnInfoDto> Columns { get; set; } = new();
+}
+
+/// <summary>
+/// 表列信息 DTO（用于SQL编辑器自动补全）
+/// </summary>
+public class TableColumnInfoDto
+{
+    /// <summary>
+    /// 列名称
+    /// </summary>
+    public string ColumnName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 数据类型
+    /// </summary>
+    public string DataType { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// 备份计划 DTO
+/// </summary>
+public class BackupScheduleDto
+{
+    public int ScheduleId { get; set; }
+    public string ScheduleName { get; set; } = string.Empty;
+    public string ScheduleType { get; set; } = string.Empty;
+    public List<int> RecurringDays { get; set; } = new();
+    public string? ScheduledTime { get; set; }
+    public DateTime? OnceDate { get; set; }
+    public int RetentionCount { get; set; }
+    public bool IsEnabled { get; set; }
+    public DateTime? LastRunTime { get; set; }
+    public DateTime? NextRunTime { get; set; }
+    public string CreatedTime { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// 创建/更新备份计划请求
+/// </summary>
+public class CreateBackupScheduleRequest
+{
+    public string ScheduleName { get; set; } = string.Empty;
+    public string ScheduleType { get; set; } = "Recurring";
+    public List<int>? RecurringDays { get; set; }
+    public string? ScheduledTime { get; set; }
+    public DateTime? OnceDate { get; set; }
+    public int RetentionCount { get; set; } = 10;
+    public bool IsEnabled { get; set; } = true;
 }
