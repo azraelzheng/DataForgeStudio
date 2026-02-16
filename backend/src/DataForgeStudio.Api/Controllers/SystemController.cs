@@ -124,6 +124,25 @@ public class SystemController : ControllerBase
     }
 
     /// <summary>
+    /// 导出选中的操作日志到 Excel
+    /// </summary>
+    [HttpPost("logs/export-selected")]
+    public async Task<IActionResult> ExportSelectedLogs([FromBody] List<int> logIds)
+    {
+        if (logIds == null || logIds.Count == 0)
+        {
+            return BadRequest(ApiResponse.Fail("请选择要导出的日志", "NO_SELECTION"));
+        }
+
+        var excelData = await _systemService.ExportSelectedLogsToExcelAsync(logIds);
+
+        return File(
+            excelData,
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            $"操作日志_{DateTime.UtcNow:yyyyMMdd_HHmmss}.xlsx");
+    }
+
+    /// <summary>
     /// 创建备份
     /// </summary>
     [HttpPost("backup")]
@@ -144,10 +163,11 @@ public class SystemController : ControllerBase
     [HttpGet("backups")]
     public async Task<ApiResponse<PagedResponse<BackupRecordDto>>> GetBackups(
         [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20)
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? backupName = null)
     {
         var request = new PagedRequest { PageIndex = page, PageSize = pageSize };
-        return await _systemService.GetBackupsAsync(request);
+        return await _systemService.GetBackupsAsync(request, backupName);
     }
 
     /// <summary>
@@ -167,4 +187,53 @@ public class SystemController : ControllerBase
     {
         return await _systemService.RestoreBackupAsync(id);
     }
+
+    #region 备份计划管理
+
+    /// <summary>
+    /// 获取备份计划列表
+    /// </summary>
+    [HttpGet("backup-schedules")]
+    public async Task<ApiResponse<List<BackupScheduleDto>>> GetBackupSchedules()
+    {
+        return await _systemService.GetBackupSchedulesAsync();
+    }
+
+    /// <summary>
+    /// 创建备份计划
+    /// </summary>
+    [HttpPost("backup-schedules")]
+    public async Task<ApiResponse<BackupScheduleDto>> CreateBackupSchedule([FromBody] CreateBackupScheduleRequest request)
+    {
+        return await _systemService.CreateBackupScheduleAsync(request);
+    }
+
+    /// <summary>
+    /// 更新备份计划
+    /// </summary>
+    [HttpPut("backup-schedules/{id}")]
+    public async Task<ApiResponse<BackupScheduleDto>> UpdateBackupSchedule(int id, [FromBody] CreateBackupScheduleRequest request)
+    {
+        return await _systemService.UpdateBackupScheduleAsync(id, request);
+    }
+
+    /// <summary>
+    /// 删除备份计划
+    /// </summary>
+    [HttpDelete("backup-schedules/{id}")]
+    public async Task<ApiResponse> DeleteBackupSchedule(int id)
+    {
+        return await _systemService.DeleteBackupScheduleAsync(id);
+    }
+
+    /// <summary>
+    /// 切换备份计划启用状态
+    /// </summary>
+    [HttpPost("backup-schedules/{id}/toggle")]
+    public async Task<ApiResponse> ToggleBackupSchedule(int id)
+    {
+        return await _systemService.ToggleBackupScheduleAsync(id);
+    }
+
+    #endregion
 }
