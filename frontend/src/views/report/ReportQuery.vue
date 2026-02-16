@@ -58,28 +58,35 @@
 
     <!-- 主内容区域 -->
     <div class="main-content">
-      <el-card style="height: 100%; overflow-y: auto;">
-          <!-- 未选择报表 -->
-          <div v-if="!selectedReport" class="empty-state">
-            <el-empty description="请选择左侧报表进行查询">
-              <el-icon size="60" color="#909399"><Document /></el-icon>
-            </el-empty>
-          </div>
+      <!-- 未选择报表 -->
+      <div v-if="!selectedReport" class="empty-state">
+        <el-empty description="请选择左侧报表进行查询">
+          <template #image>
+            <el-icon :size="80" color="#c0c4cc"><Document /></el-icon>
+          </template>
+        </el-empty>
+      </div>
 
-          <!-- 已选择报表 -->
-          <div v-else class="query-area">
-            <!-- 报表标题 -->
-            <div class="report-header">
-              <h2>{{ selectedReport.reportName }}</h2>
-              <el-tag v-if="selectedReport.reportCategory" type="info">{{ selectedReport.reportCategory }}</el-tag>
-            </div>
+      <!-- 已选择报表 -->
+      <template v-else>
+        <!-- 报表标题 -->
+        <div class="report-header">
+          <h2>{{ selectedReport.reportName }}</h2>
+          <el-tag v-if="selectedReport.reportCategory" type="info">
+            {{ selectedReport.reportCategory }}
+          </el-tag>
+        </div>
 
-            <!-- 查询条件 -->
-            <div v-if="queryConditions.length > 0" class="conditions-section">
-              <div class="section-header">
-                <span>查询条件</span>
-                <el-button link size="small" @click="resetConditions">重置条件</el-button>
-              </div>
+        <!-- 查询条件 (可折叠) -->
+        <el-collapse v-if="queryConditions.length > 0" v-model="conditionsActive" class="conditions-collapse">
+          <el-collapse-item name="conditions">
+            <template #title>
+              <span class="collapse-title">
+                <el-icon><Filter /></el-icon>
+                查询条件
+              </span>
+            </template>
+            <div class="conditions-content">
               <el-form :inline="true" :model="conditionForm" label-width="100px">
                 <el-row :gutter="20">
                   <el-col :span="12" v-for="qc in queryConditions" :key="qc.fieldName + qc.operator">
@@ -167,40 +174,64 @@
                   </el-col>
                 </el-row>
               </el-form>
+              <div class="conditions-actions">
+                <el-button type="primary" @click="handleQuery" :loading="querying">
+                  <el-icon><Search /></el-icon>
+                  查询
+                </el-button>
+                <el-button @click="resetConditions">重置条件</el-button>
+              </div>
             </div>
+          </el-collapse-item>
+        </el-collapse>
 
-            <!-- 操作按钮 -->
-            <div class="action-buttons">
-              <el-button type="primary" @click="handleQuery" :loading="querying">
-                <el-icon><Search /></el-icon>
-                查询
-              </el-button>
-              <el-button type="success" @click="handleExportExcel" :loading="exporting" :disabled="!reportData || reportData.length === 0">
+        <!-- 无查询条件时的操作按钮 -->
+        <div v-if="queryConditions.length === 0" class="action-bar">
+          <el-button type="primary" @click="handleQuery" :loading="querying">
+            <el-icon><Search /></el-icon>
+            查询
+          </el-button>
+          <el-button type="success" @click="handleExportExcel" :loading="exporting" :disabled="!reportData || reportData.length === 0">
+            <el-icon><Download /></el-icon>
+            导出 Excel
+          </el-button>
+        </div>
+
+        <!-- 查询结果 -->
+        <div v-if="reportData && reportData.length > 0" class="results-container">
+          <!-- 表格工具栏 -->
+          <div class="table-toolbar">
+            <span class="result-count">共 {{ reportData.length }} 条记录</span>
+            <div class="toolbar-actions">
+              <el-button v-if="queryConditions.length > 0" type="success" size="small" @click="handleExportExcel" :loading="exporting">
                 <el-icon><Download /></el-icon>
                 导出 Excel
               </el-button>
             </div>
-
-            <!-- 查询结果 -->
-            <div v-if="reportData && reportData.length > 0" class="results-section">
-              <div class="section-header">
-                <span>查询结果 (共 {{ reportData.length }} 条记录)</span>
-              </div>
-
-              <!-- 表格视图 -->
-              <el-table :data="reportData" border max-height="400">
-                <el-table-column
-                  v-for="col in displayColumns"
-                  :key="col.fieldName"
-                  :prop="col.fieldName"
-                  :label="col.displayName"
-                  :width="col.width"
-                  :align="col.align || 'left'"
-                />
-              </el-table>
-            </div>
           </div>
-        </el-card>
+
+          <!-- 表格 -->
+          <div class="table-wrapper">
+            <el-table :data="reportData" border stripe style="width: 100%;"
+              :max-height="tableMaxHeight">
+              <el-table-column
+                v-for="col in displayColumns"
+                :key="col.fieldName"
+                :prop="col.fieldName"
+                :label="col.displayName"
+                :width="col.width"
+                :align="col.align || 'left'"
+                sortable
+              />
+            </el-table>
+          </div>
+        </div>
+
+        <!-- 无数据提示 -->
+        <div v-else-if="hasQueried" class="no-data">
+          <el-empty description="查询结果为空" />
+        </div>
+      </template>
     </div>
   </div>
 </template>
@@ -209,7 +240,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Search, Document, Download, ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
+import { Search, Document, Download, ArrowLeft, ArrowRight, Filter } from '@element-plus/icons-vue'
 import { reportApi } from '../../api/request'
 
 const router = useRouter()
@@ -226,6 +257,9 @@ const conditionForm = reactive({})
 const reportData = ref([])
 const querying = ref(false)
 const exporting = ref(false)
+const conditionsActive = ref(['conditions'])  // 默认展开条件面板
+const hasQueried = ref(false)  // 是否已执行过查询
+const tableMaxHeight = ref(400)  // 表格最大高度
 
 // 操作符标签映射
 const operatorLabels = {
@@ -280,6 +314,7 @@ const filteredReports = computed(() => {
 
 const selectReport = async (report) => {
   selectedReportId.value = report.reportId
+  hasQueried.value = false
   try {
     const res = await reportApi.getReport(report.reportId)
     if (res.success) {
@@ -337,6 +372,7 @@ const resetConditions = () => {
 }
 
 const handleQuery = async () => {
+  hasQueried.value = true
   querying.value = true
   try {
     const params = buildQueryParams()
@@ -588,44 +624,125 @@ const handleExportExcel = async () => {
   align-items: center;
   justify-content: center;
   height: 100%;
+  flex: 1;
 }
 
-.query-area {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
+/* 报表标题 */
 .report-header {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #e4e7ed;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border-light);
 }
 
 .report-header h2 {
   margin: 0;
   font-size: 20px;
+  font-weight: 600;
+  color: #303133;
 }
 
-.conditions-section,
-.results-section {
+/* 查询条件折叠 */
+.conditions-collapse {
+  border: none;
+  background: var(--bg-card);
+  border-radius: 8px;
+  box-shadow: var(--shadow-card);
+  margin-bottom: 16px;
+}
+
+.conditions-collapse :deep(.el-collapse-item__header) {
+  border-bottom: none;
+  height: 44px;
+  font-size: 14px;
+}
+
+.conditions-collapse :deep(.el-collapse-item__wrap) {
+  border-bottom: none;
+}
+
+.conditions-collapse :deep(.el-collapse-item__content) {
+  padding: 0;
+}
+
+.collapse-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  color: #303133;
+}
+
+.conditions-content {
   padding: 16px;
-  background-color: #f5f7fa;
-  border-radius: 6px;
 }
 
-.section-header {
+.conditions-actions {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  gap: 12px;
+}
+
+/* 操作按钮栏 */
+.action-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+/* 查询结果容器 */
+.results-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  border-radius: 8px;
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  min-height: 200px;
+}
+
+/* 表格工具栏 */
+.table-toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-light);
+  background: #fafafa;
+  flex-shrink: 0;
+}
+
+.result-count {
+  font-size: 14px;
+  color: #606266;
   font-weight: 500;
 }
 
-.action-buttons {
+.toolbar-actions {
   display: flex;
-  gap: 12px;
+  gap: 8px;
+}
+
+/* 表格包装器 */
+.table-wrapper {
+  flex: 1;
+  overflow: auto;
+  padding: 0;
+}
+
+/* 无数据 */
+.no-data {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-card);
+  border-radius: 8px;
+  box-shadow: var(--shadow-card);
 }
 </style>
