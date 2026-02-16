@@ -93,7 +93,7 @@
                     <el-form-item :label="qc.displayName">
                       <!-- 不需要输入值的操作符 -->
                       <template v-if="['null', 'notnull', 'true', 'false'].includes(qc.operator)">
-                        <span style="color: #909399; font-size: 14px;">{{ getOperatorLabel(qc.operator) }}</span>
+                        <span class="operator-label">{{ getOperatorLabel(qc.operator) }}</span>
                       </template>
 
                       <!-- DateTime between: 日期范围选择器 -->
@@ -111,19 +111,19 @@
 
                       <!-- Number between: 两个数字输入框 -->
                       <template v-else-if="qc.operator === 'between' && qc.dataType === 'Number'">
-                        <div style="display: flex; align-items: center; gap: 8px;">
+                        <div class="number-range-input">
                           <el-input-number
                             v-model="conditionForm[getFieldKey(qc) + '_start']"
                             placeholder="最小值"
                             :controls-position="'right'"
-                            style="flex: 1;"
+                            class="flex-1"
                           />
-                          <span style="color: #909399;">~</span>
+                          <span class="range-separator-text">~</span>
                           <el-input-number
                             v-model="conditionForm[getFieldKey(qc) + '_end']"
                             placeholder="最大值"
                             :controls-position="'right'"
-                            style="flex: 1;"
+                            class="flex-1"
                           />
                         </div>
                       </template>
@@ -244,7 +244,6 @@
                           placeholder="最小"
                           size="small"
                           :controls="false"
-                          style="width: 70px;"
                         />
                         <span class="range-separator">-</span>
                         <el-input-number
@@ -252,7 +251,6 @@
                           placeholder="最大"
                           size="small"
                           :controls="false"
-                          style="width: 70px;"
                         />
                       </div>
                       <!-- 日期范围筛选 -->
@@ -687,6 +685,7 @@ const handleExportExcel = async () => {
   display: flex;
   flex-direction: column;
   padding: 16px;
+  gap: 16px;
   overflow: hidden;
   min-width: 0;
 }
@@ -727,8 +726,8 @@ const handleExportExcel = async () => {
   border-radius: 8px;
   cursor: pointer;
   margin-bottom: 4px;
-  transition: all 200ms ease;
   border-left: 3px solid transparent;
+  /* transition is defined in animation section */
 }
 
 .report-item:hover {
@@ -869,12 +868,36 @@ const handleExportExcel = async () => {
   padding: 16px;
 }
 
+.conditions-form {
+  padding: 0 16px;
+}
+
 .conditions-actions {
   margin-top: 16px;
   padding-top: 16px;
   border-top: 1px solid var(--border-light);
   display: flex;
   gap: 12px;
+}
+
+/* 查询条件表单样式 */
+.operator-label {
+  color: #909399;
+  font-size: 14px;
+}
+
+.number-range-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.number-range-input .flex-1 {
+  flex: 1;
+}
+
+.range-separator-text {
+  color: #909399;
 }
 
 /* 操作按钮栏 */
@@ -970,6 +993,14 @@ const handleExportExcel = async () => {
   gap: 4px;
 }
 
+.range-filter :deep(.el-input-number) {
+  width: 80px;
+}
+
+.range-filter span {
+  color: #909399;
+}
+
 .range-separator {
   color: #909399;
   font-size: 12px;
@@ -981,6 +1012,8 @@ const handleExportExcel = async () => {
   display: flex;
   justify-content: flex-end;
   flex-shrink: 0;
+  border-top: 1px solid var(--border-light);
+  background: #fafafa;
 }
 
 /* 无数据 */
@@ -992,5 +1025,37 @@ const handleExportExcel = async () => {
   background: var(--bg-card);
   border-radius: 8px;
   box-shadow: var(--shadow-card);
+  min-height: 300px;
+}
+
+/* 动画 */
+.sidebar,
+.report-item,
+.action-bar button {
+  transition: all var(--transition-speed) ease;
+}
+
+.report-item:hover {
+  transform: translateX(2px);
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+  .sidebar {
+    width: var(--sidebar-collapsed-width);
+    min-width: var(--sidebar-collapsed-width);
+  }
+
+  .sidebar .report-item-info {
+    display: none;
+  }
+
+  .main-content {
+    padding: 12px;
+  }
+
+  .conditions-content {
+    padding: 12px;
+  }
 }
 </style>
