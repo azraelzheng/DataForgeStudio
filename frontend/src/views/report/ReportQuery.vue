@@ -1,57 +1,14 @@
 <template>
   <div class="report-query">
-    <el-row :gutter="20" style="height: 100%;">
-      <!-- 左侧：报表列表 -->
-      <el-col :span="8" style="height: 100%;">
-        <el-card style="height: 100%; overflow-y: auto;">
-          <template #header>
-            <span>报表列表</span>
-          </template>
+    <!-- 可折叠侧边栏 -->
+    <div class="sidebar">
+      <!-- 临时占位，下个任务会完善 -->
+      <div style="padding: 16px;">侧边栏占位</div>
+    </div>
 
-          <!-- 搜索 -->
-          <el-input
-            v-model="searchKeyword"
-            placeholder="搜索报表..."
-            clearable
-            style="margin-bottom: 15px;"
-          >
-            <template #prefix>
-              <el-icon><Search /></el-icon>
-            </template>
-          </el-input>
-
-          <!-- 报表列表 -->
-          <div v-if="filteredReports.length > 0" class="report-list">
-            <div
-              v-for="report in filteredReports"
-              :key="report.reportId"
-              :class="['report-item', { active: selectedReportId === report.reportId }]"
-              @click="selectReport(report)"
-            >
-              <div class="report-icon">
-                <el-icon><Document /></el-icon>
-              </div>
-              <div class="report-info">
-                <div class="report-name">{{ report.reportName }}</div>
-                <div class="report-meta">
-                  <el-tag size="small" type="info">{{ report.reportCategory || '未分类' }}</el-tag>
-                  <span class="view-count">{{ report.viewCount || 0 }} 次查看</span>
-                </div>
-              </div>
-              <el-icon class="report-arrow">
-                <ArrowRight />
-              </el-icon>
-            </div>
-          </div>
-          <el-empty v-else description="暂无报表数据" :image-size="80" style="margin-top: 40px;">
-            <el-button type="primary" @click="router.push('/report/design')">创建报表</el-button>
-          </el-empty>
-        </el-card>
-      </el-col>
-
-      <!-- 右侧：查询区域 -->
-      <el-col :span="16" style="height: 100%;">
-        <el-card style="height: 100%; overflow-y: auto;">
+    <!-- 主内容区域 -->
+    <div class="main-content">
+      <el-card style="height: 100%; overflow-y: auto;">
           <!-- 未选择报表 -->
           <div v-if="!selectedReport" class="empty-state">
             <el-empty description="请选择左侧报表进行查询">
@@ -194,8 +151,7 @@
             </div>
           </div>
         </el-card>
-      </el-col>
-    </el-row>
+    </div>
   </div>
 </template>
 
@@ -398,8 +354,52 @@ const handleExportExcel = async () => {
 </script>
 
 <style scoped>
+/* CSS 变量定义 */
 .report-query {
   height: 100%;
+  --sidebar-width: 280px;
+  --sidebar-collapsed-width: 48px;
+  --primary-color: #409eff;
+  --primary-light: #ecf5ff;
+  --bg-page: #f5f7fa;
+  --bg-card: #ffffff;
+  --bg-hover: #f0f7ff;
+  --border-light: #e4e7ed;
+  --border-active: #409eff;
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.08);
+  --shadow-card-hover: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --transition-speed: 300ms;
+
+  /* 布局 */
+  display: flex;
+  background-color: var(--bg-page);
+}
+
+/* 侧边栏样式 */
+.sidebar {
+  width: var(--sidebar-width);
+  min-width: var(--sidebar-width);
+  background: var(--bg-card);
+  border-right: 1px solid var(--border-light);
+  display: flex;
+  flex-direction: column;
+  transition: all var(--transition-speed) ease-in-out;
+  overflow: hidden;
+}
+
+.sidebar.collapsed {
+  width: var(--sidebar-collapsed-width);
+  min-width: var(--sidebar-collapsed-width);
+}
+
+/* 主内容区域样式 */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  overflow: hidden;
+  min-width: 0;
 }
 
 .report-list {
