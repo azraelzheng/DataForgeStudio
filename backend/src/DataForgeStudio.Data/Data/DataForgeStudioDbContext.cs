@@ -35,6 +35,7 @@ public class DataForgeStudioDbContext : DbContext
     // 系统
     public DbSet<SystemConfig> SystemConfigs { get; set; }
     public DbSet<BackupRecord> BackupRecords { get; set; }
+    public DbSet<BackupSchedule> BackupSchedules { get; set; }
     public DbSet<License> Licenses { get; set; }
 
     #endregion
@@ -226,6 +227,13 @@ public class DataForgeStudioDbContext : DbContext
             entity.Property(e => e.LicenseKey).HasMaxLength(512).IsRequired();
             entity.Property(e => e.Signature).HasMaxLength(512).IsRequired();
             entity.Property(e => e.MachineCode).HasMaxLength(64).IsRequired();
+        });
+
+        // 配置 BackupSchedule
+        modelBuilder.Entity<BackupSchedule>(entity =>
+        {
+            entity.HasIndex(e => e.NextRunTime);
+            entity.HasIndex(e => e.IsEnabled);
         });
 
         // 全局配置: 禁止级联删除
