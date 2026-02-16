@@ -38,7 +38,15 @@
         <!-- SQL编辑器 -->
         <el-card class="design-card" style="margin-top: 20px;">
           <template #header>
-            <span>SQL查询</span>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span>SQL查询</span>
+              <div>
+                <el-button type="primary" link size="small" @click="handleParseSql">
+                  <el-icon><Search /></el-icon>
+                  解析参数
+                </el-button>
+              </div>
+            </div>
           </template>
           <SqlEditor
             ref="sqlEditorRef"
@@ -47,10 +55,6 @@
             style="height: 300px;"
           />
           <div style="margin-top: 10px;">
-            <el-button type="primary" @click="handleParseSql">
-              <el-icon><Search /></el-icon>
-              解析SQL
-            </el-button>
             <el-button @click="handleTestQuery">
               <el-icon><Connection /></el-icon>
               测试查询
@@ -63,60 +67,42 @@
         </el-card>
 
         <!-- 参数配置 -->
-        <el-card class="design-card" style="margin-top: 20px;">
+        <el-card class="design-card" style="margin-top: 20px;" v-if="form.parameters.length > 0">
           <template #header>
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <span>参数配置</span>
-              <el-button type="primary" link size="small" @click="handleAddParameter">
-                <el-icon><Plus /></el-icon>
-                添加参数
-              </el-button>
             </div>
           </template>
-          <el-table :data="form.parameters" border>
-            <el-table-column prop="name" label="参数名" width="120" />
-            <el-table-column prop="label" label="显示名称">
+          <el-table :data="form.parameters" border size="small">
+            <el-table-column prop="name" label="参数名" width="100" />
+            <el-table-column prop="label" label="显示名称" width="120">
               <template #default="{ row }">
                 <el-input v-model="row.label" size="small" />
               </template>
             </el-table-column>
-            <el-table-column prop="dataType" label="数据类型" width="120">
+            <el-table-column prop="dataType" label="类型" width="100">
               <template #default="{ row }">
                 <el-select v-model="row.dataType" size="small">
                   <el-option label="字符串" value="String" />
                   <el-option label="数字" value="Number" />
                   <el-option label="日期" value="DateTime" />
-                  <el-option label="下拉选择" value="Select" />
+                  <el-option label="下拉" value="Select" />
                 </el-select>
               </template>
             </el-table-column>
             <el-table-column prop="defaultValue" label="默认值">
               <template #default="{ row }">
-                <el-input v-model="row.defaultValue" size="small" />
+                <el-input v-model="row.defaultValue" size="small" :placeholder="row.dataType === 'Select' ? '选项用换行分隔' : ''" />
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="80">
+            <el-table-column label="" width="50">
               <template #default="{ $index }">
                 <el-button type="danger" link size="small" @click="handleRemoveParameter($index)">
-                  删除
+                  <el-icon><Delete /></el-icon>
                 </el-button>
               </template>
             </el-table-column>
           </el-table>
-        </el-card>
-
-        <!-- 查询条件配置 -->
-        <el-card class="design-card" style="margin-top: 20px;">
-          <template #header>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span>查询条件配置</span>
-            </div>
-          </template>
-
-          <QueryConditions
-            v-model="form.queryConditions"
-            :fields="form.columns"
-          />
         </el-card>
       </el-col>
 
@@ -194,6 +180,78 @@
           </el-table>
         </el-card>
 
+        <!-- 查询条件配置 -->
+        <el-card class="design-card" style="margin-top: 20px;">
+          <template #header>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span>查询条件配置</span>
+              <el-button type="primary" link size="small" @click="handleAddQueryCondition" :disabled="form.columns.length === 0">
+                <el-icon><Plus /></el-icon>
+                添加条件
+              </el-button>
+            </div>
+          </template>
+          <div v-if="form.queryConditions.length > 0">
+            <el-table :data="form.queryConditions" border size="small">
+              <el-table-column label="字段" width="150">
+                <template #default="{ row }">
+                  <el-select
+                    v-model="row.fieldName"
+                    size="small"
+                    placeholder="选择或输入关键字"
+                    filterable
+                    clearable
+                    @change="onConditionFieldChange(row)"
+                  >
+                    <el-option
+                      v-for="col in form.columns"
+                      :key="col.fieldName"
+                      :label="col.displayName"
+                      :value="col.fieldName"
+                    />
+                  </el-select>
+                </template>
+              </el-table-column>
+              <el-table-column label="显示名" width="120">
+                <template #default="{ row }">
+                  <el-input v-model="row.displayName" size="small" placeholder="显示名称" />
+                </template>
+              </el-table-column>
+              <el-table-column label="比较方式" width="120">
+                <template #default="{ row }">
+                  <el-select v-model="row.operator" size="small" placeholder="选择">
+                    <el-option
+                      v-for="op in getOperatorsForField(row.fieldName)"
+                      :key="op.value"
+                      :label="op.label"
+                      :value="op.value"
+                    />
+                  </el-select>
+                </template>
+              </el-table-column>
+              <el-table-column label="默认值">
+                <template #default="{ row }">
+                  <el-input
+                    v-if="!['null', 'notnull'].includes(row.operator)"
+                    v-model="row.defaultValue"
+                    size="small"
+                    placeholder="默认值"
+                  />
+                  <span v-else style="color: #909399; font-size: 12px;">-</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="" width="50">
+                <template #default="{ $index }">
+                  <el-button type="danger" link size="small" @click="handleRemoveQueryCondition($index)">
+                    <el-icon><Delete /></el-icon>
+                  </el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+          <el-empty v-else description="配置字段后可添加查询条件" :image-size="60" />
+        </el-card>
+
         <!-- 图表配置 -->
         <el-card class="design-card" style="margin-top: 20px;">
           <template #header>
@@ -264,12 +322,11 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { reportApi, dataSourceApi } from '../../api/request'
 import SqlEditor from '../../components/SqlEditor.vue'
-import QueryConditions from '../../components/QueryConditions.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -307,6 +364,51 @@ const rules = {
 // SqlEditor 组件引用
 const sqlEditorRef = ref(null)
 
+// 根据字段类型获取可用的操作符
+const operatorOptions = {
+  String: [
+    { label: '等于', value: 'eq' },
+    { label: '不等于', value: 'ne' },
+    { label: '包含', value: 'like' },
+    { label: '开头是', value: 'start' },
+    { label: '结尾是', value: 'end' },
+    { label: '为空', value: 'null' },
+    { label: '不为空', value: 'notnull' }
+  ],
+  Number: [
+    { label: '等于', value: 'eq' },
+    { label: '不等于', value: 'ne' },
+    { label: '大于', value: 'gt' },
+    { label: '小于', value: 'lt' },
+    { label: '大于等于', value: 'ge' },
+    { label: '小于等于', value: 'le' },
+    { label: '为空', value: 'null' },
+    { label: '不为空', value: 'notnull' }
+  ],
+  DateTime: [
+    { label: '等于', value: 'eq' },
+    { label: '不等于', value: 'ne' },
+    { label: '之后', value: 'gt' },
+    { label: '之前', value: 'lt' },
+    { label: '不晚于', value: 'le' },
+    { label: '不早于', value: 'ge' },
+    { label: '为空', value: 'null' },
+    { label: '不为空', value: 'notnull' }
+  ],
+  Boolean: [
+    { label: '等于', value: 'eq' },
+    { label: '为真', value: 'true' },
+    { label: '为假', value: 'false' }
+  ]
+}
+
+// 获取字段对应的操作符列表
+const getOperatorsForField = (fieldName) => {
+  const field = form.columns.find(c => c.fieldName === fieldName)
+  if (!field) return operatorOptions.String
+  return operatorOptions[field.dataType] || operatorOptions.String
+}
+
 // 格式化 SQL
 const formatSQL = () => {
   if (sqlEditorRef.value) {
@@ -342,6 +444,9 @@ const loadReport = async (id) => {
           title: ''
         }
       }
+      if (!form.queryConditions) {
+        form.queryConditions = []
+      }
     }
   } catch (error) {
     console.error('加载报表失败:', error)
@@ -353,6 +458,7 @@ const handleDataSourceChange = async () => {
   form.sqlQuery = ''
   form.columns = []
   form.parameters = []
+  form.queryConditions = []
 
   // 预加载表结构
   if (form.dataSourceId && sqlEditorRef.value) {
@@ -367,8 +473,8 @@ const handleDataSourceChange = async () => {
 const handleParseSql = () => {
   // 解析SQL中的参数 @参数名
   const regex = /@(\w+)/g
-  const matches = []
   let match
+  let addedCount = 0
 
   while ((match = regex.exec(form.sqlQuery)) !== null) {
     const paramName = match[1]
@@ -379,10 +485,19 @@ const handleParseSql = () => {
         dataType: 'String',
         defaultValue: ''
       })
+      addedCount++
     }
   }
 
-  ElMessage.success('解析成功')
+  if (addedCount > 0) {
+    ElMessage.success(`解析成功，添加了 ${addedCount} 个参数`)
+  } else {
+    ElMessage.info('没有发现新的参数')
+  }
+}
+
+const handleRemoveParameter = (index) => {
+  form.parameters.splice(index, 1)
 }
 
 const handleTestQuery = async () => {
@@ -412,24 +527,10 @@ const handleTestQuery = async () => {
 
     if (res.success) {
       ElMessage.success(`查询成功，返回 ${res.data.length} 条记录`)
-      // 可以在这里显示预览结果
     }
   } catch (error) {
     console.error('测试查询失败:', error)
   }
-}
-
-const handleAddParameter = () => {
-  form.parameters.push({
-    name: '',
-    label: '',
-    dataType: 'String',
-    defaultValue: ''
-  })
-}
-
-const handleRemoveParameter = (index) => {
-  form.parameters.splice(index, 1)
 }
 
 const handleAddField = () => {
@@ -445,7 +546,10 @@ const handleAddField = () => {
 }
 
 const handleRemoveField = (index) => {
+  const fieldName = form.columns[index].fieldName
   form.columns.splice(index, 1)
+  // 同时移除相关的查询条件
+  form.queryConditions = form.queryConditions.filter(qc => qc.fieldName !== fieldName)
 }
 
 const handleAutoDetectFields = async () => {
@@ -467,38 +571,24 @@ const handleAutoDetectFields = async () => {
       }
     })
 
-    const res = await reportApi.testQuery({
+    // 调用新的 getQuerySchema API 只获取字段结构
+    const res = await reportApi.getQuerySchema({
       dataSourceId: form.dataSourceId,
       sql: form.sqlQuery,
       parameters: Object.keys(parameters).length > 0 ? parameters : null
     })
 
     if (res.success && res.data.length > 0) {
-      // 从第一行数据获取字段信息
-      const firstRow = res.data[0]
-      const detectedFields = []
-
-      for (const [fieldName, value] of Object.entries(firstRow)) {
-        // 检测数据类型
-        let dataType = 'String'
-        if (typeof value === 'number') {
-          dataType = Number.isInteger(value) ? 'Number' : 'Number'
-        } else if (value instanceof Date) {
-          dataType = 'DateTime'
-        } else if (typeof value === 'boolean') {
-          dataType = 'Boolean'
-        }
-
-        detectedFields.push({
-          fieldName: fieldName,
-          displayName: fieldName, // 默认使用字段名作为显示名称
-          dataType: dataType,
-          width: 120,
-          align: dataType === 'Number' ? 'right' : 'left',
-          isVisible: true,
-          isSortable: true
-        })
-      }
+      // 直接使用后端返回的字段元数据
+      const detectedFields = res.data.map(field => ({
+        fieldName: field.fieldName,
+        displayName: field.fieldName,
+        dataType: field.systemDataType,  // 直接使用后端映射的类型
+        width: 120,
+        align: field.systemDataType === 'Number' ? 'right' : 'left',
+        isVisible: true,
+        isSortable: true
+      }))
 
       form.columns = detectedFields
       ElMessage.success(`自动识别成功，检测到 ${detectedFields.length} 个字段`)
@@ -508,6 +598,38 @@ const handleAutoDetectFields = async () => {
   } catch (error) {
     console.error('自动识别字段失败:', error)
     ElMessage.error('自动识别字段失败: ' + (error.message || '未知错误'))
+  }
+}
+
+// 添加查询条件
+const handleAddQueryCondition = () => {
+  if (form.columns.length === 0) {
+    ElMessage.warning('请先配置字段')
+    return
+  }
+  form.queryConditions.push({
+    fieldName: '',
+    displayName: '',
+    dataType: 'String',
+    operator: 'eq',
+    defaultValue: ''
+  })
+}
+
+// 删除查询条件
+const handleRemoveQueryCondition = (index) => {
+  form.queryConditions.splice(index, 1)
+}
+
+// 当选择字段时，自动填充显示名和数据类型
+const onConditionFieldChange = (row) => {
+  const field = form.columns.find(c => c.fieldName === row.fieldName)
+  if (field) {
+    row.displayName = field.displayName
+    row.dataType = field.dataType
+    // 重置操作符为默认值
+    const operators = getOperatorsForField(row.fieldName)
+    row.operator = operators[0]?.value || 'eq'
   }
 }
 
@@ -541,6 +663,8 @@ const handleSave = async () => {
 <style scoped>
 .report-design {
   height: 100%;
+  overflow-y: auto;
+  padding-bottom: 20px;
 }
 
 .design-card {
