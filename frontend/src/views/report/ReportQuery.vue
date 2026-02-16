@@ -1,9 +1,59 @@
 <template>
   <div class="report-query">
     <!-- 可折叠侧边栏 -->
-    <div class="sidebar">
-      <!-- 临时占位，下个任务会完善 -->
-      <div style="padding: 16px;">侧边栏占位</div>
+    <div class="sidebar" :class="{ collapsed: sidebarCollapsed }">
+      <!-- 搜索框 -->
+      <div class="sidebar-search">
+        <el-input
+          v-if="!sidebarCollapsed"
+          v-model="searchKeyword"
+          placeholder="搜索报表..."
+          clearable
+        >
+          <template #prefix>
+            <el-icon><Search /></el-icon>
+          </template>
+        </el-input>
+        <el-tooltip v-else content="搜索报表" placement="right">
+          <el-icon class="sidebar-icon-only"><Search /></el-icon>
+        </el-tooltip>
+      </div>
+
+      <!-- 报表列表 -->
+      <div class="sidebar-list">
+        <div v-if="filteredReports.length > 0" class="report-list">
+          <div
+            v-for="report in filteredReports"
+            :key="report.reportId"
+            :class="['report-item', { active: selectedReportId === report.reportId }]"
+            @click="selectReport(report)"
+          >
+            <el-tooltip :content="sidebarCollapsed ? report.reportName : ''" placement="right">
+              <div class="report-item-content">
+                <el-icon class="report-item-icon"><Document /></el-icon>
+                <div v-if="!sidebarCollapsed" class="report-item-info">
+                  <div class="report-item-name">{{ report.reportName }}</div>
+                  <div class="report-item-meta">
+                    <el-tag size="small" type="info">{{ report.reportCategory || '未分类' }}</el-tag>
+                    <span class="view-count">{{ report.viewCount || 0 }} 次查看</span>
+                  </div>
+                </div>
+              </div>
+            </el-tooltip>
+          </div>
+        </div>
+        <el-empty v-else description="暂无报表数据" :image-size="60" style="margin-top: 20px;">
+          <el-button type="primary" size="small" @click="router.push('/report/design')">创建报表</el-button>
+        </el-empty>
+      </div>
+
+      <!-- 收起/展开按钮 -->
+      <div class="sidebar-toggle" @click="toggleSidebar">
+        <el-icon>
+          <ArrowLeft v-if="!sidebarCollapsed" />
+          <ArrowRight v-else />
+        </el-icon>
+      </div>
     </div>
 
     <!-- 主内容区域 -->
@@ -159,9 +209,13 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { Search, Document, Download, ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
 import { reportApi } from '../../api/request'
 
 const router = useRouter()
+
+// 侧边栏状态
+const sidebarCollapsed = ref(false)
 
 const searchKeyword = ref('')
 const reports = ref([])
@@ -192,8 +246,19 @@ const operatorLabels = {
 }
 
 onMounted(async () => {
+  // 从 localStorage 恢复侧边栏状态
+  const savedState = localStorage.getItem('reportQuerySidebarCollapsed')
+  if (savedState !== null) {
+    sidebarCollapsed.value = savedState === 'true'
+  }
   await loadReports()
 })
+
+// 切换侧边栏
+const toggleSidebar = () => {
+  sidebarCollapsed.value = !sidebarCollapsed.value
+  localStorage.setItem('reportQuerySidebarCollapsed', sidebarCollapsed.value)
+}
 
 const loadReports = async () => {
   try {
@@ -400,48 +465,83 @@ const handleExportExcel = async () => {
   min-width: 0;
 }
 
+/* 侧边栏搜索框 */
+.sidebar-search {
+  padding: 12px;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+}
+
+.sidebar-icon-only {
+  font-size: 20px;
+  color: var(--primary-color);
+  cursor: pointer;
+}
+
+/* 侧边栏列表区域 */
+.sidebar-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
 .report-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 
 .report-item {
   display: flex;
   align-items: center;
   padding: 12px;
-  border: 1px solid #e4e7ed;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s;
+  margin-bottom: 4px;
+  transition: all 200ms ease;
+  border-left: 3px solid transparent;
 }
 
 .report-item:hover {
-  background-color: #f5f7fa;
-  border-color: #409eff;
+  background-color: var(--bg-hover);
 }
 
 .report-item.active {
-  background-color: #ecf5ff;
-  border-color: #409eff;
+  background-color: var(--primary-light);
+  border-left: 3px solid var(--primary-color);
 }
 
-.report-icon {
-  font-size: 24px;
-  color: #409eff;
-  margin-right: 12px;
+.report-item-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
 }
 
-.report-info {
+.report-item-icon {
+  font-size: 20px;
+  color: var(--primary-color);
+  flex-shrink: 0;
+}
+
+.report-item-info {
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 
-.report-name {
+.report-item-name {
   font-weight: 500;
   margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.report-meta {
+.report-item-meta {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -449,8 +549,38 @@ const handleExportExcel = async () => {
   color: #909399;
 }
 
-.report-arrow {
-  color: #c0c4cc;
+.view-count {
+  font-size: 12px;
+  color: #909399;
+  margin-left: 8px;
+}
+
+/* 侧边栏收起状态下的报表项 */
+.sidebar.collapsed .report-item {
+  padding: 12px 8px;
+  display: flex;
+  justify-content: center;
+}
+
+.sidebar.collapsed .report-item-info {
+  display: none;
+}
+
+/* 侧边栏收起/展开按钮 */
+.sidebar-toggle {
+  padding: 12px;
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #909399;
+  transition: all 200ms ease;
+}
+
+.sidebar-toggle:hover {
+  background-color: var(--bg-hover);
+  color: var(--primary-color);
 }
 
 .empty-state {
