@@ -11,12 +11,7 @@ namespace DataForgeStudio.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<string>(
-                name: "Description",
-                table: "BackupRecords",
-                type: "nvarchar(500)",
-                maxLength: 500,
-                nullable: true);
+            // Note: Description column already exists in BackupRecords table
 
             migrationBuilder.CreateTable(
                 name: "BackupSchedules",
@@ -57,10 +52,6 @@ namespace DataForgeStudio.Data.Migrations
         {
             migrationBuilder.DropTable(
                 name: "BackupSchedules");
-
-            migrationBuilder.DropColumn(
-                name: "Description",
-                table: "BackupRecords");
         }
     }
 }
