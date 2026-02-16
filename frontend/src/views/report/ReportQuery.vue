@@ -1116,11 +1116,12 @@ const handleExportExcel = async () => {
 }
 
 .filter-section {
-  margin-bottom: 12px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #ebeef5;
 }
 
 .filter-section:last-of-type {
-  margin-bottom: 8px;
+  border-bottom: none;
 }
 
 .filter-section-title {
@@ -1149,6 +1150,11 @@ const handleExportExcel = async () => {
 .filter-input-wrapper .range-filter :deep(.el-input-number) {
   flex: 1;
   min-width: 80px;
+}
+
+.range-separator {
+  color: #909399;
+  flex-shrink: 0;
 }
 
 .filter-input-wrapper :deep(.el-date-editor) {
