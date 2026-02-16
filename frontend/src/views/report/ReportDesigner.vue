@@ -383,7 +383,8 @@ const operatorOptions = {
     { label: '大于等于', value: 'ge' },
     { label: '小于等于', value: 'le' },
     { label: '为空', value: 'null' },
-    { label: '不为空', value: 'notnull' }
+    { label: '不为空', value: 'notnull' },
+    { label: '两者之间', value: 'between' }
   ],
   DateTime: [
     { label: '等于', value: 'eq' },
@@ -393,7 +394,8 @@ const operatorOptions = {
     { label: '不晚于', value: 'le' },
     { label: '不早于', value: 'ge' },
     { label: '为空', value: 'null' },
-    { label: '不为空', value: 'notnull' }
+    { label: '不为空', value: 'notnull' },
+    { label: '两者之间', value: 'between' }
   ],
   Boolean: [
     { label: '等于', value: 'eq' },
