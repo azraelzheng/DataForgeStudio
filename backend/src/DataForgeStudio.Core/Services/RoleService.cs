@@ -25,8 +25,8 @@ public class RoleService : IRoleService
 
     public async Task<ApiResponse<PagedResponse<RoleDto>>> GetRolesAsync(PagedRequest request, string? roleName = null)
     {
-        // 过滤掉系统内置角色（超级管理员等），只显示用户创建的角色
-        var query = _context.Roles.Where(r => !r.IsSystem);
+        // 显示所有角色（包括系统预置角色），用户可以看到但不能编辑/删除系统角色
+        var query = _context.Roles.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(roleName))
         {
@@ -71,9 +71,8 @@ public class RoleService : IRoleService
 
     public async Task<ApiResponse<List<RoleDto>>> GetAllRolesAsync()
     {
-        // 过滤掉系统内置角色（超级管理员等），只显示用户创建的角色
+        // 显示所有角色（包括系统预置角色），用于用户分配角色时选择
         var roles = await _context.Roles
-            .Where(r => !r.IsSystem)
             .OrderBy(r => r.SortOrder)
             .ThenBy(r => r.RoleName)
             .Select(r => new RoleDto
