@@ -337,6 +337,9 @@ const sortOrder = ref(null) // 'asc' | 'desc'
 const currentPage = ref(1)
 const pageSize = ref(20)
 
+// Popover visibility state per column
+const filterPopoverVisible = reactive({})
+
 // 操作符标签映射
 const operatorLabels = {
   'eq': '等于',
@@ -407,6 +410,18 @@ const selectReport = async (report) => {
 const displayColumns = computed(() => {
   return selectedReport.value?.columns || selectedReport.value?.fields || []
 })
+
+// Check if column has active filter
+const hasColumnFilter = (fieldName) => {
+  const val = columnFilters[fieldName]
+  const minVal = columnFilters[fieldName + '_min']
+  const maxVal = columnFilters[fieldName + '_max']
+
+  if (val !== null && val !== undefined && val !== '') return true
+  if (minVal !== null && minVal !== undefined) return true
+  if (maxVal !== null && maxVal !== undefined) return true
+  return false
+}
 
 // 筛选后的数据
 const filteredTableData = computed(() => {
