@@ -48,6 +48,11 @@ function toCamelCase(obj) {
 // 响应拦截器
 request.interceptors.response.use(
   (response) => {
+    // 如果是 blob 类型（文件下载），直接返回原始数据
+    if (response.config.responseType === 'blob') {
+      return response.data
+    }
+
     const res = response.data
 
     console.log('API Response:', res) // Debug log
@@ -232,7 +237,10 @@ export const reportApi = {
   exportAllConfigs: () => request.get('/reports/export-config'),
 
   // 切换报表启用状态
-  toggleReport: (id) => request.post(`/reports/${id}/toggle`)
+  toggleReport: (id) => request.post(`/reports/${id}/toggle`),
+
+  // 获取查询字段结构（用于自动识别字段）
+  getQuerySchema: (data) => request.post('/reports/query-schema', data)
 }
 
 export const licenseApi = {
@@ -265,6 +273,11 @@ export const systemApi = {
   // 导出日志
   exportLogs: (params) => request.get('/system/logs/export', {
     params,
+    responseType: 'blob'
+  }),
+
+  // 导出选中的日志
+  exportSelectedLogs: (logIds) => request.post('/system/logs/export-selected', logIds, {
     responseType: 'blob'
   }),
 
