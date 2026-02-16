@@ -281,6 +281,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useLicenseStore } from '../../stores/license'
+import { licenseApi } from '../../api/request'
 import {
   Refresh,
   CopyDocument,
@@ -347,10 +348,20 @@ const loadLicense = async () => {
 }
 
 const loadStats = async () => {
-  // TODO: 调用API获取统计数据
-  stats.currentUsers = 1
-  stats.currentReports = 0
-  stats.currentDataSources = 0
+  try {
+    const response = await licenseApi.getLicenseStats()
+    if (response.success && response.data) {
+      stats.currentUsers = response.data.currentUsers
+      stats.currentReports = response.data.currentReports
+      stats.currentDataSources = response.data.currentDataSources
+    }
+  } catch (error) {
+    console.error('获取统计数据失败:', error)
+    // 保持默认值
+    stats.currentUsers = 0
+    stats.currentReports = 0
+    stats.currentDataSources = 0
+  }
 }
 
 const updateFeatures = () => {
@@ -391,19 +402,15 @@ const handleActivate = async () => {
 
   activating.value = true
   try {
-    // 读取文件内容
+    // 读取文件内容（许可证文件已经是 base64 编码的加密数据）
     const licenseKey = await readFileAsText(activateForm.licenseFile)
 
-    // 转换为 base64 - 添加错误处理
-    let base64Key
-    try {
-      base64Key = btoa(licenseKey)
-    } catch (encodeError) {
-      throw new Error('许可证文件编码失败，请确保文件格式正确')
-    }
+    // 许可证文件内容已经是加密后的 base64 字符串，直接使用
+    // 去除可能的空白字符
+    const trimmedKey = licenseKey.trim()
 
     // 激活许可证
-    const success = await licenseStore.activateLicense(base64Key)
+    const success = await licenseStore.activateLicense(trimmedKey)
     if (success) {
       activateForm.licenseFile = null
       uploadRef.value?.clearFiles()

@@ -394,27 +394,17 @@ CREATE TABLE BackupRecords (
 ```sql
 CREATE TABLE Licenses (
     LicenseId INT IDENTITY(1,1) PRIMARY KEY,
-    LicenseKey NVARCHAR(500) NOT NULL UNIQUE,  -- RSA加密的许可证密钥
-    CompanyName NVARCHAR(200),
-    ContactPerson NVARCHAR(50),
-    Email NVARCHAR(100),
-    Phone NVARCHAR(20),
-    MaxUsers INT,                              -- 最大用户数
-    MaxReports INT,                            -- 最大报表数
-    MaxDataSources INT,                        -- 最大数据源数
-    ExpiryDate DATETIME,
-    Features NVARCHAR(MAX),                    -- 功能列表(JSON)
-    IsActive BIT DEFAULT 1,
-    ActivatedTime DATETIME,
-    ActivatedIP NVARCHAR(50),
-    MachineCode NVARCHAR(200),                 -- 机器码
-    Remark NVARCHAR(500),
-    CreatedBy INT,
+    LicenseKey NVARCHAR(MAX) NOT NULL,         -- AES 加密的完整许可证 JSON
+    Signature NVARCHAR(512) NOT NULL,          -- RSA 签名（Base64）
+    MachineCode NVARCHAR(64) NOT NULL,         -- 绑定的机器码
+    ActivatedTime DATETIME NOT NULL,           -- 激活时间
+    ActivatedIP NVARCHAR(50),                  -- 激活时的 IP 地址
     CreatedTime DATETIME DEFAULT GETDATE(),
-    UpdatedBy INT,
-    UpdatedTime DATETIME
+    CONSTRAINT UQ_Licenses_MachineCode UNIQUE(MachineCode)
 )
 ```
+
+**注意**: LicenseKey 字段使用 NVARCHAR(MAX) 以支持存储完整的加密许可证数据。
 
 ---
 

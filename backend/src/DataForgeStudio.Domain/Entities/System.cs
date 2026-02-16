@@ -95,7 +95,7 @@ public class License
     /// 包含所有许可证信息（客户名称、过期日期、功能列表等）
     /// </summary>
     [Required]
-    [MaxLength(512)]
+    [MaxLength(4096)]
     public string LicenseKey { get; set; } = string.Empty;
 
     /// <summary>

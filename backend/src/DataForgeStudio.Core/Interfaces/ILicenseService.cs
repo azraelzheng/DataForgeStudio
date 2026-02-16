@@ -22,4 +22,9 @@ public interface ILicenseService
     /// </summary>
     /// <param name="forceRefresh">是否强制刷新缓存</param>
     Task<ApiResponse<LicenseValidationResponse>> ValidateLicenseAsync(bool forceRefresh = false);
+
+    /// <summary>
+    /// 获取许可证使用统计（用户数、报表数、数据源数）
+    /// </summary>
+    Task<ApiResponse<LicenseUsageStatsDto>> GetUsageStatsAsync();
 }

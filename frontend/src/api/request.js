@@ -248,7 +248,10 @@ export const licenseApi = {
   getLicense: () => request.get('/license'),
 
   // 激活许可证
-  activateLicense: (data) => request.post('/license/activate', data)
+  activateLicense: (data) => request.post('/license/activate', data),
+
+  // 获取许可证使用统计
+  getLicenseStats: () => request.get('/license/stats')
 }
 
 export const systemApi = {

@@ -774,3 +774,24 @@ public class CreateBackupScheduleRequest
     public int RetentionCount { get; set; } = 10;
     public bool IsEnabled { get; set; } = true;
 }
+
+/// <summary>
+/// 许可证使用统计 DTO
+/// </summary>
+public class LicenseUsageStatsDto
+{
+    /// <summary>
+    /// 当前用户数量
+    /// </summary>
+    public int CurrentUsers { get; set; }
+
+    /// <summary>
+    /// 当前报表数量
+    /// </summary>
+    public int CurrentReports { get; set; }
+
+    /// <summary>
+    /// 当前数据源数量
+    /// </summary>
+    public int CurrentDataSources { get; set; }
+}

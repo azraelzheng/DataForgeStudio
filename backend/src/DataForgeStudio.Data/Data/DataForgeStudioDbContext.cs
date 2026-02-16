@@ -224,7 +224,7 @@ public class DataForgeStudioDbContext : DbContext
         {
             entity.HasIndex(e => e.MachineCode).IsUnique();
 
-            entity.Property(e => e.LicenseKey).HasMaxLength(512).IsRequired();
+            entity.Property(e => e.LicenseKey).HasMaxLength(4096).IsRequired();
             entity.Property(e => e.Signature).HasMaxLength(512).IsRequired();
             entity.Property(e => e.MachineCode).HasMaxLength(64).IsRequired();
         });

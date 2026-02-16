@@ -51,4 +51,14 @@ public class LicenseController : ControllerBase
     {
         return await _licenseService.ValidateLicenseAsync(forceRefresh);
     }
+
+    /// <summary>
+    /// 获取许可证使用统计
+    /// </summary>
+    [HttpGet("stats")]
+    [Authorize]
+    public async Task<ApiResponse<LicenseUsageStatsDto>> GetUsageStats()
+    {
+        return await _licenseService.GetUsageStatsAsync();
+    }
 }
