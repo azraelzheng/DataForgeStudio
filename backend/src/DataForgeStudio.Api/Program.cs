@@ -13,7 +13,17 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using NetEscapades.AspNetCore.SecurityHeaders;
 
+// 在创建 builder 之前检测测试环境
+var isTestingEnvironment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Testing" ||
+                           (args != null && args.Contains("--testing"));
+
 var builder = WebApplication.CreateBuilder(args);
+
+// 再次检查 builder 中的环境
+if (builder.Environment.IsEnvironment("Testing"))
+{
+    isTestingEnvironment = true;
+}
 
 // 配置安全选项（优先从环境变量读取，其次从配置文件读取）
 var securityOptionsConfig = new SecurityOptions();
@@ -83,6 +93,13 @@ var corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<st
 var corsMethods = builder.Configuration.GetSection("Cors:AllowedMethods").Get<string[]>() ?? new[] { "GET", "POST", "PUT", "DELETE", "PATCH" };
 var corsHeaders = builder.Configuration.GetSection("Cors:AllowedHeaders").Get<string[]>() ?? new[] { "Authorization", "Content-Type", "X-Requested-With" };
 
+// 将设置好的默认值写回配置，以便 KeyManagementService 可以读取
+builder.Configuration["Security:Jwt:Secret"] = jwtOptions.Secret;
+builder.Configuration["Security:Encryption:AesKey"] = encryptionOptions.AesKey;
+builder.Configuration["Security:Encryption:AesIV"] = encryptionOptions.AesIV;
+builder.Configuration["Security:License:AesKey"] = licenseOptions.AesKey;
+builder.Configuration["Security:License:AesIv"] = licenseOptions.AesIv;
+
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
@@ -112,6 +129,9 @@ builder.Services.AddScoped<IKeyManagementService, KeyManagementService>();
 builder.Services.AddScoped<ISqlValidationService, SqlValidationService>();
 builder.Services.AddScoped<IReportCacheService, ReportCacheService>();
 builder.Services.AddScoped<IExportService, ExportService>();
+
+// 注册备份计划后台服务
+builder.Services.AddHostedService<DataForgeStudio.Api.Services.BackupBackgroundService>();
 
 // 注册内存缓存（用于许可证验证缓存和报表查询缓存）
 builder.Services.AddMemoryCache();
@@ -227,20 +247,31 @@ builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 
-// 初始化数据库 - 创建 root 用户和默认权限
-using (var scope = app.Services.CreateScope())
+// 初始化数据库 - 创建 root 用户和默认权限（测试环境跳过）
+if (!isTestingEnvironment)
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<DataForgeStudioDbContext>();
-    // 开发环境可以设置为 true 强制重建权限，生产环境设置为 false
-    await DbInitializer.InitializeAsync(dbContext, forceResetPermissions: false);
-}
+    try
+    {
+        using (var scope = app.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<DataForgeStudioDbContext>();
+            // 开发环境可以设置为 true 强制重建权限，生产环境设置为 false
+            DbInitializer.InitializeAsync(dbContext, forceResetPermissions: false).GetAwaiter().GetResult();
+        }
 
-// 初始化密钥 - 生成 RSA 密钥对（如果不存在）
-using (var scope = app.Services.CreateScope())
-{
-    var keyService = scope.ServiceProvider.GetRequiredService<IKeyManagementService>();
-    await keyService.EnsureKeyPairExistsAsync();
-    await keyService.EnsureAesKeyExistsAsync();
+        // 初始化密钥 - 生成 RSA 密钥对（如果不存在）
+        using (var scope = app.Services.CreateScope())
+        {
+            var keyService = scope.ServiceProvider.GetRequiredService<IKeyManagementService>();
+            keyService.EnsureKeyPairExistsAsync().GetAwaiter().GetResult();
+            keyService.EnsureAesKeyExistsAsync().GetAwaiter().GetResult();
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"⚠️ 初始化失败: {ex.Message}");
+        throw;
+    }
 }
 
 // 配置 HTTP 请求管道
