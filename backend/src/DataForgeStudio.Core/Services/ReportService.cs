@@ -457,6 +457,21 @@ public class ReportService : IReportService
                     continue;
                 }
 
+                // between 操作符特殊处理（需要两个值）
+                if (op.ToLower() == "between")
+                {
+                    var (startValue, endValue) = ParseBetweenValue(param.Value);
+                    if (startValue != null && endValue != null)
+                    {
+                        var startParam = $"@p{paramIndex++}";
+                        var endParam = $"@p{paramIndex++}";
+                        whereClauses.Add($"{fieldName} BETWEEN {startParam} AND {endParam}");
+                        parameters[startParam] = startValue;
+                        parameters[endParam] = endValue;
+                    }
+                    continue;
+                }
+
                 var paramName = $"@p{paramIndex++}";
                 var clause = op.ToLower() switch
                 {
@@ -473,6 +488,7 @@ public class ReportService : IReportService
                     "notnull" => $"{fieldName} IS NOT NULL",
                     "true" => $"{fieldName} = 1",
                     "false" => $"{fieldName} = 0",
+                    "between" => null, // between 已在上面特殊处理
                     _ => null
                 };
 
@@ -1104,6 +1120,43 @@ public class ReportService : IReportService
             _logger.LogError(ex, $"获取查询结构失败: DataSourceId={dataSourceId}, Error={ex.Message}");
             return ApiResponse<List<FieldSchemaDto>>.Fail($"获取查询结构失败: {ex.Message}", "SCHEMA_ERROR");
         }
+    }
+
+    /// <summary>
+    /// 解析 between 操作符的值
+    /// 支持两种格式：数组 ["start", "end"] 或逗号分隔的字符串 "start,end"
+    /// </summary>
+    private (object? start, object? end) ParseBetweenValue(object? value)
+    {
+        if (value == null) return (null, null);
+
+        // 处理 JsonElement（从前端传来的数组）
+        if (value is JsonElement jsonEl)
+        {
+            if (jsonEl.ValueKind == JsonValueKind.Array)
+            {
+                var arr = jsonEl.EnumerateArray().ToArray();
+                if (arr.Length == 2)
+                {
+                    return (ConvertJsonElement(arr[0]), ConvertJsonElement(arr[1]));
+                }
+            }
+            // 处理逗号分隔的字符串
+            else if (jsonEl.ValueKind == JsonValueKind.String)
+            {
+                var str = jsonEl.GetString();
+                if (!string.IsNullOrEmpty(str) && str.Contains(','))
+                {
+                    var parts = str.Split(',');
+                    if (parts.Length == 2)
+                    {
+                        return (parts[0].Trim(), parts[1].Trim());
+                    }
+                }
+            }
+        }
+
+        return (null, null);
     }
 
     /// <summary>
