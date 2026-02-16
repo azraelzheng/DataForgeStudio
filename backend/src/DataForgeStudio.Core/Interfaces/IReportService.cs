@@ -43,6 +43,18 @@ public interface IReportService
     Task<ApiResponse<List<Dictionary<string, object>>>> TestQueryAsync(int dataSourceId, string sql, Dictionary<string, object>? parameters);
 
     /// <summary>
+    /// 获取查询的字段结构信息
+    /// </summary>
+    /// <param name="dataSourceId">数据源ID</param>
+    /// <param name="sql">SQL 查询语句</param>
+    /// <param name="parameters">查询参数</param>
+    /// <returns>字段结构列表</returns>
+    Task<ApiResponse<List<FieldSchemaDto>>> GetQuerySchemaAsync(
+        int dataSourceId,
+        string sql,
+        Dictionary<string, object>? parameters);
+
+    /// <summary>
     /// 导出报表
     /// </summary>
     Task<ApiResponse<byte[]>> ExportReportAsync(int reportId, ExecuteReportRequest request);
