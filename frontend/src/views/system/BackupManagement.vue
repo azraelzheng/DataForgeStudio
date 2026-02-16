@@ -21,6 +21,59 @@
         </el-card>
       </el-col>
 
+      <!-- 备份计划 -->
+      <el-col :span="24" style="margin-top: 20px;">
+        <el-card>
+          <template #header>
+            <div class="card-header">
+              <span>备份计划</span>
+              <el-button type="primary" @click="handleAddSchedule">
+                <el-icon><Plus /></el-icon>
+                新增计划
+              </el-button>
+            </div>
+          </template>
+
+          <el-table :data="schedules" v-loading="schedulesLoading" border stripe>
+            <el-table-column prop="scheduleName" label="计划名称" width="150" />
+            <el-table-column prop="scheduleType" label="类型" width="100">
+              <template #default="{ row }">
+                <el-tag :type="row.scheduleType === 'Recurring' ? 'primary' : 'warning'">
+                  {{ row.scheduleType === 'Recurring' ? '重复' : '单次' }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="执行时间" min-width="200">
+              <template #default="{ row }">
+                <span v-if="row.scheduleType === 'Recurring'">
+                  {{ formatRecurringDays(row.recurringDays) }} {{ row.scheduledTime }}
+                </span>
+                <span v-else>
+                  {{ formatOnceDate(row.onceDate) }}
+                </span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="retentionCount" label="保留数量" width="100" />
+            <el-table-column prop="nextRunTime" label="下次执行" width="180">
+              <template #default="{ row }">
+                {{ formatDateTime(row.nextRunTime) }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="isEnabled" label="状态" width="80">
+              <template #default="{ row }">
+                <el-switch v-model="row.isEnabled" @change="handleToggleSchedule(row)" />
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="120" fixed="right">
+              <template #default="{ row }">
+                <el-button type="primary" link size="small" @click="handleEditSchedule(row)">编辑</el-button>
+                <el-button type="danger" link size="small" @click="handleDeleteSchedule(row)">删除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-card>
+      </el-col>
+
       <!-- 备份列表 -->
       <el-col :span="24" style="margin-top: 20px;">
         <el-card>
@@ -92,6 +145,66 @@
         </el-card>
       </el-col>
     </el-row>
+
+    <!-- 计划编辑对话框 -->
+    <el-dialog v-model="scheduleDialogVisible" :title="editingSchedule ? '编辑计划' : '新增计划'" width="500px">
+      <el-form :model="scheduleForm" label-width="100px">
+        <el-form-item label="计划名称" required>
+          <el-input v-model="scheduleForm.scheduleName" placeholder="请输入计划名称" />
+        </el-form-item>
+        <el-form-item label="计划类型" required>
+          <el-radio-group v-model="scheduleForm.scheduleType">
+            <el-radio value="Recurring">重复计划</el-radio>
+            <el-radio value="Once">单次计划</el-radio>
+          </el-radio-group>
+        </el-form-item>
+
+        <!-- 重复计划设置 -->
+        <template v-if="scheduleForm.scheduleType === 'Recurring'">
+          <el-form-item label="执行日期" required>
+            <el-checkbox-group v-model="scheduleForm.recurringDays">
+              <el-checkbox :value="0">周日</el-checkbox>
+              <el-checkbox :value="1">周一</el-checkbox>
+              <el-checkbox :value="2">周二</el-checkbox>
+              <el-checkbox :value="3">周三</el-checkbox>
+              <el-checkbox :value="4">周四</el-checkbox>
+              <el-checkbox :value="5">周五</el-checkbox>
+              <el-checkbox :value="6">周六</el-checkbox>
+            </el-checkbox-group>
+          </el-form-item>
+          <el-form-item label="执行时间" required>
+            <el-time-select
+              v-model="scheduleForm.scheduledTime"
+              start="00:00"
+              end="23:59"
+              step="00:30"
+              placeholder="选择时间"
+            />
+          </el-form-item>
+        </template>
+
+        <!-- 单次计划设置 -->
+        <template v-if="scheduleForm.scheduleType === 'Once'">
+          <el-form-item label="执行时间" required>
+            <el-date-picker
+              v-model="scheduleForm.onceDate"
+              type="datetime"
+              placeholder="选择日期时间"
+              value-format="YYYY-MM-DDTHH:mm:ss"
+            />
+          </el-form-item>
+        </template>
+
+        <el-form-item label="保留数量">
+          <el-input-number v-model="scheduleForm.retentionCount" :min="1" :max="100" />
+          <span style="margin-left: 10px; color: #909399;">个备份</span>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="scheduleDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleSaveSchedule" :loading="savingSchedule">保存</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -120,8 +233,25 @@ const pagination = reactive({
   total: 0
 })
 
+// 备份计划相关
+const schedules = ref([])
+const schedulesLoading = ref(false)
+const scheduleDialogVisible = ref(false)
+const editingSchedule = ref(null)
+const savingSchedule = ref(false)
+
+const scheduleForm = reactive({
+  scheduleName: '',
+  scheduleType: 'Recurring',
+  recurringDays: [1, 2, 3, 4, 5],
+  scheduledTime: '02:00',
+  onceDate: null,
+  retentionCount: 10
+})
+
 onMounted(() => {
   loadData()
+  loadSchedules()
 })
 
 const loadData = async () => {
@@ -141,6 +271,20 @@ const loadData = async () => {
     console.error('加载数据失败:', error)
   } finally {
     loading.value = false
+  }
+}
+
+const loadSchedules = async () => {
+  schedulesLoading.value = true
+  try {
+    const res = await systemApi.getBackupSchedules()
+    if (res.success) {
+      schedules.value = res.data || []
+    }
+  } catch (error) {
+    console.error('加载备份计划失败:', error)
+  } finally {
+    schedulesLoading.value = false
   }
 }
 
@@ -249,6 +393,99 @@ const formatFileSize = (bytes) => {
   }
 
   return `${size.toFixed(2)} ${units[unitIndex]}`
+}
+
+// 备份计划相关方法
+const handleAddSchedule = () => {
+  editingSchedule.value = null
+  Object.assign(scheduleForm, {
+    scheduleName: '',
+    scheduleType: 'Recurring',
+    recurringDays: [1, 2, 3, 4, 5],
+    scheduledTime: '02:00',
+    onceDate: null,
+    retentionCount: 10
+  })
+  scheduleDialogVisible.value = true
+}
+
+const handleEditSchedule = (row) => {
+  editingSchedule.value = row
+  Object.assign(scheduleForm, {
+    scheduleName: row.scheduleName,
+    scheduleType: row.scheduleType,
+    recurringDays: row.recurringDays || [],
+    scheduledTime: row.scheduledTime,
+    onceDate: row.onceDate,
+    retentionCount: row.retentionCount
+  })
+  scheduleDialogVisible.value = true
+}
+
+const handleSaveSchedule = async () => {
+  if (!scheduleForm.scheduleName) {
+    ElMessage.warning('请输入计划名称')
+    return
+  }
+
+  savingSchedule.value = true
+  try {
+    if (editingSchedule.value) {
+      await systemApi.updateBackupSchedule(editingSchedule.value.scheduleId, scheduleForm)
+      ElMessage.success('更新成功')
+    } else {
+      await systemApi.createBackupSchedule(scheduleForm)
+      ElMessage.success('创建成功')
+    }
+    scheduleDialogVisible.value = false
+    loadSchedules()
+  } catch (error) {
+    console.error('保存失败:', error)
+  } finally {
+    savingSchedule.value = false
+  }
+}
+
+const handleToggleSchedule = async (row) => {
+  try {
+    await systemApi.toggleBackupSchedule(row.scheduleId)
+    ElMessage.success(row.isEnabled ? '已启用' : '已禁用')
+    loadSchedules()
+  } catch (error) {
+    console.error('切换状态失败:', error)
+    row.isEnabled = !row.isEnabled
+  }
+}
+
+const handleDeleteSchedule = async (row) => {
+  try {
+    await ElMessageBox.confirm(`确定要删除计划"${row.scheduleName}"吗？`, '提示', {
+      type: 'warning'
+    })
+    await systemApi.deleteBackupSchedule(row.scheduleId)
+    ElMessage.success('删除成功')
+    loadSchedules()
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('删除失败:', error)
+    }
+  }
+}
+
+const formatRecurringDays = (days) => {
+  if (!days || days.length === 0) return '-'
+  const dayNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+  return days.map(d => dayNames[d]).join('、')
+}
+
+const formatOnceDate = (date) => {
+  if (!date) return '-'
+  return new Date(date).toLocaleString('zh-CN')
+}
+
+const formatDateTime = (date) => {
+  if (!date) return '-'
+  return new Date(date).toLocaleString('zh-CN')
 }
 </script>
 
