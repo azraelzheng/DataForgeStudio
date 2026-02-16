@@ -21,6 +21,7 @@ public class LicenseService : ILicenseService
     private readonly ILogger<LicenseService> _logger;
     private readonly IKeyManagementService _keyManagementService;
     private readonly IMemoryCache _memoryCache;
+    private readonly ITrialLicenseTracker _trialTracker;
     private const string CACHE_KEY = "LicenseValidation";
     private const int CACHE_DURATION_MINUTES = 30;
     private const string LICENSE_TYPE_TRIAL = "Trial";
@@ -29,12 +30,14 @@ public class LicenseService : ILicenseService
         DataForgeStudioDbContext context,
         ILogger<LicenseService> logger,
         IKeyManagementService keyManagementService,
-        IMemoryCache memoryCache)
+        IMemoryCache memoryCache,
+        ITrialLicenseTracker trialTracker)
     {
         _context = context;
         _logger = logger;
         _keyManagementService = keyManagementService;
         _memoryCache = memoryCache;
+        _trialTracker = trialTracker;
     }
 
     public async Task<ApiResponse<LicenseInfoDto>> GetLicenseAsync()
@@ -98,11 +101,16 @@ public class LicenseService : ILicenseService
                 return ApiResponse<LicenseInfoDto>.Fail("许可证文件格式错误或已损坏", "INVALID_FORMAT");
             }
 
-            // 2. 解析 JSON
+            // 2. 解析 JSON（使用 camelCase 命名策略，与 LicenseGenerator 保持一致）
             LicenseData licenseData;
             try
             {
-                licenseData = JsonSerializer.Deserialize<LicenseData>(licenseJson);
+                var jsonOptions = new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    PropertyNameCaseInsensitive = true
+                };
+                licenseData = JsonSerializer.Deserialize<LicenseData>(licenseJson, jsonOptions);
                 if (licenseData == null)
                 {
                     _logger.LogError("许可证数据反序列化后为 null");
@@ -116,9 +124,28 @@ public class LicenseService : ILicenseService
             }
 
             // 3. 使用 KeyManagementService 获取公钥验证签名
+            // 重新构建不含 Signature 的 JSON（与 LicenseGenerator 签名时的格式一致）
+            var jsonForVerification = JsonSerializer.Serialize(new
+            {
+                LicenseId = licenseData.LicenseId,
+                CustomerName = licenseData.CustomerName,
+                ExpiryDate = licenseData.ExpiryDate.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+                MaxUsers = licenseData.MaxUsers,
+                MaxReports = licenseData.MaxReports,
+                MaxDataSources = licenseData.MaxDataSources,
+                Features = licenseData.Features,
+                MachineCode = licenseData.MachineCode,
+                IssuedDate = licenseData.IssuedDate,
+                LicenseType = licenseData.LicenseType
+            }, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                WriteIndented = false
+            });
+
             var publicKey = await _keyManagementService.GetPublicKeyAsync();
             bool isValid = EncryptionHelper.RsaVerifyData(
-                licenseJson,
+                jsonForVerification,
                 licenseData.Signature,
                 publicKey
             );
@@ -131,8 +158,8 @@ public class LicenseService : ILicenseService
             // 4. 获取当前服务器机器码
             var currentMachineCode = EncryptionHelper.GetMachineCode();
 
-            // 5. 验证机器码是否匹配
-            if (licenseData.MachineCode != currentMachineCode)
+            // 5. 验证机器码是否匹配（如果许可证绑定了机器码）
+            if (!string.IsNullOrEmpty(licenseData.MachineCode) && licenseData.MachineCode != currentMachineCode)
             {
                 return ApiResponse<LicenseInfoDto>.Fail(
                     $"许可证与当前服务器不匹配\n许可证绑定机器码: {licenseData.MachineCode}\n当前服务器机器码: {currentMachineCode}\n\n请联系供应商，提供当前服务器机器码以重新生成许可证。",
@@ -248,10 +275,28 @@ public class LicenseService : ILicenseService
             return response;
         }
 
-        // 验证签名
+        // 验证签名 - 重新构建不含 Signature 的 JSON（与 LicenseGenerator 签名时的格式一致）
+        var jsonForVerification = JsonSerializer.Serialize(new
+        {
+            LicenseId = licenseData.LicenseId,
+            CustomerName = licenseData.CustomerName,
+            ExpiryDate = licenseData.ExpiryDate.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+            MaxUsers = licenseData.MaxUsers,
+            MaxReports = licenseData.MaxReports,
+            MaxDataSources = licenseData.MaxDataSources,
+            Features = licenseData.Features,
+            MachineCode = licenseData.MachineCode,
+            IssuedDate = licenseData.IssuedDate,
+            LicenseType = licenseData.LicenseType
+        }, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = false
+        });
+
         var publicKey = await _keyManagementService.GetPublicKeyAsync();
         bool isValid = EncryptionHelper.RsaVerifyData(
-            JsonSerializer.Serialize(licenseData),
+            jsonForVerification,
             licenseData.Signature,
             publicKey
         );
@@ -302,7 +347,12 @@ public class LicenseService : ILicenseService
             var aesKey = _keyManagementService.GetAesKey();
             var aesIv = _keyManagementService.GetAesIv();
             var licenseJson = EncryptionHelper.AesDecrypt(encryptedLicense, aesKey, aesIv);
-            return JsonSerializer.Deserialize<LicenseData>(licenseJson);
+            var jsonOptions = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                PropertyNameCaseInsensitive = true
+            };
+            return JsonSerializer.Deserialize<LicenseData>(licenseJson, jsonOptions);
         }
         catch (Exception ex)
         {
@@ -318,6 +368,30 @@ public class LicenseService : ILicenseService
     {
         try
         {
+            // 使用 TrialLicenseTracker 检查试用期状态
+            var trialStatus = _trialTracker.CheckTrialStatus();
+
+            if (trialStatus.IsFirstRun)
+            {
+                // 首次运行，记录试用期起始时间
+                _trialTracker.RecordFirstRun();
+                _logger.LogInformation("首次运行，已记录试用期起始时间");
+            }
+            else if (!trialStatus.IsValid)
+            {
+                // 试用期已过期
+                var trialExpiryDate = trialStatus.ExpiryTime?.ToString("yyyy-MM-dd") ?? "未知";
+                _logger.LogWarning("试用期已过期，过期日期: {ExpiryDate}", trialExpiryDate);
+                return ApiResponse<LicenseInfoDto>.Fail(
+                    $"试用期已过期（过期日期: {trialExpiryDate}），请联系供应商购买正式许可证。",
+                    "TRIAL_EXPIRED");
+            }
+            else
+            {
+                // 试用期有效
+                _logger.LogInformation("试用期有效，剩余 {Days} 天", trialStatus.DaysRemaining);
+            }
+
             var machineCode = EncryptionHelper.GetMachineCode();
 
             // 检查是否已有试用许可证
@@ -343,11 +417,13 @@ public class LicenseService : ILicenseService
             }
 
             // 生成试用许可证数据
+            // 使用 TrialLicenseTracker 计算的到期时间（15天试用期）
+            var expiryDate = trialStatus.ExpiryTime ?? DateTime.UtcNow.AddDays(15);
             var licenseData = new LicenseData
             {
                 LicenseId = Guid.NewGuid().ToString(),
                 CustomerName = "试用用户",
-                ExpiryDate = DateTime.UtcNow.AddDays(30),
+                ExpiryDate = expiryDate,
                 MaxUsers = 5,
                 MaxReports = 10,
                 MaxDataSources = 2,
@@ -404,6 +480,42 @@ public class LicenseService : ILicenseService
         {
             _logger.LogError(ex, "生成试用许可证失败");
             return ApiResponse<LicenseInfoDto>.Fail($"生成试用许可证失败: {ex.Message}", "TRIAL_GENERATION_FAILED");
+        }
+    }
+
+    /// <summary>
+    /// 获取许可证使用统计
+    /// </summary>
+    public async Task<ApiResponse<LicenseUsageStatsDto>> GetUsageStatsAsync()
+    {
+        try
+        {
+            // 统计非系统用户数量
+            var currentUsers = await _context.Users
+                .Where(u => !u.IsSystem)
+                .CountAsync();
+
+            // 统计报表数量
+            var currentReports = await _context.Reports
+                .CountAsync();
+
+            // 统计数据源数量
+            var currentDataSources = await _context.DataSources
+                .CountAsync();
+
+            var stats = new LicenseUsageStatsDto
+            {
+                CurrentUsers = currentUsers,
+                CurrentReports = currentReports,
+                CurrentDataSources = currentDataSources
+            };
+
+            return ApiResponse<LicenseUsageStatsDto>.Ok(stats);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "获取许可证使用统计失败");
+            return ApiResponse<LicenseUsageStatsDto>.Fail($"获取统计数据失败: {ex.Message}", "GET_STATS_FAILED");
         }
     }
 }
