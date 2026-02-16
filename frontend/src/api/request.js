@@ -300,5 +300,12 @@ export const systemApi = {
   validateLicense: (params) => request.post('/license/validate', null, { params }),
 
   // 激活许可证
-  activateLicense: (data) => request.post('/license/activate', data)
+  activateLicense: (data) => request.post('/license/activate', data),
+
+  // 备份计划 API
+  getBackupSchedules: () => request.get('/system/backup-schedules'),
+  createBackupSchedule: (data) => request.post('/system/backup-schedules', data),
+  updateBackupSchedule: (id, data) => request.put(`/system/backup-schedules/${id}`, data),
+  deleteBackupSchedule: (id) => request.delete(`/system/backup-schedules/${id}`),
+  toggleBackupSchedule: (id) => request.post(`/system/backup-schedules/${id}/toggle`)
 }
