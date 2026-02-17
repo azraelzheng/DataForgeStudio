@@ -434,8 +434,8 @@ public class DatabaseService : IDatabaseService
         if (type.Contains("date") || type.Contains("time"))
             return "DateTime";
 
-        // 布尔类型
-        if (type.Contains("bit"))
+        // 布尔类型 (bit: SQL Server, bool/boolean: MySQL/PostgreSQL, yesno: Access)
+        if (type.Contains("bit") || type.Equals("bool") || type.Equals("boolean") || type.Contains("yesno") || type.Contains("logical"))
             return "Boolean";
 
         return "String"; // 默认字符串
@@ -741,6 +741,12 @@ public class DatabaseService : IDatabaseService
             {
                 var sqlDataType = column.DataTypeName ?? "unknown";
                 var systemDataType = MapSystemDataType(sqlDataType);
+
+                // 如果 SQL 类型名检测不到布尔，使用 .NET 类型作为备用检测
+                if (systemDataType == "String" && column.DataType == typeof(bool))
+                {
+                    systemDataType = "Boolean";
+                }
 
                 fields.Add(new FieldSchemaDto
                 {
