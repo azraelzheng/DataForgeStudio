@@ -377,7 +377,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Search, Document, Download, ArrowLeft, ArrowRight, Filter } from '@element-plus/icons-vue'
@@ -399,16 +399,33 @@ const querying = ref(false)
 const exporting = ref(false)
 const conditionsActive = ref(['conditions'])  // 默认展开条件面板
 const hasQueried = ref(false)  // 是否已执行过查询
-const tableMaxHeight = ref(400)  // 表格最大高度
+const tableMaxHeight = ref(null)  // 表格最大高度，null 表示自适应内容
 
-// 动态计算表格高度
+// 动态计算表格高度（混合模式）
 const updateTableHeight = () => {
   nextTick(() => {
     if (tableWrapperRef.value) {
       const wrapperHeight = tableWrapperRef.value.clientHeight
       if (wrapperHeight > 0) {
-        // 预留 60px 给合计行等
-        tableMaxHeight.value = Math.max(wrapperHeight - 60, 200)
+        // 计算可容纳的行数（size="small" 行高约 32px）
+        const rowHeight = 32
+        const headerHeight = 36  // 表头高度
+        const summaryHeight = 32  // 合计行高度
+        const availableHeight = wrapperHeight - summaryHeight - 20  // 预留边距
+        const maxVisibleRows = Math.floor((availableHeight - headerHeight) / rowHeight)
+
+        // 当前数据行数
+        const dataRows = paginatedData.value?.length || 0
+
+        // 混合模式：数据少时自适应，数据多时填满容器
+        if (dataRows > 0 && dataRows < maxVisibleRows) {
+          // 数据行少于可容纳行数，自适应内容高度
+          const contentHeight = headerHeight + (dataRows * rowHeight) + summaryHeight + 10
+          tableMaxHeight.value = contentHeight
+        } else {
+          // 数据行足够多，填满容器
+          tableMaxHeight.value = Math.max(availableHeight, 200)
+        }
       }
     }
   })
@@ -605,6 +622,11 @@ const paginatedData = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
   const end = start + pageSize.value
   return filteredTableData.value.slice(start, end)
+})
+
+// 监听分页数据变化，更新表格高度
+watch(paginatedData, () => {
+  updateTableHeight()
 })
 
 // 获取数值数组中的最大小数位数
