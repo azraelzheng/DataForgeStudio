@@ -71,6 +71,10 @@
                   <el-icon><Plus /></el-icon>
                   添加字段
                 </el-button>
+                <el-button type="danger" @click="handleClearFields" :disabled="form.columns.length === 0">
+                  <el-icon><Delete /></el-icon>
+                  清空字段
+                </el-button>
                 <el-button @click="handleAutoDetectFields">
                   <el-icon><MagicStick /></el-icon>
                   自动识别
@@ -81,7 +85,22 @@
           <el-table :data="form.columns" border max-height="300">
             <el-table-column prop="fieldName" label="字段名" width="150">
               <template #default="{ row }">
-                <el-input v-model="row.fieldName" size="small" />
+                <el-select
+                  v-model="row.fieldName"
+                  size="small"
+                  filterable
+                  clearable
+                  placeholder="输入关键字筛选"
+                  @change="onFieldNameChange(row)"
+                  style="width: 100%;"
+                >
+                  <el-option
+                    v-for="field in availableFields"
+                    :key="field.fieldName"
+                    :label="field.displayName"
+                    :value="field.fieldName"
+                  />
+                </el-select>
               </template>
             </el-table-column>
             <el-table-column prop="displayName" label="显示名称" width="150">
@@ -287,6 +306,7 @@ const route = useRoute()
 const formRef = ref()
 const saving = ref(false)
 const dataSources = ref([])
+const availableFields = ref([])  // SQL 解析的字段列表，用于字段名下拉筛选
 
 const form = reactive({
   reportId: null,
@@ -296,6 +316,7 @@ const form = reactive({
   dataSourceId: null,
   sqlQuery: '',
   columns: [],
+  parameters: [],  // 添加 parameters 字段
   queryConditions: [],
   enableChart: false,
   chartConfig: {
@@ -376,6 +397,11 @@ onMounted(async () => {
   const res = await dataSourceApi.getDataSources()
   if (res.success) {
     dataSources.value = res.data.items || res.data
+    // Debug logging
+    console.log('=== Datasources loaded ===')
+    dataSources.value.forEach(ds => {
+      console.log(`  ID: ${ds.dataSourceId} (${typeof ds.dataSourceId}), Name: ${ds.dataSourceName}`)
+    })
   }
 
   // 如果有ID，则加载报表
@@ -408,10 +434,15 @@ const loadReport = async (id) => {
 }
 
 const handleDataSourceChange = async () => {
+  // Debug logging
+  console.log('=== DataSource changed ===')
+  console.log('New form.dataSourceId:', form.dataSourceId, typeof form.dataSourceId)
+
   // 数据源切换时清除SQL和字段
   form.sqlQuery = ''
   form.columns = []
   form.queryConditions = []
+  availableFields.value = []  // 清空可用字段列表
 
   // 预加载表结构
   if (form.dataSourceId && sqlEditorRef.value) {
@@ -466,6 +497,24 @@ const handleRemoveField = (index) => {
   form.queryConditions = form.queryConditions.filter(qc => qc.fieldName !== fieldName)
 }
 
+// 清空所有字段
+const handleClearFields = () => {
+  form.columns = []
+  form.queryConditions = []  // 同时清空相关查询条件
+}
+
+// 当从下拉列表选择字段名时，自动填充显示名和数据类型
+const onFieldNameChange = (row) => {
+  if (row.fieldName) {
+    const field = availableFields.value.find(f => f.fieldName === row.fieldName)
+    if (field) {
+      row.displayName = field.displayName
+      row.dataType = field.dataType
+      row.align = field.dataType === 'Number' ? 'right' : 'left'
+    }
+  }
+}
+
 const handleAutoDetectFields = async () => {
   if (!form.dataSourceId) {
     ElMessage.warning('请先选择数据源')
@@ -476,12 +525,23 @@ const handleAutoDetectFields = async () => {
     return
   }
 
+  // Debug logging
+  console.log('=== Auto-detect called ===')
+  console.log('form.dataSourceId:', form.dataSourceId, typeof form.dataSourceId)
+  console.log('form.sqlQuery:', form.sqlQuery)
+
   try {
     // 调用 getQuerySchema API 只获取字段结构
-    const res = await reportApi.getQuerySchema({
+    const requestData = {
       dataSourceId: form.dataSourceId,
       sql: form.sqlQuery
-    })
+    }
+    console.log('API request data:', JSON.stringify(requestData))
+
+    const res = await reportApi.getQuerySchema(requestData)
+
+    console.log('API response success:', res.success)
+    console.log('API response first 3 fields:', res.data?.slice(0, 3))
 
     if (res.success && res.data.length > 0) {
       // 直接使用后端返回的字段元数据
@@ -496,6 +556,12 @@ const handleAutoDetectFields = async () => {
       }))
 
       form.columns = detectedFields
+      // 同时更新 availableFields 供字段名下拉筛选使用
+      availableFields.value = detectedFields.map(f => ({
+        fieldName: f.fieldName,
+        displayName: f.displayName,
+        dataType: f.dataType
+      }))
       ElMessage.success(`自动识别成功，检测到 ${detectedFields.length} 个字段`)
     } else {
       ElMessage.warning('查询结果为空，无法自动识别字段')
@@ -542,23 +608,34 @@ const handleSave = async () => {
   const valid = await formRef.value.validate().catch(() => false)
   if (!valid) return
 
+  // Debug logging
+  console.log('=== Save report ===')
+  console.log('form.dataSourceId:', form.dataSourceId)
+  console.log('form.reportId:', form.reportId)
+  console.log('form.columns count:', form.columns.length)
+
   saving.value = true
   try {
     const saveData = {
       ...form,
+      parameters: [],  // 添加必需的 parameters 字段
       chartConfig: form.enableChart ? form.chartConfig : null,
       queryConditions: form.queryConditions.length > 0 ? form.queryConditions : null
     }
+    console.log('Save data:', JSON.stringify(saveData, null, 2).substring(0, 500))
 
     if (form.reportId) {
+      console.log('Updating existing report, ID:', form.reportId)
       await reportApi.updateReport(form.reportId, saveData)
     } else {
+      console.log('Creating new report')
       await reportApi.createReport(saveData)
     }
     ElMessage.success('保存成功')
     router.push('/report/design')
   } catch (error) {
     console.error('保存失败:', error)
+    console.error('Error details:', error.response?.data || error.message)
   } finally {
     saving.value = false
   }
