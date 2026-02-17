@@ -243,7 +243,7 @@
 
 <script setup>
 import { ref, reactive, onMounted, computed, h } from 'vue'
-import { ElInput, ElSelect, ElOption, ElInputNumber, ElSwitch, ElButton } from 'element-plus'
+import { ElInput, ElSelect, ElInputNumber, ElSwitch, ElButton } from 'element-plus'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { reportApi, dataSourceApi } from '../../api/request'
@@ -312,13 +312,14 @@ const fieldColumns = computed(() => [
     cellRenderer: ({ rowData }) => h(ElSelect, {
       modelValue: rowData.dataType,
       'onUpdate:modelValue': (val) => { rowData.dataType = val },
-      size: 'small'
-    }, () => [
-      h(ElOption, { label: '字符串', value: 'String' }),
-      h(ElOption, { label: '数字', value: 'Number' }),
-      h(ElOption, { label: '日期', value: 'DateTime' }),
-      h(ElOption, { label: '布尔', value: 'Boolean' })
-    ])
+      size: 'small',
+      options: [
+        { label: '字符串', value: 'String' },
+        { label: '数字', value: 'Number' },
+        { label: '日期', value: 'DateTime' },
+        { label: '布尔', value: 'Boolean' }
+      ]
+    })
   },
   {
     key: 'width',
@@ -341,12 +342,13 @@ const fieldColumns = computed(() => [
     cellRenderer: ({ rowData }) => h(ElSelect, {
       modelValue: rowData.align,
       'onUpdate:modelValue': (val) => { rowData.align = val },
-      size: 'small'
-    }, () => [
-      h(ElOption, { label: '左对齐', value: 'left' }),
-      h(ElOption, { label: '居中', value: 'center' }),
-      h(ElOption, { label: '右对齐', value: 'right' })
-    ])
+      size: 'small',
+      options: [
+        { label: '左对齐', value: 'left' },
+        { label: '居中', value: 'center' },
+        { label: '右对齐', value: 'right' }
+      ]
+    })
   },
   {
     key: 'isVisible',
