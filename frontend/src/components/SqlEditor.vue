@@ -194,12 +194,7 @@ watch(() => props.modelValue, (newValue) => {
   }
 })
 
-// 监听数据源变化，预加载表结构
-watch(() => props.dataSourceId, async (newDataSourceId) => {
-  if (newDataSourceId) {
-    await preloadTableDataSourceId(newDataSourceId)
-  }
-})
+// 注意：已移除数据源变化时自动预加载表结构的功能，避免大量数据加载影响性能
 
 // 转换后端表结构格式为自动补全所需格式
 const transformTableStructure = (response) => {
