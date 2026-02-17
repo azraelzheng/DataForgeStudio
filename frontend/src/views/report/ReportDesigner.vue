@@ -396,6 +396,7 @@ const fieldColumns = computed(() => [
       modelValue: rowData.summaryType || 'none',
       'onUpdate:modelValue': (val) => { rowData.summaryType = val },
       size: 'small',
+      disabled: rowData.dataType !== 'Number',  // 非数字类型禁用
       options: rowData.dataType === 'Number'
         ? [
             { label: '无', value: 'none' },
