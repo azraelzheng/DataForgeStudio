@@ -929,7 +929,7 @@ const handleExportExcel = async () => {
 /* CSS 变量定义 */
 .report-query {
   height: 100%;
-  --sidebar-width: 280px;
+  --sidebar-width: 220px;
   --sidebar-collapsed-width: 48px;
   --primary-color: #409eff;
   --primary-light: #ecf5ff;
@@ -977,12 +977,12 @@ const handleExportExcel = async () => {
 
 /* 侧边栏搜索框 */
 .sidebar-search {
-  padding: 12px;
+  padding: 8px;
   border-bottom: 1px solid var(--border-light);
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 56px;
+  min-height: 48px;
 }
 
 .sidebar-icon-only {
@@ -995,22 +995,22 @@ const handleExportExcel = async () => {
 .sidebar-list {
   flex: 1;
   overflow-y: auto;
-  padding: 8px;
+  padding: 4px;
 }
 
 .report-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .report-item {
   display: flex;
   align-items: center;
-  padding: 12px;
-  border-radius: 8px;
+  padding: 8px;
+  border-radius: 6px;
   cursor: pointer;
-  margin-bottom: 4px;
+  margin-bottom: 0;
   border-left: 3px solid transparent;
   /* transition is defined in animation section */
 }
