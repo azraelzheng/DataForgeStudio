@@ -65,7 +65,7 @@
         <el-card class="design-card">
           <template #header>
             <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span>字段配置</span>
+              <span>字段配置 ({{ form.columns.length }} 个字段)</span>
               <div>
                 <el-button type="primary" @click="handleAddField">
                   <el-icon><Plus /></el-icon>
@@ -82,59 +82,22 @@
               </div>
             </div>
           </template>
-          <el-table :data="form.columns" border max-height="300">
-            <el-table-column prop="fieldName" label="字段名" width="150">
-              <template #default="{ row }">
-                <el-input v-model="row.fieldName" size="small" placeholder="字段名" />
+          <!-- 使用虚拟滚动表格提升性能 -->
+          <div class="virtual-table-container">
+            <el-auto-resizer>
+              <template #default="{ height, width }">
+                <el-table-v2
+                  :columns="fieldColumns"
+                  :data="form.columns"
+                  :width="width"
+                  :height="Math.max(300, Math.min(500, form.columns.length * 45))"
+                  :row-height="45"
+                  :header-height="40"
+                  fixed
+                />
               </template>
-            </el-table-column>
-            <el-table-column prop="displayName" label="显示名称" width="150">
-              <template #default="{ row }">
-                <el-input v-model="row.displayName" size="small" />
-              </template>
-            </el-table-column>
-            <el-table-column prop="dataType" label="数据类型" width="120">
-              <template #default="{ row }">
-                <el-select v-model="row.dataType" size="small">
-                  <el-option label="字符串" value="String" />
-                  <el-option label="数字" value="Number" />
-                  <el-option label="日期" value="DateTime" />
-                  <el-option label="布尔" value="Boolean" />
-                </el-select>
-              </template>
-            </el-table-column>
-            <el-table-column prop="width" label="宽度" width="100">
-              <template #default="{ row }">
-                <el-input-number v-model="row.width" :min="50" :max="500" :step="10" size="small" />
-              </template>
-            </el-table-column>
-            <el-table-column prop="align" label="对齐" width="100">
-              <template #default="{ row }">
-                <el-select v-model="row.align" size="small">
-                  <el-option label="左对齐" value="left" />
-                  <el-option label="居中" value="center" />
-                  <el-option label="右对齐" value="right" />
-                </el-select>
-              </template>
-            </el-table-column>
-            <el-table-column prop="isVisible" label="可见" width="80" align="center">
-              <template #default="{ row }">
-                <el-switch v-model="row.isVisible" />
-              </template>
-            </el-table-column>
-            <el-table-column prop="isSortable" label="排序" width="80" align="center">
-              <template #default="{ row }">
-                <el-switch v-model="row.isSortable" />
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" width="100">
-              <template #default="{ $index }">
-                <el-button type="danger" link size="small" @click="handleRemoveField($index)">
-                  删除
-                </el-button>
-              </template>
-            </el-table-column>
-          </el-table>
+            </el-auto-resizer>
+          </div>
         </el-card>
 
         <!-- 查询条件配置 -->
@@ -279,7 +242,8 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, h } from 'vue'
+import { ElInput, ElSelect, ElOption, ElInputNumber, ElSwitch, ElButton } from 'element-plus'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { reportApi, dataSourceApi } from '../../api/request'
@@ -317,6 +281,105 @@ const rules = {
   dataSourceId: [{ required: true, message: '请选择数据源', trigger: 'change' }],
   sqlQuery: [{ required: true, message: '请输入SQL查询语句', trigger: 'blur' }]
 }
+
+// 虚拟滚动表格列定义
+const fieldColumns = computed(() => [
+  {
+    key: 'fieldName',
+    title: '字段名',
+    width: 150,
+    cellRenderer: ({ rowData }) => h(ElInput, {
+      modelValue: rowData.fieldName,
+      'onUpdate:modelValue': (val) => { rowData.fieldName = val },
+      size: 'small',
+      placeholder: '字段名'
+    })
+  },
+  {
+    key: 'displayName',
+    title: '显示名称',
+    width: 150,
+    cellRenderer: ({ rowData }) => h(ElInput, {
+      modelValue: rowData.displayName,
+      'onUpdate:modelValue': (val) => { rowData.displayName = val },
+      size: 'small'
+    })
+  },
+  {
+    key: 'dataType',
+    title: '数据类型',
+    width: 120,
+    cellRenderer: ({ rowData }) => h(ElSelect, {
+      modelValue: rowData.dataType,
+      'onUpdate:modelValue': (val) => { rowData.dataType = val },
+      size: 'small'
+    }, () => [
+      h(ElOption, { label: '字符串', value: 'String' }),
+      h(ElOption, { label: '数字', value: 'Number' }),
+      h(ElOption, { label: '日期', value: 'DateTime' }),
+      h(ElOption, { label: '布尔', value: 'Boolean' })
+    ])
+  },
+  {
+    key: 'width',
+    title: '宽度',
+    width: 100,
+    cellRenderer: ({ rowData }) => h(ElInputNumber, {
+      modelValue: rowData.width,
+      'onUpdate:modelValue': (val) => { rowData.width = val },
+      min: 50,
+      max: 500,
+      step: 10,
+      size: 'small',
+      controls: false
+    })
+  },
+  {
+    key: 'align',
+    title: '对齐',
+    width: 100,
+    cellRenderer: ({ rowData }) => h(ElSelect, {
+      modelValue: rowData.align,
+      'onUpdate:modelValue': (val) => { rowData.align = val },
+      size: 'small'
+    }, () => [
+      h(ElOption, { label: '左对齐', value: 'left' }),
+      h(ElOption, { label: '居中', value: 'center' }),
+      h(ElOption, { label: '右对齐', value: 'right' })
+    ])
+  },
+  {
+    key: 'isVisible',
+    title: '可见',
+    width: 80,
+    align: 'center',
+    cellRenderer: ({ rowData }) => h(ElSwitch, {
+      modelValue: rowData.isVisible,
+      'onUpdate:modelValue': (val) => { rowData.isVisible = val }
+    })
+  },
+  {
+    key: 'isSortable',
+    title: '排序',
+    width: 80,
+    align: 'center',
+    cellRenderer: ({ rowData }) => h(ElSwitch, {
+      modelValue: rowData.isSortable,
+      'onUpdate:modelValue': (val) => { rowData.isSortable = val }
+    })
+  },
+  {
+    key: 'actions',
+    title: '操作',
+    width: 80,
+    cellRenderer: ({ rowIndex }) => h(ElButton, {
+      type: 'danger',
+      link: true,
+      size: 'small',
+      onClick: () => handleRemoveField(rowIndex)
+    }, () => '删除')
+  }
+])
 
 // SqlEditor 组件引用
 const sqlEditorRef = ref(null)
@@ -627,5 +690,23 @@ const handleSave = async () => {
 .action-buttons {
   margin-top: 20px;
   text-align: right;
+}
+
+.virtual-table-container {
+  width: 100%;
+  min-height: 300px;
+}
+
+/* 虚拟表格内组件样式调整 */
+:deep(.el-table-v2__cell) {
+  padding: 4px 8px;
+}
+
+:deep(.el-table-v2__cell .el-input__wrapper) {
+  padding: 1px 8px;
+}
+
+:deep(.el-table-v2__cell .el-select) {
+  width: 100%;
 }
 </style>
