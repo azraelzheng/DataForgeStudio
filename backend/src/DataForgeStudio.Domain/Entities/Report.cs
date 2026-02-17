@@ -198,6 +198,17 @@ public class ReportField
 
     public bool IsSortable { get; set; } = true;
 
+    /// <summary>
+    /// 汇总类型：none（无）, sum（求和）, avg（平均值）
+    /// </summary>
+    [MaxLength(10)]
+    public string? SummaryType { get; set; } = "none";
+
+    /// <summary>
+    /// 汇总值小数位数，null 表示自动检测
+    /// </summary>
+    public int? SummaryDecimals { get; set; }
+
     public bool IsFilterable { get; set; } = false;
 
     public bool IsGroupable { get; set; } = false;

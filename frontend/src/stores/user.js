@@ -101,7 +101,7 @@ export const useUserStore = defineStore('user', () => {
   }
 
   const logout = () => {
-    // 使用 setToken 确保一致性
+    // 使用 setToken 清除所有存储
     setToken('')
     userInfo.value = null
     permissions.value = []

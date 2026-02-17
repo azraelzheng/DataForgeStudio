@@ -484,7 +484,9 @@ const selectReport = async (report) => {
 }
 
 const displayColumns = computed(() => {
-  return selectedReport.value?.columns || selectedReport.value?.fields || []
+  const cols = selectedReport.value?.columns || selectedReport.value?.fields || []
+  // 过滤掉不可见的列
+  return cols.filter(col => col.isVisible !== false)
 })
 
 // Check if column has active filter
@@ -585,6 +587,32 @@ const paginatedData = computed(() => {
   return filteredTableData.value.slice(start, end)
 })
 
+// 获取数值数组中的最大小数位数
+const getMaxDecimals = (values) => {
+  let maxDecimals = 0
+  for (const val of values) {
+    if (val === null || val === undefined) continue
+    const str = String(val)
+    // 处理科学计数法
+    if (str.includes('e') || str.includes('E')) {
+      const num = Number(val)
+      const fixed = num.toFixed(10)
+      const dotIndex = fixed.indexOf('.')
+      if (dotIndex !== -1) {
+        const decimals = fixed.length - dotIndex - 1
+        maxDecimals = Math.max(maxDecimals, decimals)
+      }
+    } else {
+      const dotIndex = str.indexOf('.')
+      if (dotIndex !== -1) {
+        const decimals = str.length - dotIndex - 1
+        maxDecimals = Math.max(maxDecimals, decimals)
+      }
+    }
+  }
+  return maxDecimals
+}
+
 // 汇总行计算方法
 const getSummaryRow = (param) => {
   const { columns } = param
@@ -616,11 +644,19 @@ const getSummaryRow = (param) => {
 
     if (col.summaryType === 'sum') {
       const sum = values.reduce((acc, val) => acc + Number(val), 0)
-      sums[index] = sum.toFixed(2)
+      // 确定小数位数：优先使用配置值，否则自动检测
+      const decimals = col.summaryDecimals !== null && col.summaryDecimals !== undefined
+        ? col.summaryDecimals
+        : getMaxDecimals(values)
+      sums[index] = sum.toFixed(decimals)
     } else if (col.summaryType === 'avg') {
       if (values.length > 0) {
         const avg = values.reduce((acc, val) => acc + Number(val), 0) / values.length
-        sums[index] = avg.toFixed(2)
+        // 确定小数位数：优先使用配置值，否则默认2位
+        const decimals = col.summaryDecimals !== null && col.summaryDecimals !== undefined
+          ? col.summaryDecimals
+          : 2
+        sums[index] = avg.toFixed(decimals)
       } else {
         sums[index] = ''
       }

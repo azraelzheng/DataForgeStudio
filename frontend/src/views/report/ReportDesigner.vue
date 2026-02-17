@@ -409,6 +409,21 @@ const fieldColumns = computed(() => [
     })
   },
   {
+    key: 'summaryDecimals',
+    title: '小数位',
+    width: 80,
+    cellRenderer: ({ rowData }) => h(ElInputNumber, {
+      modelValue: rowData.summaryDecimals,
+      'onUpdate:modelValue': (val) => { rowData.summaryDecimals = val },
+      size: 'small',
+      min: 0,
+      max: 10,
+      placeholder: '自动',
+      controls: false,
+      disabled: rowData.dataType !== 'Number'
+    })
+  },
+  {
     key: 'actions',
     title: '操作',
     width: 80,
@@ -590,7 +605,8 @@ const handleAddField = () => {
     align: 'left',
     isVisible: true,
     isSortable: false,  // 默认不排序
-    summaryType: 'none'
+    summaryType: 'none',
+    summaryDecimals: null
   })
 }
 
@@ -645,7 +661,8 @@ const handleAutoDetectFields = async () => {
         align: field.systemDataType === 'Number' ? 'right' : 'left',
         isVisible: true,
         isSortable: false,  // 默认不排序
-        summaryType: 'none'
+        summaryType: 'none',
+        summaryDecimals: null
       }))
 
       form.columns = detectedFields

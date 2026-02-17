@@ -99,7 +99,7 @@
         </el-table>
       </template>
       <el-empty v-else-if="!loading" description="暂无报表数据，点击右上角创建报表">
-        <el-button type="primary" @click="handleAdd">创建报表</el-button>
+        <el-button type="primary" @click="handleCreate">创建报表</el-button>
       </el-empty>
 
       <!-- 分页 -->
@@ -139,7 +139,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, onActivated } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { reportApi } from '../../api/request'
@@ -163,6 +163,11 @@ const pagination = reactive({
 })
 
 onMounted(() => {
+  loadData()
+})
+
+// 当从 keep-alive 缓存中重新激活时，刷新数据
+onActivated(() => {
   loadData()
 })
 

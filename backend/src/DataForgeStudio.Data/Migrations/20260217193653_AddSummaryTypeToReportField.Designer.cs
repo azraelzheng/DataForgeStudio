@@ -4,6 +4,7 @@ using DataForgeStudio.Data.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataForgeStudio.Data.Migrations
 {
     [DbContext(typeof(DataForgeStudioDbContext))]
-    partial class DataForgeStudioDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260217193653_AddSummaryTypeToReportField")]
+    partial class AddSummaryTypeToReportField
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -623,9 +626,6 @@ namespace DataForgeStudio.Data.Migrations
                         .HasColumnType("int");
 
                     b.Property<int>("SortOrder")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("SummaryDecimals")
                         .HasColumnType("int");
 
                     b.Property<string>("SummaryType")

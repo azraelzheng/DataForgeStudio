@@ -109,7 +109,9 @@ public class ReportService : IReportService
                 Width = f.Width,
                 Align = f.Align,
                 IsVisible = f.IsVisible,
-                IsSortable = f.IsSortable
+                IsSortable = f.IsSortable,
+                SummaryType = f.SummaryType ?? "none",
+                SummaryDecimals = f.SummaryDecimals
             }).ToList(),
             Parameters = report.Parameters.OrderBy(p => p.SortOrder).Select(p => new ReportParameterDto
             {
@@ -222,6 +224,8 @@ public class ReportService : IReportService
                     Align = column.Align,
                     IsVisible = column.IsVisible,
                     IsSortable = column.IsSortable,
+                    SummaryType = column.SummaryType ?? "none",
+                    SummaryDecimals = column.SummaryDecimals,
                     SortOrder = sortOrder++
                 });
             }
@@ -334,6 +338,8 @@ public class ReportService : IReportService
                     Align = column.Align,
                     IsVisible = column.IsVisible,
                     IsSortable = column.IsSortable,
+                    SummaryType = column.SummaryType ?? "none",
+                    SummaryDecimals = column.SummaryDecimals,
                     SortOrder = sortOrder++
                 });
             }

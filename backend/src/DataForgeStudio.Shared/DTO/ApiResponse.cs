@@ -497,6 +497,14 @@ public class ReportFieldDto
     public string Align { get; set; }
     public bool IsVisible { get; set; }
     public bool IsSortable { get; set; }
+    /// <summary>
+    /// 汇总类型：none, sum, avg
+    /// </summary>
+    public string? SummaryType { get; set; }
+    /// <summary>
+    /// 汇总值小数位数，null 表示自动检测
+    /// </summary>
+    public int? SummaryDecimals { get; set; }
 }
 
 /// <summary>

@@ -53,7 +53,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../../stores/user'
 
@@ -78,6 +78,30 @@ const rules = {
   ]
 }
 
+// 页面加载时检查是否有保存的凭据
+onMounted(() => {
+  const savedUsername = localStorage.getItem('remembered_username')
+  const savedPassword = localStorage.getItem('remembered_password')
+  if (savedUsername) {
+    loginForm.username = savedUsername
+    loginForm.rememberMe = true
+    if (savedPassword) {
+      loginForm.password = savedPassword
+    }
+  }
+})
+
+// 保存/清除凭据
+const saveCredentials = (username, password, remember) => {
+  if (remember) {
+    localStorage.setItem('remembered_username', username)
+    localStorage.setItem('remembered_password', password)
+  } else {
+    localStorage.removeItem('remembered_username')
+    localStorage.removeItem('remembered_password')
+  }
+}
+
 const handleLogin = async () => {
   const valid = await formRef.value.validate().catch(() => false)
   if (!valid) return
@@ -86,12 +110,15 @@ const handleLogin = async () => {
 
   const success = await userStore.login({
     username: loginForm.username,
-    password: loginForm.password
+    password: loginForm.password,
+    rememberMe: loginForm.rememberMe
   })
 
   loading.value = false
 
   if (success) {
+    // 登录成功后保存/清除凭据
+    saveCredentials(loginForm.username, loginForm.password, loginForm.rememberMe)
     router.push('/home')
   }
 }
