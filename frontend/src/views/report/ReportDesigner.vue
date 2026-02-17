@@ -255,6 +255,7 @@ const route = useRoute()
 const formRef = ref()
 const saving = ref(false)
 const dataSources = ref([])
+const availableFields = ref([])  // SQL 解析的字段列表，用于字段名下拉筛选
 
 const form = reactive({
   reportId: null,
@@ -288,11 +289,28 @@ const fieldColumns = computed(() => [
     key: 'fieldName',
     title: '字段名',
     width: 150,
-    cellRenderer: ({ rowData }) => h(ElInput, {
+    cellRenderer: ({ rowData }) => h(ElSelect, {
       modelValue: rowData.fieldName,
-      'onUpdate:modelValue': (val) => { rowData.fieldName = val },
+      'onUpdate:modelValue': (val) => {
+        rowData.fieldName = val
+        // 自动填充显示名和数据类型
+        if (val) {
+          const field = availableFields.value.find(f => f.fieldName === val)
+          if (field) {
+            rowData.displayName = field.displayName
+            rowData.dataType = field.dataType
+            rowData.align = field.dataType === 'Number' ? 'right' : 'left'
+          }
+        }
+      },
       size: 'small',
-      placeholder: '字段名'
+      filterable: true,
+      clearable: true,
+      placeholder: '输入关键字筛选',
+      options: availableFields.value.map(f => ({
+        label: f.displayName,
+        value: f.fieldName
+      }))
     })
   },
   {
@@ -504,6 +522,7 @@ const handleDataSourceChange = async () => {
   form.sqlQuery = ''
   form.columns = []
   form.queryConditions = []
+  availableFields.value = []  // 清空可用字段列表
 
   // 注意：已移除预加载表结构功能，避免加载大量表数据影响性能
 }
@@ -598,6 +617,12 @@ const handleAutoDetectFields = async () => {
       }))
 
       form.columns = detectedFields
+      // 同时更新 availableFields 供字段名下拉筛选使用
+      availableFields.value = detectedFields.map(f => ({
+        fieldName: f.fieldName,
+        displayName: f.displayName,
+        dataType: f.dataType
+      }))
       ElMessage.success(`自动识别成功，检测到 ${detectedFields.length} 个字段`)
     } else {
       ElMessage.warning('查询结果为空，无法自动识别字段')
