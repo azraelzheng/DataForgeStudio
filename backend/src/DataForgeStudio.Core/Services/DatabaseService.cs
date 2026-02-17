@@ -574,62 +574,117 @@ public class DatabaseService : IDatabaseService
 
     /// <summary>
     /// 获取所有表及其列信息（用于SQL编辑器自动补全）
+    /// 优化：使用单次查询获取所有表和列，避免 N+1 查询问题
     /// </summary>
     public async Task<ApiResponse<List<TableInfoDto>>> GetAllTablesAsync(DataSource dataSource)
     {
         try
         {
             _logger.LogInformation($"获取所有表: {dataSource.DbType}");
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
             using var connection = CreateConnection(dataSource);
             await connection.OpenAsync();
 
-            // 根据数据库类型构建不同的查询获取表列表
-            var tableQuery = dataSource.DbType switch
+            // 单次查询获取所有表和列信息（避免 N+1 查询）
+            var tablesMap = new Dictionary<string, List<TableColumnInfoDto>>();
+
+            if (dataSource.DbType == "SQLite")
             {
-                "SqlServer" => "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' ORDER BY TABLE_NAME",
-                "MySql" => "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_TYPE = 'BASE TABLE' ORDER BY TABLE_NAME",
-                "PostgreSQL" => "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE' ORDER BY table_name",
-                "Oracle" => "SELECT TABLE_NAME FROM USER_TABLES ORDER BY TABLE_NAME",
-                "SQLite" => "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name",
-                _ => throw new NotSupportedException($"不支持的数据库类型: {dataSource.DbType}")
-            };
-
-            var tables = new List<TableInfoDto>();
-
-            using (var tableCommand = connection.CreateCommand())
-            {
-                tableCommand.CommandText = tableQuery;
-                tableCommand.CommandTimeout = _options.DefaultCommandTimeout;
-
-                using var tableReader = await tableCommand.ExecuteReaderAsync();
+                // SQLite 需要特殊处理：先获取表列表，再批量获取列
                 var tableNames = new List<string>();
-                while (await tableReader.ReadAsync())
-                {
-                    tableNames.Add(tableReader.GetString(0));
-                }
-                tableReader.Close();
 
-                // 对每个表获取列信息
+                using (var tableCommand = connection.CreateCommand())
+                {
+                    tableCommand.CommandText = "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name";
+                    using var reader = await tableCommand.ExecuteReaderAsync();
+                    while (await reader.ReadAsync())
+                    {
+                        tableNames.Add(reader.GetString(0));
+                    }
+                }
+
+                // 批量获取所有表的列（仍然需要多次查询，但 SQLite 通常表较少）
                 foreach (var tableName in tableNames)
                 {
                     try
                     {
                         var columns = await GetTableColumnsForAutocompleteAsync(connection, dataSource.DbType, tableName);
-                        tables.Add(new TableInfoDto
-                        {
-                            TableName = tableName,
-                            Columns = columns
-                        });
+                        tablesMap[tableName] = columns;
                     }
                     catch (Exception ex)
                     {
                         _logger.LogWarning(ex, $"获取表 {tableName} 的列信息失败，跳过");
+                        tablesMap[tableName] = new List<TableColumnInfoDto>();
+                    }
+                }
+            }
+            else
+            {
+                // 其他数据库：使用单次查询获取所有表和列
+                var columnsQuery = dataSource.DbType switch
+                {
+                    "SqlServer" => @"SELECT t.TABLE_NAME, c.COLUMN_NAME, c.DATA_TYPE
+                        FROM INFORMATION_SCHEMA.TABLES t
+                        LEFT JOIN INFORMATION_SCHEMA.COLUMNS c ON t.TABLE_NAME = c.TABLE_NAME
+                        WHERE t.TABLE_TYPE = 'BASE TABLE'
+                        ORDER BY t.TABLE_NAME, c.ORDINAL_POSITION",
+                    "MySql" => @"SELECT t.TABLE_NAME, c.COLUMN_NAME, c.DATA_TYPE
+                        FROM INFORMATION_SCHEMA.TABLES t
+                        LEFT JOIN INFORMATION_SCHEMA.COLUMNS c ON t.TABLE_NAME = c.TABLE_NAME AND c.TABLE_SCHEMA = DATABASE()
+                        WHERE t.TABLE_SCHEMA = DATABASE() AND t.TABLE_TYPE = 'BASE TABLE'
+                        ORDER BY t.TABLE_NAME, c.ORDINAL_POSITION",
+                    "PostgreSQL" => @"SELECT t.table_name, c.column_name, c.data_type
+                        FROM information_schema.tables t
+                        LEFT JOIN information_schema.columns c ON t.table_name = c.table_name AND c.table_schema = 'public'
+                        WHERE t.table_schema = 'public' AND t.table_type = 'BASE TABLE'
+                        ORDER BY t.table_name, c.ordinal_position",
+                    "Oracle" => @"SELECT t.TABLE_NAME, c.COLUMN_NAME, c.DATA_TYPE
+                        FROM USER_TABLES t
+                        LEFT JOIN USER_TAB_COLUMNS c ON t.TABLE_NAME = c.TABLE_NAME
+                        ORDER BY t.TABLE_NAME, c.COLUMN_ID",
+                    _ => throw new NotSupportedException($"不支持的数据库类型: {dataSource.DbType}")
+                };
+
+                using var command = connection.CreateCommand();
+                command.CommandText = columnsQuery;
+                command.CommandTimeout = _options.DefaultCommandTimeout;
+
+                using var reader = await command.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    var tableName = reader.GetString(0);
+                    var columnName = reader.IsDBNull(1) ? null : reader.GetString(1);
+                    var dataType = reader.IsDBNull(2) ? null : reader.GetString(2);
+
+                    if (!tablesMap.ContainsKey(tableName))
+                    {
+                        tablesMap[tableName] = new List<TableColumnInfoDto>();
+                    }
+
+                    if (!string.IsNullOrEmpty(columnName))
+                    {
+                        tablesMap[tableName].Add(new TableColumnInfoDto
+                        {
+                            ColumnName = columnName,
+                            DataType = dataType ?? "unknown"
+                        });
                     }
                 }
             }
 
-            _logger.LogInformation($"获取所有表成功: 共 {tables.Count} 个表");
+            // 转换为结果列表
+            var tables = tablesMap
+                .OrderBy(kvp => kvp.Key)
+                .Select(kvp => new TableInfoDto
+                {
+                    TableName = kvp.Key,
+                    Columns = kvp.Value
+                })
+                .ToList();
+
+            stopwatch.Stop();
+            _logger.LogInformation($"获取所有表成功: 共 {tables.Count} 个表，耗时 {stopwatch.ElapsedMilliseconds}ms");
             return ApiResponse<List<TableInfoDto>>.Ok(tables, "获取表列表成功");
         }
         catch (Exception ex)
