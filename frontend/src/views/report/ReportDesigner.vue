@@ -389,6 +389,25 @@ const fieldColumns = computed(() => [
     })
   },
   {
+    key: 'summaryType',
+    title: '汇总',
+    width: 100,
+    cellRenderer: ({ rowData }) => h(ElSelect, {
+      modelValue: rowData.summaryType || 'none',
+      'onUpdate:modelValue': (val) => { rowData.summaryType = val },
+      size: 'small',
+      options: rowData.dataType === 'Number'
+        ? [
+            { label: '无', value: 'none' },
+            { label: '求和', value: 'sum' },
+            { label: '平均值', value: 'avg' }
+          ]
+        : [
+            { label: '无', value: 'none' }
+          ]
+    })
+  },
+  {
     key: 'actions',
     title: '操作',
     width: 80,
@@ -569,7 +588,8 @@ const handleAddField = () => {
     width: 120,
     align: 'left',
     isVisible: true,
-    isSortable: true
+    isSortable: false,  // 默认不排序
+    summaryType: 'none'
   })
 }
 
@@ -623,7 +643,8 @@ const handleAutoDetectFields = async () => {
         width: 120,
         align: field.systemDataType === 'Number' ? 'right' : 'left',
         isVisible: true,
-        isSortable: true
+        isSortable: false,  // 默认不排序
+        summaryType: 'none'
       }))
 
       form.columns = detectedFields

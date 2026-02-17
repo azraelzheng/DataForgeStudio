@@ -212,7 +212,15 @@
 
           <!-- 表格 -->
           <div class="table-wrapper" ref="tableWrapperRef">
-            <el-table :data="paginatedData" border stripe style="width: 100%;" :max-height="tableMaxHeight">
+            <el-table
+              :data="paginatedData"
+              border
+              stripe
+              style="width: 100%;"
+              :max-height="tableMaxHeight"
+              show-summary
+              :summary-method="getSummaryRow"
+            >
               <el-table-column
                 v-for="col in displayColumns"
                 :key="col.fieldName"
@@ -577,6 +585,53 @@ const paginatedData = computed(() => {
   return filteredTableData.value.slice(start, end)
 })
 
+// 汇总行计算方法
+const getSummaryRow = (param) => {
+  const { columns } = param
+  const data = filteredTableData.value
+
+  if (!data || data.length === 0) {
+    return []
+  }
+
+  const sums = []
+  columns.forEach((column, index) => {
+    // 第一列显示"合计"
+    if (index === 0) {
+      sums[index] = '合计'
+      return
+    }
+
+    const fieldName = column.property
+    const col = displayColumns.value.find(c => c.fieldName === fieldName)
+
+    // 检查该列是否配置了汇总
+    if (!col || col.summaryType === 'none' || !col.summaryType) {
+      sums[index] = ''
+      return
+    }
+
+    // 计算汇总值
+    const values = data.map(row => row[fieldName]).filter(v => v !== null && v !== undefined && !isNaN(v))
+
+    if (col.summaryType === 'sum') {
+      const sum = values.reduce((acc, val) => acc + Number(val), 0)
+      sums[index] = sum.toFixed(2)
+    } else if (col.summaryType === 'avg') {
+      if (values.length > 0) {
+        const avg = values.reduce((acc, val) => acc + Number(val), 0) / values.length
+        sums[index] = avg.toFixed(2)
+      } else {
+        sums[index] = ''
+      }
+    } else {
+      sums[index] = ''
+    }
+  })
+
+  return sums
+}
+
 // 点击列标题排序
 const handleColumnSort = (field) => {
   if (sortField.value === field) {
@@ -687,30 +742,13 @@ const resetConditions = () => {
 const handleQuery = async () => {
   hasQueried.value = true
   querying.value = true
-
-  const t0 = performance.now()
-  console.log('[性能诊断] handleQuery 开始')
-
   try {
     const params = buildQueryParams()
     const res = await reportApi.executeReport(selectedReport.value.reportId, { parameters: params })
-
-    const t1 = performance.now()
-    console.log(`[性能诊断] API 响应完成: ${(t1 - t0).toFixed(0)}ms`)
-    console.log(`[性能诊断] 返回数据: ${res.data?.length || 0} 行, ${displayColumns.value?.length || 0} 列`)
-
     if (res.success) {
       reportData.value = res.data
-
-      const t2 = performance.now()
-      console.log(`[性能诊断] 数据赋值完成: ${(t2 - t1).toFixed(0)}ms`)
-
       // 重置筛选和分页
       resetColumnFilters()
-
-      const t3 = performance.now()
-      console.log(`[性能诊断] resetColumnFilters 完成: ${(t3 - t2).toFixed(0)}ms`)
-      console.log(`[性能诊断] handleQuery 总耗时: ${(t3 - t0).toFixed(0)}ms`)
     } else {
       ElMessage.error(res.message || '查询失败')
     }
