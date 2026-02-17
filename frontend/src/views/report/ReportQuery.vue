@@ -1121,20 +1121,23 @@ const handleExportExcel = async () => {
 /* 查询条件折叠 */
 .conditions-collapse {
   border: none;
-  background: var(--bg-card);
-  border-radius: 8px;
-  box-shadow: var(--shadow-card);
-  margin-bottom: 16px;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--border-light);
 }
 
 .conditions-collapse :deep(.el-collapse-item__header) {
   border-bottom: none;
-  height: 44px;
+  height: 36px;
   font-size: 14px;
+  background: transparent;
 }
 
 .conditions-collapse :deep(.el-collapse-item__wrap) {
   border-bottom: none;
+  background: transparent;
 }
 
 .conditions-collapse :deep(.el-collapse-item__content) {
@@ -1150,7 +1153,7 @@ const handleExportExcel = async () => {
 }
 
 .conditions-content {
-  padding: 16px;
+  padding: 10px 0;
 }
 
 .conditions-form {
@@ -1158,8 +1161,8 @@ const handleExportExcel = async () => {
 }
 
 .conditions-actions {
-  margin-top: 16px;
-  padding-top: 16px;
+  margin-top: 12px;
+  padding-top: 12px;
   border-top: 1px solid var(--border-light);
   display: flex;
   gap: 12px;
