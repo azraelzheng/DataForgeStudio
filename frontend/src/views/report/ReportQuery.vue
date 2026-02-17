@@ -211,7 +211,7 @@
           </div>
 
           <!-- 表格 -->
-          <div class="table-wrapper">
+          <div class="table-wrapper" ref="tableWrapperRef">
             <el-table :data="paginatedData" border stripe style="width: 100%;" :max-height="tableMaxHeight">
               <el-table-column
                 v-for="col in displayColumns"
@@ -228,121 +228,122 @@
                         {{ sortOrder === 'asc' ? '▲' : '▼' }}
                       </span>
                     </span>
-                    <el-popover
-                      :visible="filterPopoverVisible[col.fieldName]"
-                      placement="bottom-start"
-                      :width="280"
-                      trigger="click"
-                      @update:visible="(v) => handlePopoverToggle(col.fieldName, v)"
+                    <!-- 使用简单的点击事件替代每列独立的 popover -->
+                    <el-icon
+                      class="filter-icon"
+                      :class="{ active: hasColumnFilter(col.fieldName) || activeFilterColumn === col.fieldName }"
+                      @click.stop="openFilterPopover($event, col)"
                     >
-                      <template #reference>
-                        <el-icon
-                          class="filter-icon"
-                          :class="{ active: hasColumnFilter(col.fieldName) }"
-                          @click.stop
-                        >
-                          <Filter />
-                        </el-icon>
-                      </template>
-
-                      <!-- Popover content -->
-                      <div class="filter-popover-content">
-                        <!-- Sort section -->
-                        <div class="filter-section">
-                          <div class="filter-section-title">排序</div>
-                          <div class="sort-buttons">
-                            <el-button
-                              size="small"
-                              :type="sortField === col.fieldName && sortOrder === 'asc' ? 'primary' : 'default'"
-                              @click="handlePopoverSort(col.fieldName, 'asc')"
-                            >
-                              升序
-                            </el-button>
-                            <el-button
-                              size="small"
-                              :type="sortField === col.fieldName && sortOrder === 'desc' ? 'primary' : 'default'"
-                              @click="handlePopoverSort(col.fieldName, 'desc')"
-                            >
-                              降序
-                            </el-button>
-                            <el-button
-                              v-if="sortField === col.fieldName"
-                              size="small"
-                              @click="handlePopoverSort(col.fieldName, null)"
-                            >
-                              取消
-                            </el-button>
-                          </div>
-                        </div>
-
-                        <!-- Filter section - varies by data type -->
-                        <div class="filter-section">
-                          <div class="filter-section-title">筛选</div>
-                          <div class="filter-input-wrapper">
-                            <!-- String -->
-                            <el-input
-                              v-if="col.dataType === 'String' || !col.dataType"
-                              v-model="columnFilters[col.fieldName]"
-                              placeholder="输入筛选文本..."
-                              size="small"
-                              clearable
-                            />
-                            <!-- Number range -->
-                            <div v-else-if="col.dataType === 'Number'" class="range-filter">
-                              <el-input-number
-                                v-model="columnFilters[col.fieldName + '_min']"
-                                placeholder="最小"
-                                size="small"
-                                :controls="false"
-                              />
-                              <span class="range-separator">~</span>
-                              <el-input-number
-                                v-model="columnFilters[col.fieldName + '_max']"
-                                placeholder="最大"
-                                size="small"
-                                :controls="false"
-                              />
-                            </div>
-                            <!-- DateTime range -->
-                            <el-date-picker
-                              v-else-if="col.dataType === 'DateTime'"
-                              v-model="columnFilters[col.fieldName]"
-                              type="daterange"
-                              size="small"
-                              range-separator="-"
-                              start-placeholder="开始"
-                              end-placeholder="结束"
-                              value-format="YYYY-MM-DD"
-                            />
-                            <!-- Boolean select -->
-                            <el-select
-                              v-else-if="col.dataType === 'Boolean'"
-                              v-model="columnFilters[col.fieldName]"
-                              placeholder="全部"
-                              size="small"
-                              clearable
-                            >
-                              <el-option label="是" :value="true" />
-                              <el-option label="否" :value="false" />
-                            </el-select>
-                          </div>
-                        </div>
-
-                        <!-- Action buttons -->
-                        <div class="filter-actions">
-                          <el-button size="small" @click="handleClearColumnFilter(col.fieldName)">
-                            清除
-                          </el-button>
-                          <el-button type="primary" size="small" @click="handleApplyColumnFilter(col.fieldName)">
-                            应用
-                          </el-button>
-                        </div>
-                      </div>
-                    </el-popover>
+                      <Filter />
+                    </el-icon>
                   </div>
                 </template>
               </el-table-column>
             </el-table>
+
+            <!-- 共享的筛选弹出框 - 只渲染一个 -->
+            <el-popover
+              v-if="activeFilterColumn"
+              :visible="!!activeFilterColumn"
+              :virtual-ref="filterTriggerRef"
+              virtual-triggering
+              placement="bottom-start"
+              :width="280"
+              @update:visible="closeFilterPopover"
+            >
+              <div class="filter-popover-content" v-if="activeColumn">
+                <!-- Sort section -->
+                <div class="filter-section">
+                  <div class="filter-section-title">排序</div>
+                  <div class="sort-buttons">
+                    <el-button
+                      size="small"
+                      :type="sortField === activeColumn.fieldName && sortOrder === 'asc' ? 'primary' : 'default'"
+                      @click="handlePopoverSort(activeColumn.fieldName, 'asc')"
+                    >
+                      升序
+                    </el-button>
+                    <el-button
+                      size="small"
+                      :type="sortField === activeColumn.fieldName && sortOrder === 'desc' ? 'primary' : 'default'"
+                      @click="handlePopoverSort(activeColumn.fieldName, 'desc')"
+                    >
+                      降序
+                    </el-button>
+                    <el-button
+                      v-if="sortField === activeColumn.fieldName"
+                      size="small"
+                      @click="handlePopoverSort(activeColumn.fieldName, null)"
+                    >
+                      取消
+                    </el-button>
+                  </div>
+                </div>
+
+                <!-- Filter section - varies by data type -->
+                <div class="filter-section">
+                  <div class="filter-section-title">筛选</div>
+                  <div class="filter-input-wrapper">
+                    <!-- String -->
+                    <el-input
+                      v-if="activeColumn.dataType === 'String' || !activeColumn.dataType"
+                      v-model="columnFilters[activeColumn.fieldName]"
+                      placeholder="输入筛选文本..."
+                      size="small"
+                      clearable
+                    />
+                    <!-- Number range -->
+                    <div v-else-if="activeColumn.dataType === 'Number'" class="range-filter">
+                      <el-input-number
+                        v-model="columnFilters[activeColumn.fieldName + '_min']"
+                        placeholder="最小"
+                        size="small"
+                        :controls="false"
+                      />
+                      <span class="range-separator">~</span>
+                      <el-input-number
+                        v-model="columnFilters[activeColumn.fieldName + '_max']"
+                        placeholder="最大"
+                        size="small"
+                        :controls="false"
+                      />
+                    </div>
+                    <!-- DateTime range -->
+                    <el-date-picker
+                      v-else-if="activeColumn.dataType === 'DateTime'"
+                      v-model="columnFilters[activeColumn.fieldName]"
+                      type="daterange"
+                      size="small"
+                      range-separator="-"
+                      start-placeholder="开始"
+                      end-placeholder="结束"
+                      value-format="YYYY-MM-DD"
+                    />
+                    <!-- Boolean select -->
+                    <el-select
+                      v-else-if="activeColumn.dataType === 'Boolean'"
+                      v-model="columnFilters[activeColumn.fieldName]"
+                      placeholder="全部"
+                      size="small"
+                      clearable
+                    >
+                      <el-option label="是" :value="true" />
+                      <el-option label="否" :value="false" />
+                    </el-select>
+                  </div>
+                </div>
+
+                <!-- Action buttons -->
+                <div class="filter-actions">
+                  <el-button size="small" @click="handleClearColumnFilter(activeColumn.fieldName)">
+                    清除
+                  </el-button>
+                  <el-button type="primary" size="small" @click="closeFilterPopover(false)">
+                    应用
+                  </el-button>
+                </div>
+              </div>
+            </el-popover>
           </div>
 
           <!-- 分页 -->
@@ -398,8 +399,14 @@ const sortOrder = ref(null) // 'asc' | 'desc'
 const currentPage = ref(1)
 const pageSize = ref(20)
 
-// Popover visibility state per column
-const filterPopoverVisible = reactive({})
+// 共享 Popover 状态（替代每列独立的 popover）
+const tableWrapperRef = ref(null)
+const activeFilterColumn = ref(null)  // 当前激活筛选的列名
+const filterTriggerRef = ref(null)     // 触发 popover 的虚拟引用
+const activeColumn = computed(() => {  // 当前激活的列对象
+  if (!activeFilterColumn.value) return null
+  return displayColumns.value.find(c => c.fieldName === activeFilterColumn.value)
+})
 
 // 操作符标签映射
 const operatorLabels = {
@@ -586,15 +593,21 @@ const handleColumnSort = (field) => {
   }
 }
 
-// Handle popover toggle (close others when opening new)
-const handlePopoverToggle = (fieldName, visible) => {
-  if (visible) {
-    // Close all other popovers
-    Object.keys(filterPopoverVisible).forEach(key => {
-      filterPopoverVisible[key] = false
-    })
+// 打开筛选弹出框（懒加载方式）
+const openFilterPopover = (event, col) => {
+  // 创建虚拟触发元素
+  filterTriggerRef.value = {
+    getBoundingClientRect: () => event.target.getBoundingClientRect()
   }
-  filterPopoverVisible[fieldName] = visible
+  activeFilterColumn.value = col.fieldName
+}
+
+// 关闭筛选弹出框
+const closeFilterPopover = (visible) => {
+  if (!visible) {
+    activeFilterColumn.value = null
+    filterTriggerRef.value = null
+  }
 }
 
 // Handle sort from popover
@@ -606,7 +619,7 @@ const handlePopoverSort = (fieldName, order) => {
     sortField.value = fieldName
     sortOrder.value = order
   }
-  filterPopoverVisible[fieldName] = false
+  closeFilterPopover(false)
 }
 
 // Clear filter for specific column
@@ -615,13 +628,13 @@ const handleClearColumnFilter = (fieldName) => {
   delete columnFilters[fieldName + '_min']
   delete columnFilters[fieldName + '_max']
   currentPage.value = 1
-  filterPopoverVisible[fieldName] = false
+  closeFilterPopover(false)
 }
 
 // Apply filter (close popover)
 const handleApplyColumnFilter = (fieldName) => {
   currentPage.value = 1
-  filterPopoverVisible[fieldName] = false
+  closeFilterPopover(false)
 }
 
 // 重置列筛选
@@ -674,13 +687,30 @@ const resetConditions = () => {
 const handleQuery = async () => {
   hasQueried.value = true
   querying.value = true
+
+  const t0 = performance.now()
+  console.log('[性能诊断] handleQuery 开始')
+
   try {
     const params = buildQueryParams()
     const res = await reportApi.executeReport(selectedReport.value.reportId, { parameters: params })
+
+    const t1 = performance.now()
+    console.log(`[性能诊断] API 响应完成: ${(t1 - t0).toFixed(0)}ms`)
+    console.log(`[性能诊断] 返回数据: ${res.data?.length || 0} 行, ${displayColumns.value?.length || 0} 列`)
+
     if (res.success) {
       reportData.value = res.data
+
+      const t2 = performance.now()
+      console.log(`[性能诊断] 数据赋值完成: ${(t2 - t1).toFixed(0)}ms`)
+
       // 重置筛选和分页
       resetColumnFilters()
+
+      const t3 = performance.now()
+      console.log(`[性能诊断] resetColumnFilters 完成: ${(t3 - t2).toFixed(0)}ms`)
+      console.log(`[性能诊断] handleQuery 总耗时: ${(t3 - t0).toFixed(0)}ms`)
     } else {
       ElMessage.error(res.message || '查询失败')
     }
