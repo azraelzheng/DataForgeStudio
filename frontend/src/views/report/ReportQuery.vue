@@ -218,7 +218,7 @@
               stripe
               size="small"
               style="width: 100%;"
-              :max-height="tableMaxHeight"
+              :height="tableHeight"
               show-summary
               :summary-method="getSummaryRow"
               :row-class-name="tableRowClassName"
@@ -409,7 +409,7 @@ const querying = ref(false)
 const exporting = ref(false)
 const conditionsActive = ref(['conditions'])  // 默认展开条件面板
 const hasQueried = ref(false)  // 是否已执行过查询
-const tableMaxHeight = ref(null)  // 表格最大高度，null 表示自适应内容
+const tableHeight = ref(null)  // 表格高度
 
 // 动态计算表格高度
 const updateTableHeight = () => {
@@ -417,23 +417,16 @@ const updateTableHeight = () => {
     if (tableWrapperRef.value) {
       const wrapperHeight = tableWrapperRef.value.clientHeight
       if (wrapperHeight > 0) {
-        // 表格元素高度常量（size="small"）
-        const rowHeight = 32      // 数据行高度
-        const headerHeight = 36   // 表头高度
-        const summaryHeight = 32  // 合计行高度
-
         // 计算当前页的实际数据行数
         const realDataRows = filteredTableData.value?.length || 0
         const currentPageRows = Math.min(pageSize.value, Math.max(0, realDataRows - (currentPage.value - 1) * pageSize.value))
 
         if (currentPageRows > 0) {
-          // 有数据时，高度 = 表头 + 数据行 + 合计行
-          // paginatedData 会补充空行到 pageSize，所以用 pageSize 计算高度
-          const calculatedHeight = headerHeight + (pageSize.value * rowHeight) + summaryHeight
-          tableMaxHeight.value = calculatedHeight
+          // 有数据时，使用容器高度，Element Plus 会自动处理表头、滚动和合计行的布局
+          tableHeight.value = wrapperHeight
         } else {
           // 无数据时，使用较小高度
-          tableMaxHeight.value = headerHeight + summaryHeight + 50
+          tableHeight.value = 100
         }
       }
     }
