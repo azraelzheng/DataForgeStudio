@@ -376,7 +376,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Search, Document, Download, ArrowLeft, ArrowRight, Filter } from '@element-plus/icons-vue'
@@ -399,6 +399,19 @@ const exporting = ref(false)
 const conditionsActive = ref(['conditions'])  // 默认展开条件面板
 const hasQueried = ref(false)  // 是否已执行过查询
 const tableMaxHeight = ref(400)  // 表格最大高度
+
+// 动态计算表格高度
+const updateTableHeight = () => {
+  nextTick(() => {
+    if (tableWrapperRef.value) {
+      const wrapperHeight = tableWrapperRef.value.clientHeight
+      if (wrapperHeight > 0) {
+        // 预留 60px 给合计行等
+        tableMaxHeight.value = Math.max(wrapperHeight - 60, 200)
+      }
+    }
+  })
+}
 
 // 表格筛选和排序状态
 const columnFilters = reactive({})
@@ -441,6 +454,12 @@ onMounted(async () => {
     sidebarCollapsed.value = savedState === 'true'
   }
   await loadReports()
+  // 监听窗口大小变化
+  window.addEventListener('resize', updateTableHeight)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateTableHeight)
 })
 
 // 切换侧边栏
@@ -785,6 +804,8 @@ const handleQuery = async () => {
       reportData.value = res.data
       // 重置筛选和分页
       resetColumnFilters()
+      // 数据加载后更新表格高度
+      updateTableHeight()
     } else {
       ElMessage.error(res.message || '查询失败')
     }
@@ -1134,7 +1155,7 @@ const handleExportExcel = async () => {
   border-radius: 8px;
   box-shadow: var(--shadow-card);
   overflow: hidden;
-  min-height: 200px;
+  min-height: 0;  /* 关键：允许 flex 收缩 */
 }
 
 /* 表格工具栏 */
@@ -1162,7 +1183,8 @@ const handleExportExcel = async () => {
 /* 表格包装器 */
 .table-wrapper {
   flex: 1;
-  overflow: auto;
+  min-height: 0;  /* 关键：允许 flex 收缩 */
+  overflow: hidden;
   padding: 0;
 }
 
