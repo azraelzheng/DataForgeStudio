@@ -399,18 +399,31 @@ const loadReport = async (id) => {
   try {
     const res = await reportApi.getReport(id)
     if (res.success) {
-      Object.assign(form, res.data)
-      if (!form.chartConfig) {
-        form.chartConfig = {
-          chartType: 'bar',
-          xField: '',
-          yFields: [],
-          title: ''
-        }
+      const data = res.data
+
+      // 先赋值基本字段（避免逐个触发响应式）
+      form.reportId = data.reportId
+      form.reportName = data.reportName || ''
+      form.reportCategory = data.reportCategory || ''
+      form.description = data.description || ''
+      form.dataSourceId = data.dataSourceId
+      form.sqlQuery = data.sqlStatement || data.sqlQuery || ''
+      form.parameters = data.parameters || []
+      form.enableChart = data.enableChart || false
+
+      // 处理 chartConfig
+      form.chartConfig = data.chartConfig || {
+        chartType: 'bar',
+        xField: '',
+        yFields: [],
+        title: ''
       }
-      if (!form.queryConditions) {
-        form.queryConditions = []
-      }
+
+      // 处理 queryConditions
+      form.queryConditions = data.queryConditions || []
+
+      // 最后赋值 columns（最大的数组，一次性赋值减少渲染次数）
+      form.columns = data.columns || data.fields || []
     }
   } catch (error) {
     console.error('加载报表失败:', error)
