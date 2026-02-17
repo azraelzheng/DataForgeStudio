@@ -216,6 +216,7 @@
               :data="paginatedData"
               border
               stripe
+              size="small"
               style="width: 100%;"
               :max-height="tableMaxHeight"
               show-summary
@@ -225,7 +226,7 @@
                 v-for="col in displayColumns"
                 :key="col.fieldName"
                 :prop="col.fieldName"
-                :width="col.width"
+                :min-width="col.width"
                 :align="col.align || 'left'"
               >
                 <template #header>
