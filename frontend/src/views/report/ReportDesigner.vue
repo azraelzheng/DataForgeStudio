@@ -506,7 +506,17 @@ const loadReport = async (id) => {
       form.queryConditions = data.queryConditions || []
 
       // 最后赋值 columns（最大的数组，一次性赋值减少渲染次数）
-      form.columns = data.columns || data.fields || []
+      const columns = data.columns || data.fields || []
+      form.columns = columns
+
+      // 同时填充 availableFields 供字段名下拉筛选使用
+      if (columns.length > 0) {
+        availableFields.value = columns.map(f => ({
+          fieldName: f.fieldName,
+          displayName: f.displayName || f.fieldName,
+          dataType: f.dataType
+        }))
+      }
     }
   } catch (error) {
     console.error('加载报表失败:', error)
