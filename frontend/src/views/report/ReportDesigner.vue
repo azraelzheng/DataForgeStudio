@@ -444,14 +444,7 @@ const handleDataSourceChange = async () => {
   form.queryConditions = []
   availableFields.value = []  // 清空可用字段列表
 
-  // 预加载表结构
-  if (form.dataSourceId && sqlEditorRef.value) {
-    try {
-      await sqlEditorRef.value.preloadTableStructure(form.dataSourceId)
-    } catch (error) {
-      console.warn('预加载表结构失败:', error)
-    }
-  }
+  // 注意：已移除预加载表结构功能，避免加载大量表数据影响性能
 }
 
 const handleTestQuery = async () => {
