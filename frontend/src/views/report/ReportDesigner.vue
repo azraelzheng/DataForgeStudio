@@ -85,22 +85,7 @@
           <el-table :data="form.columns" border max-height="300">
             <el-table-column prop="fieldName" label="字段名" width="150">
               <template #default="{ row }">
-                <el-select
-                  v-model="row.fieldName"
-                  size="small"
-                  filterable
-                  clearable
-                  placeholder="输入关键字筛选"
-                  @change="onFieldNameChange(row)"
-                  style="width: 100%;"
-                >
-                  <el-option
-                    v-for="field in availableFields"
-                    :key="field.fieldName"
-                    :label="field.displayName"
-                    :value="field.fieldName"
-                  />
-                </el-select>
+                <el-input v-model="row.fieldName" size="small" placeholder="字段名" />
               </template>
             </el-table-column>
             <el-table-column prop="displayName" label="显示名称" width="150">
@@ -306,7 +291,6 @@ const route = useRoute()
 const formRef = ref()
 const saving = ref(false)
 const dataSources = ref([])
-const availableFields = ref([])  // SQL 解析的字段列表，用于字段名下拉筛选
 
 const form = reactive({
   reportId: null,
@@ -442,7 +426,6 @@ const handleDataSourceChange = async () => {
   form.sqlQuery = ''
   form.columns = []
   form.queryConditions = []
-  availableFields.value = []  // 清空可用字段列表
 
   // 注意：已移除预加载表结构功能，避免加载大量表数据影响性能
 }
@@ -496,18 +479,6 @@ const handleClearFields = () => {
   form.queryConditions = []  // 同时清空相关查询条件
 }
 
-// 当从下拉列表选择字段名时，自动填充显示名和数据类型
-const onFieldNameChange = (row) => {
-  if (row.fieldName) {
-    const field = availableFields.value.find(f => f.fieldName === row.fieldName)
-    if (field) {
-      row.displayName = field.displayName
-      row.dataType = field.dataType
-      row.align = field.dataType === 'Number' ? 'right' : 'left'
-    }
-  }
-}
-
 const handleAutoDetectFields = async () => {
   if (!form.dataSourceId) {
     ElMessage.warning('请先选择数据源')
@@ -549,12 +520,6 @@ const handleAutoDetectFields = async () => {
       }))
 
       form.columns = detectedFields
-      // 同时更新 availableFields 供字段名下拉筛选使用
-      availableFields.value = detectedFields.map(f => ({
-        fieldName: f.fieldName,
-        displayName: f.displayName,
-        dataType: f.dataType
-      }))
       ElMessage.success(`自动识别成功，检测到 ${detectedFields.length} 个字段`)
     } else {
       ElMessage.warning('查询结果为空，无法自动识别字段')
