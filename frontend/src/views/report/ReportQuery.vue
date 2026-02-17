@@ -221,7 +221,16 @@
               :max-height="tableMaxHeight"
               show-summary
               :summary-method="getSummaryRow"
+              :row-class-name="tableRowClassName"
             >
+              <!-- 序号列 -->
+              <el-table-column
+                type="index"
+                label="序号"
+                width="60"
+                align="center"
+                :index="indexMethod"
+              />
               <el-table-column
                 v-for="col in displayColumns"
                 :key="col.fieldName"
@@ -439,6 +448,19 @@ const sortOrder = ref(null) // 'asc' | 'desc'
 const currentPage = ref(1)
 const pageSize = ref(20)
 
+// 序号列计算方法
+const indexMethod = (index) => {
+  return (currentPage.value - 1) * pageSize.value + index + 1
+}
+
+// 表格行样式类名
+const tableRowClassName = ({ row }) => {
+  if (row._isEmpty) {
+    return 'empty-row'
+  }
+  return ''
+}
+
 // 共享 Popover 状态（替代每列独立的 popover）
 const tableWrapperRef = ref(null)
 const activeFilterColumn = ref(null)  // 当前激活筛选的列名
@@ -618,11 +640,19 @@ const filteredTableData = computed(() => {
   return data
 })
 
-// 分页后的数据
+// 分页后的数据（补充空行填满表格）
 const paginatedData = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
   const end = start + pageSize.value
-  return filteredTableData.value.slice(start, end)
+  const data = filteredTableData.value.slice(start, end)
+
+  // 如果数据不足一页，补充空行
+  if (data.length > 0 && data.length < pageSize.value) {
+    const emptyRows = Array(pageSize.value - data.length).fill({ _isEmpty: true })
+    return [...data, ...emptyRows]
+  }
+
+  return data
 })
 
 // 监听分页数据变化，更新表格高度
@@ -1265,6 +1295,21 @@ const handleExportExcel = async () => {
 
 :deep(.el-table__footer-wrapper .cell) {
   font-weight: 600;
+}
+
+/* 空行样式 */
+:deep(.el-table .empty-row td) {
+  background-color: #fff !important;
+  color: transparent;
+}
+
+:deep(.el-table .empty-row:hover > td) {
+  background-color: #fff !important;
+}
+
+/* 序号列样式 */
+:deep(.el-table .el-table__cell:first-child) {
+  text-align: center;
 }
 
 /* 列头样式 - Excel风格 */
