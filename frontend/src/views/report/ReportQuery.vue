@@ -77,113 +77,221 @@
           </el-tag>
         </div>
 
-        <!-- 查询条件 (可折叠) -->
-        <el-collapse v-if="queryConditions.length > 0" v-model="conditionsActive" class="conditions-collapse">
-          <el-collapse-item name="conditions">
-            <template #title>
-              <span class="collapse-title">
-                <el-icon><Filter /></el-icon>
-                查询条件
-              </span>
-            </template>
-            <div class="conditions-content">
-              <el-form :inline="true" :model="conditionForm" label-width="100px">
-                <el-row :gutter="20">
-                  <el-col :span="12" v-for="qc in queryConditions" :key="qc.fieldName + qc.operator">
-                    <el-form-item :label="qc.displayName">
-                      <!-- 不需要输入值的操作符 -->
-                      <template v-if="['null', 'notnull', 'true', 'false'].includes(qc.operator)">
-                        <span class="operator-label">{{ getOperatorLabel(qc.operator) }}</span>
-                      </template>
+        <!-- 查询条件 (智能折叠) -->
+        <div v-if="queryConditions.length > 0" class="conditions-panel">
+          <!-- 标题栏 -->
+          <div class="conditions-header" @click="toggleConditionsCollapse">
+            <span class="collapse-title">
+              <el-icon><Filter /></el-icon>
+              查询条件
+              <el-tag v-if="hasMoreConditions && conditionsCollapsed" size="small" type="info" style="margin-left: 8px;">
+                已折叠
+              </el-tag>
+            </span>
+            <el-icon v-if="hasMoreConditions" class="collapse-icon" :class="{ rotated: !conditionsCollapsed }">
+              <ArrowDown />
+            </el-icon>
+          </div>
 
-                      <!-- DateTime between: 日期范围选择器 -->
-                      <template v-else-if="qc.operator === 'between' && qc.dataType === 'DateTime'">
-                        <el-date-picker
-                          v-model="conditionForm[getFieldKey(qc)]"
-                          type="daterange"
-                          range-separator="至"
-                          start-placeholder="开始日期"
-                          end-placeholder="结束日期"
-                          value-format="YYYY-MM-DD"
-                          style="width: 100%;"
-                        />
-                      </template>
+          <!-- 条件内容 - 展开时显示全部 -->
+          <div class="conditions-content" v-show="!conditionsCollapsed">
+            <el-form :inline="true" :model="conditionForm" label-width="100px">
+              <el-row :gutter="16">
+                <el-col :span="12" v-for="qc in queryConditions" :key="qc.fieldName + qc.operator">
+                  <el-form-item :label="qc.displayName">
+                    <!-- 不需要输入值的操作符 -->
+                    <template v-if="['null', 'notnull', 'true', 'false'].includes(qc.operator)">
+                      <span class="operator-label">{{ getOperatorLabel(qc.operator) }}</span>
+                    </template>
 
-                      <!-- Number between: 两个数字输入框 -->
-                      <template v-else-if="qc.operator === 'between' && qc.dataType === 'Number'">
-                        <div class="number-range-input">
-                          <el-input-number
-                            v-model="conditionForm[getFieldKey(qc) + '_start']"
-                            placeholder="最小值"
-                            :controls-position="'right'"
-                            class="flex-1"
-                          />
-                          <span class="range-separator-text">~</span>
-                          <el-input-number
-                            v-model="conditionForm[getFieldKey(qc) + '_end']"
-                            placeholder="最大值"
-                            :controls-position="'right'"
-                            class="flex-1"
-                          />
-                        </div>
-                      </template>
+                    <!-- DateTime between: 日期范围选择器 -->
+                    <template v-else-if="qc.operator === 'between' && qc.dataType === 'DateTime'">
+                      <el-date-picker
+                        v-model="conditionForm[getFieldKey(qc)]"
+                        type="daterange"
+                        range-separator="至"
+                        start-placeholder="开始日期"
+                        end-placeholder="结束日期"
+                        value-format="YYYY-MM-DD"
+                        style="width: 100%;"
+                      />
+                    </template>
 
-                      <!-- String 类型 -->
-                      <template v-else-if="qc.dataType === 'String'">
-                        <el-input
-                          v-model="conditionForm[getFieldKey(qc)]"
-                          :placeholder="getOperatorPlaceholder(qc.operator)"
-                          clearable
-                        />
-                      </template>
-
-                      <!-- Number 类型 -->
-                      <template v-else-if="qc.dataType === 'Number'">
+                    <!-- Number between: 两个数字输入框 -->
+                    <template v-else-if="qc.operator === 'between' && qc.dataType === 'Number'">
+                      <div class="number-range-input">
                         <el-input-number
-                          v-model="conditionForm[getFieldKey(qc)]"
-                          :placeholder="getOperatorPlaceholder(qc.operator)"
+                          v-model="conditionForm[getFieldKey(qc) + '_start']"
+                          placeholder="最小值"
                           :controls-position="'right'"
-                          style="width: 100%;"
+                          class="flex-1"
                         />
-                      </template>
-
-                      <!-- DateTime 类型 -->
-                      <template v-else-if="qc.dataType === 'DateTime'">
-                        <el-date-picker
-                          v-model="conditionForm[getFieldKey(qc)]"
-                          type="date"
-                          :placeholder="getOperatorPlaceholder(qc.operator)"
-                          value-format="YYYY-MM-DD"
-                          style="width: 100%;"
+                        <span class="range-separator-text">~</span>
+                        <el-input-number
+                          v-model="conditionForm[getFieldKey(qc) + '_end']"
+                          placeholder="最大值"
+                          :controls-position="'right'"
+                          class="flex-1"
                         />
-                      </template>
+                      </div>
+                    </template>
 
-                      <!-- Boolean 类型 -->
-                      <template v-else-if="qc.dataType === 'Boolean'">
-                        <el-select
-                          v-model="conditionForm[getFieldKey(qc)]"
-                          placeholder="请选择"
-                          clearable
-                          style="width: 100%;"
-                        >
-                          <el-option label="是" :value="true" />
-                          <el-option label="否" :value="false" />
-                        </el-select>
-                      </template>
-                    </el-form-item>
-                  </el-col>
-                </el-row>
-              </el-form>
-              <div class="conditions-actions">
-                <el-button type="primary" @click="handleQuery" :loading="querying">
-                  <el-icon><Search /></el-icon>
-                  查询
-                </el-button>
-                <el-button @click="resetConditions">重置条件</el-button>
-              </div>
+                    <!-- String 类型 -->
+                    <template v-else-if="qc.dataType === 'String'">
+                      <el-input
+                        v-model="conditionForm[getFieldKey(qc)]"
+                        :placeholder="getOperatorPlaceholder(qc.operator)"
+                        clearable
+                      />
+                    </template>
+
+                    <!-- Number 类型 -->
+                    <template v-else-if="qc.dataType === 'Number'">
+                      <el-input-number
+                        v-model="conditionForm[getFieldKey(qc)]"
+                        :placeholder="getOperatorPlaceholder(qc.operator)"
+                        :controls-position="'right'"
+                        style="width: 100%;"
+                      />
+                    </template>
+
+                    <!-- DateTime 类型 -->
+                    <template v-else-if="qc.dataType === 'DateTime'">
+                      <el-date-picker
+                        v-model="conditionForm[getFieldKey(qc)]"
+                        type="date"
+                        :placeholder="getOperatorPlaceholder(qc.operator)"
+                        value-format="YYYY-MM-DD"
+                        style="width: 100%;"
+                      />
+                    </template>
+
+                    <!-- Boolean 类型 -->
+                    <template v-else-if="qc.dataType === 'Boolean'">
+                      <el-select
+                        v-model="conditionForm[getFieldKey(qc)]"
+                        placeholder="请选择"
+                        clearable
+                        style="width: 100%;"
+                      >
+                        <el-option label="是" :value="true" />
+                        <el-option label="否" :value="false" />
+                      </el-select>
+                    </template>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+            </el-form>
+            <div class="conditions-actions">
+              <el-button type="primary" @click="handleQuery" :loading="querying">
+                <el-icon><Search /></el-icon>
+                查询
+              </el-button>
+              <el-button @click="resetConditions">重置条件</el-button>
             </div>
-          </el-collapse-item>
-        </el-collapse>
+          </div>
+
+          <!-- 折叠时显示的首行条件 -->
+          <div v-if="conditionsCollapsed" class="conditions-summary">
+            <el-form :inline="true" :model="conditionForm" label-width="100px">
+              <el-row :gutter="16">
+                <el-col :span="12" v-for="qc in queryConditions.slice(0, firstRowConditionsCount)" :key="qc.fieldName + qc.operator">
+                  <el-form-item :label="qc.displayName">
+                    <!-- 不需要输入值的操作符 -->
+                    <template v-if="['null', 'notnull', 'true', 'false'].includes(qc.operator)">
+                      <span class="operator-label">{{ getOperatorLabel(qc.operator) }}</span>
+                    </template>
+
+                    <!-- DateTime between: 日期范围选择器 -->
+                    <template v-else-if="qc.operator === 'between' && qc.dataType === 'DateTime'">
+                      <el-date-picker
+                        v-model="conditionForm[getFieldKey(qc)]"
+                        type="daterange"
+                        range-separator="至"
+                        start-placeholder="开始日期"
+                        end-placeholder="结束日期"
+                        value-format="YYYY-MM-DD"
+                        style="width: 100%;"
+                      />
+                    </template>
+
+                    <!-- Number between: 两个数字输入框 -->
+                    <template v-else-if="qc.operator === 'between' && qc.dataType === 'Number'">
+                      <div class="number-range-input">
+                        <el-input-number
+                          v-model="conditionForm[getFieldKey(qc) + '_start']"
+                          placeholder="最小值"
+                          :controls-position="'right'"
+                          class="flex-1"
+                        />
+                        <span class="range-separator-text">~</span>
+                        <el-input-number
+                          v-model="conditionForm[getFieldKey(qc) + '_end']"
+                          placeholder="最大值"
+                          :controls-position="'right'"
+                          class="flex-1"
+                        />
+                      </div>
+                    </template>
+
+                    <!-- String 类型 -->
+                    <template v-else-if="qc.dataType === 'String'">
+                      <el-input
+                        v-model="conditionForm[getFieldKey(qc)]"
+                        :placeholder="getOperatorPlaceholder(qc.operator)"
+                        clearable
+                      />
+                    </template>
+
+                    <!-- Number 类型 -->
+                    <template v-else-if="qc.dataType === 'Number'">
+                      <el-input-number
+                        v-model="conditionForm[getFieldKey(qc)]"
+                        :placeholder="getOperatorPlaceholder(qc.operator)"
+                        :controls-position="'right'"
+                        style="width: 100%;"
+                      />
+                    </template>
+
+                    <!-- DateTime 类型 -->
+                    <template v-else-if="qc.dataType === 'DateTime'">
+                      <el-date-picker
+                        v-model="conditionForm[getFieldKey(qc)]"
+                        type="date"
+                        :placeholder="getOperatorPlaceholder(qc.operator)"
+                        value-format="YYYY-MM-DD"
+                        style="width: 100%;"
+                      />
+                    </template>
+
+                    <!-- Boolean 类型 -->
+                    <template v-else-if="qc.dataType === 'Boolean'">
+                      <el-select
+                        v-model="conditionForm[getFieldKey(qc)]"
+                        placeholder="请选择"
+                        clearable
+                        style="width: 100%;"
+                      >
+                        <el-option label="是" :value="true" />
+                        <el-option label="否" :value="false" />
+                      </el-select>
+                    </template>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+            </el-form>
+            <div class="conditions-actions">
+              <el-button type="primary" @click="handleQuery" :loading="querying">
+                <el-icon><Search /></el-icon>
+                查询
+              </el-button>
+              <el-button @click="resetConditions">重置条件</el-button>
+              <el-button v-if="hasMoreConditions" link type="primary" @click.stop="conditionsCollapsed = false">
+                展开全部
+              </el-button>
+            </div>
+          </div>
+        </div>
 
         <!-- 无查询条件时的操作按钮 -->
         <div v-if="queryConditions.length === 0" class="action-bar">
@@ -390,7 +498,7 @@
 import { ref, reactive, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Search, Document, Download, ArrowLeft, ArrowRight, Filter } from '@element-plus/icons-vue'
+import { Search, Document, Download, ArrowLeft, ArrowRight, Filter, ArrowDown } from '@element-plus/icons-vue'
 import { reportApi } from '../../api/request'
 
 const router = useRouter()
@@ -409,6 +517,24 @@ const querying = ref(false)
 const exporting = ref(false)
 const conditionsActive = ref(['conditions'])  // 默认展开条件面板
 const hasQueried = ref(false)  // 是否已执行过查询
+
+// 查询条件折叠状态
+const conditionsCollapsed = ref(false)  // 是否折叠到首行
+
+// 计算首行能显示的条件数量（每行2个条件，el-col :span="12"）
+const firstRowConditionsCount = 2
+
+// 是否有超过一行的条件
+const hasMoreConditions = computed(() => {
+  return queryConditions.value.length > firstRowConditionsCount
+})
+
+// 切换条件折叠状态
+const toggleConditionsCollapse = () => {
+  if (hasMoreConditions.value) {
+    conditionsCollapsed.value = !conditionsCollapsed.value
+  }
+}
 const tableHeight = ref(null)  // 表格高度
 
 // 动态计算表格高度
@@ -850,6 +976,10 @@ const handleQuery = async () => {
       reportData.value = res.data
       // 重置筛选和分页
       resetColumnFilters()
+      // 查询成功后折叠条件（如果有多行条件）
+      if (hasMoreConditions.value) {
+        conditionsCollapsed.value = true
+      }
       // 数据加载后更新表格高度
       updateTableHeight()
     } else {
@@ -1118,30 +1248,24 @@ const handleExportExcel = async () => {
   color: #303133;
 }
 
-/* 查询条件折叠 */
-.conditions-collapse {
-  border: none;
-  background: transparent;
-  border-radius: 0;
-  box-shadow: none;
-  margin-bottom: 12px;
+/* 条件面板样式 - 智能折叠 */
+.conditions-panel {
   border-bottom: 1px solid var(--border-light);
+  margin-bottom: 12px;
 }
 
-.conditions-collapse :deep(.el-collapse-item__header) {
-  border-bottom: none;
-  height: 36px;
-  font-size: 14px;
-  background: transparent;
+.conditions-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  cursor: pointer;
+  user-select: none;
 }
 
-.conditions-collapse :deep(.el-collapse-item__wrap) {
-  border-bottom: none;
-  background: transparent;
-}
-
-.conditions-collapse :deep(.el-collapse-item__content) {
-  padding: 0;
+.conditions-header:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+  border-radius: 4px;
 }
 
 .collapse-title {
@@ -1152,8 +1276,21 @@ const handleExportExcel = async () => {
   color: #303133;
 }
 
+.collapse-icon {
+  transition: transform 0.3s ease;
+  color: #909399;
+}
+
+.collapse-icon.rotated {
+  transform: rotate(180deg);
+}
+
 .conditions-content {
   padding: 10px 0;
+}
+
+.conditions-summary {
+  padding: 10px 0 0 0;
 }
 
 .conditions-form {
