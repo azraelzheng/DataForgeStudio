@@ -228,6 +228,7 @@
                 :prop="col.fieldName"
                 :min-width="col.width"
                 :align="col.align || 'left'"
+                show-overflow-tooltip
               >
                 <template #header>
                   <div class="column-header-compact">
@@ -1209,6 +1210,61 @@ const handleExportExcel = async () => {
   min-height: 0;  /* 关键：允许 flex 收缩 */
   overflow: hidden;
   padding: 0;
+}
+
+/* ========== 表格样式优化 ========== */
+
+/* 表格整体字体大小 */
+:deep(.el-table) {
+  font-size: 13px;
+}
+
+/* 表头样式 */
+:deep(.el-table th.el-table__cell) {
+  background-color: #f5f7fa !important;
+  color: #606266;
+  font-weight: 600;
+  padding: 8px 0;
+  border-bottom: 1px solid #e4e7ed;
+}
+
+/* 单元格内边距 */
+:deep(.el-table td.el-table__cell) {
+  padding: 6px 8px;
+}
+
+/* 单元格内容截断 */
+:deep(.el-table .cell) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 行悬停效果 */
+:deep(.el-table tbody tr:hover > td.el-table__cell) {
+  background-color: #ecf5ff !important;
+}
+
+/* 斑马纹颜色 - 更柔和 */
+:deep(.el-table--striped .el-table__body tr.el-table__row--striped td.el-table__cell) {
+  background-color: #fafafa;
+}
+
+/* 斑马纹悬停效果 */
+:deep(.el-table--striped .el-table__body tr.el-table__row--striped:hover > td.el-table__cell) {
+  background-color: #ecf5ff !important;
+}
+
+/* 合计行样式 */
+:deep(.el-table__footer-wrapper .el-table__cell) {
+  background-color: #f5f7fa !important;
+  font-weight: 600;
+  color: #303133;
+  border-top: 2px solid #409eff;
+}
+
+:deep(.el-table__footer-wrapper .cell) {
+  font-weight: 600;
 }
 
 /* 列头样式 - Excel风格 */
