@@ -411,30 +411,29 @@ const conditionsActive = ref(['conditions'])  // 默认展开条件面板
 const hasQueried = ref(false)  // 是否已执行过查询
 const tableMaxHeight = ref(null)  // 表格最大高度，null 表示自适应内容
 
-// 动态计算表格高度（混合模式）
+// 动态计算表格高度
 const updateTableHeight = () => {
   nextTick(() => {
     if (tableWrapperRef.value) {
       const wrapperHeight = tableWrapperRef.value.clientHeight
       if (wrapperHeight > 0) {
-        // 计算可容纳的行数（size="small" 行高约 32px）
-        const rowHeight = 32
-        const headerHeight = 36  // 表头高度
+        // 表格元素高度常量（size="small"）
+        const rowHeight = 32      // 数据行高度
+        const headerHeight = 36   // 表头高度
         const summaryHeight = 32  // 合计行高度
-        const availableHeight = wrapperHeight - summaryHeight - 20  // 预留边距
-        const maxVisibleRows = Math.floor((availableHeight - headerHeight) / rowHeight)
 
-        // 当前数据行数
-        const dataRows = paginatedData.value?.length || 0
+        // 计算当前页的实际数据行数
+        const realDataRows = filteredTableData.value?.length || 0
+        const currentPageRows = Math.min(pageSize.value, Math.max(0, realDataRows - (currentPage.value - 1) * pageSize.value))
 
-        // 混合模式：数据少时自适应，数据多时填满容器
-        if (dataRows > 0 && dataRows < maxVisibleRows) {
-          // 数据行少于可容纳行数，自适应内容高度
-          const contentHeight = headerHeight + (dataRows * rowHeight) + summaryHeight + 10
-          tableMaxHeight.value = contentHeight
+        if (currentPageRows > 0) {
+          // 有数据时，高度 = 表头 + 数据行 + 合计行
+          // paginatedData 会补充空行到 pageSize，所以用 pageSize 计算高度
+          const calculatedHeight = headerHeight + (pageSize.value * rowHeight) + summaryHeight
+          tableMaxHeight.value = calculatedHeight
         } else {
-          // 数据行足够多，填满容器
-          tableMaxHeight.value = Math.max(availableHeight, 200)
+          // 无数据时，使用较小高度
+          tableMaxHeight.value = headerHeight + summaryHeight + 50
         }
       }
     }
