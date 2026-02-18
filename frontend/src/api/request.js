@@ -172,6 +172,9 @@ export const dataSourceApi = {
   // 获取数据源列表
   getDataSources: (params) => request.get('/datasources', { params }),
 
+  // 获取启用的数据源列表（用于报表设计器选择）
+  getActiveDataSources: () => request.get('/datasources/active'),
+
   // 创建数据源
   createDataSource: (data) => request.post('/datasources', data),
 

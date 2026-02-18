@@ -495,12 +495,12 @@ const formatSQL = () => {
 }
 
 onMounted(async () => {
-  // 加载数据源列表
-  const res = await dataSourceApi.getDataSources()
+  // 加载启用的数据源列表（排除已停用的）
+  const res = await dataSourceApi.getActiveDataSources()
   if (res.success) {
-    dataSources.value = res.data.items || res.data
+    dataSources.value = res.data || []
     // Debug logging
-    console.log('=== Datasources loaded ===')
+    console.log('=== Active datasources loaded ===')
     dataSources.value.forEach(ds => {
       console.log(`  ID: ${ds.dataSourceId} (${typeof ds.dataSourceId}), Name: ${ds.dataSourceName}`)
     })
