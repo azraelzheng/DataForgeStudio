@@ -394,18 +394,18 @@ const formatJson = (data) => {
 
 .search-grid {
   flex-shrink: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 12px 16px;
   margin-bottom: 16px;
-  align-items: end;
+  align-items: flex-end;
 }
 
 .search-item {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  min-width: 200px;
+  min-width: 180px;
 }
 
 .search-label {
@@ -416,22 +416,21 @@ const formatJson = (data) => {
 
 .search-item :deep(.el-input),
 .search-item :deep(.el-select) {
-  width: 100%;
+  width: 180px;
 }
 
 .search-item-daterange {
-  min-width: 320px;
+  min-width: 300px;
 }
 
 .search-item-daterange :deep(.el-date-editor) {
-  width: 100%;
+  width: 300px;
 }
 
 .search-actions {
   display: flex;
   gap: 8px;
   align-items: flex-end;
-  min-width: 320px;
 }
 
 .table-wrapper {
