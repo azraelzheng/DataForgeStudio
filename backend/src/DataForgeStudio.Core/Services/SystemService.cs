@@ -105,14 +105,10 @@ public class SystemService : ISystemService
 
     public async Task<ApiResponse> ClearLogsAsync()
     {
-        // 先获取日志数量
         var logCount = await _context.OperationLogs.CountAsync();
-
-        // 直接删除所有日志（不先查询）
         await _context.Database.ExecuteSqlRawAsync("DELETE FROM OperationLogs");
 
-        _logger.LogInformation($"已清空 {logCount} 条操作日志");
-
+        _logger.LogInformation("已清空 {Count} 条操作日志", logCount);
         return ApiResponse.Ok($"已清空 {logCount} 条日志");
     }
 
@@ -163,8 +159,7 @@ public class SystemService : ISystemService
         _context.OperationLogs.RemoveRange(query);
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation($"根据查询条件删除了 {count} 条操作日志");
-
+        _logger.LogInformation("根据查询条件删除了 {Count} 条操作日志", count);
         return ApiResponse.Ok($"已删除 {count} 条日志");
     }
 
@@ -189,8 +184,7 @@ public class SystemService : ISystemService
         _context.OperationLogs.RemoveRange(logsToDelete);
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation($"删除了 {logsToDelete.Count} 条操作日志");
-
+        _logger.LogInformation("删除了 {Count} 条操作日志", logsToDelete.Count);
         return ApiResponse.Ok($"已删除 {logsToDelete.Count} 条日志");
     }
 
@@ -400,7 +394,7 @@ public class SystemService : ISystemService
                 CreatedTime = backup.CreatedTime.ToString("yyyy-MM-dd HH:mm:ss")
             };
 
-            _logger.LogInformation($"数据库备份成功: {backupPath}, 大小: {fileSize} 字节");
+            _logger.LogInformation("数据库备份成功: {Path}, 大小: {Size} 字节", backupPath, fileSize);
             return ApiResponse<BackupRecordDto>.Ok(backupDto, "备份创建成功");
         }
         catch (Exception ex)

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { systemApi, licenseApi, userApi, dataSourceApi, reportApi } from '../api/request'
+import { systemApi, licenseApi } from '../api/request'
 import { ElMessage } from 'element-plus'
 
 export const useLicenseStore = defineStore('license', () => {
@@ -25,10 +25,11 @@ export const useLicenseStore = defineStore('license', () => {
   })
 
   const hasFeature = (feature) => {
-    if (!restrictions.value.allowedFeatures || restrictions.value.allowedFeatures.length === 0) {
-      return true // 没有限制则默认允许
+    const features = restrictions.value.allowedFeatures
+    if (!features || features.length === 0) {
+      return true
     }
-    return restrictions.value.allowedFeatures.includes(feature)
+    return features.includes(feature)
   }
 
   const isTrial = computed(() => {
@@ -63,15 +64,11 @@ export const useLicenseStore = defineStore('license', () => {
         license.value = res.data
         await updateLicenseStatus(res.data)
         return res.data
-      } else {
-        // 服务器返回失败状态
-        const errorMsg = res.message || '加载许可证失败'
-        ElMessage.error(errorMsg)
-        licenseStatus.value = 'invalid'
-        return null
       }
-    } catch (error) {
-      console.error('加载许可证失败:', error)
+      ElMessage.error(res.message || '加载许可证失败')
+      licenseStatus.value = 'invalid'
+      return null
+    } catch {
       licenseStatus.value = 'invalid'
       ElMessage.error('加载许可证失败，请检查网络连接')
       return null
@@ -88,54 +85,19 @@ export const useLicenseStore = defineStore('license', () => {
         return true
       }
       return false
-    } catch (error) {
-      console.error('激活许可证失败:', error)
+    } catch {
       ElMessage.error('许可证激活失败')
       return false
     }
   }
 
   const checkOperation = async (operation, resource) => {
-    // 检查操作是否允许
     if (restrictions.value.isReadOnly && ['create', 'update', 'delete'].includes(operation)) {
       ElMessage.warning('许可证已过期，系统处于只读模式')
       return false
     }
 
-    // 检查资源限制
-    switch (resource) {
-      case 'user':
-        if (operation === 'create' && restrictions.value.maxUsers !== null) {
-          // TODO: 检查当前用户数
-          // const users = await userApi.getUsers({ pageIndex: 1, pageSize: 1 })
-          // if (users.data.totalCount >= restrictions.value.maxUsers) {
-          //   ElMessage.warning(`已达到最大用户数限制 (${restrictions.value.maxUsers})`)
-          //   return false
-          // }
-        }
-        break
-      case 'report':
-        if (operation === 'create' && restrictions.value.maxReports !== null) {
-          // TODO: 检查当前报表数
-          // const reports = await reportApi.getReports({ pageIndex: 1, pageSize: 1 })
-          // if (reports.data.totalCount >= restrictions.value.maxReports) {
-          //   ElMessage.warning(`已达到最大报表数限制 (${restrictions.value.maxReports})`)
-          //   return false
-          // }
-        }
-        break
-      case 'datasource':
-        if (operation === 'create' && restrictions.value.maxDataSources !== null) {
-          // TODO: 检查当前数据源数
-          // const datasources = await dataSourceApi.getDataSources({ pageIndex: 1, pageSize: 1 })
-          // if (datasources.data.totalCount >= restrictions.value.maxDataSources) {
-          //   ElMessage.warning(`已达到最大数据源数限制 (${restrictions.value.maxDataSources})`)
-          //   return false
-          // }
-        }
-        break
-    }
-
+    // 资源数量限制检查（待实现）
     return true
   }
 
@@ -217,24 +179,21 @@ export const useLicenseStore = defineStore('license', () => {
   const validateLicense = async (forceRefresh = false) => {
     try {
       const res = await systemApi.validateLicense({ forceRefresh })
-      if (res.success) {
-        if (res.data.valid) {
-          licenseStatus.value = license.value?.licenseType === 'Trial' ? 'trial' : 'valid'
-          if (res.data.licenseInfo) {
-            license.value = res.data.licenseInfo
-            updateRestrictions(res.data.licenseInfo)
-          }
-          return true
-        } else {
-          licenseStatus.value = 'expired'
-          updateRestrictions(license.value)
-          ElMessage.warning(res.data.message || '许可证验证失败')
-          return false
+      if (res.success && res.data.valid) {
+        licenseStatus.value = license.value?.licenseType === 'Trial' ? 'trial' : 'valid'
+        if (res.data.licenseInfo) {
+          license.value = res.data.licenseInfo
+          updateRestrictions(res.data.licenseInfo)
         }
+        return true
+      }
+      if (res.success && !res.data.valid) {
+        licenseStatus.value = 'expired'
+        updateRestrictions(license.value)
+        ElMessage.warning(res.data.message || '许可证验证失败')
       }
       return false
-    } catch (error) {
-      console.error('验证许可证失败:', error)
+    } catch {
       return false
     }
   }
@@ -242,12 +201,8 @@ export const useLicenseStore = defineStore('license', () => {
   const getMachineCode = async () => {
     try {
       const res = await systemApi.getMachineCode()
-      if (res.success) {
-        return res.data
-      }
-      return null
-    } catch (error) {
-      console.error('获取机器码失败:', error)
+      return res.success ? res.data : null
+    } catch {
       return null
     }
   }

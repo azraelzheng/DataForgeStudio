@@ -495,18 +495,11 @@ const formatSQL = () => {
 }
 
 onMounted(async () => {
-  // 加载启用的数据源列表（排除已停用的）
   const res = await dataSourceApi.getActiveDataSources()
   if (res.success) {
     dataSources.value = res.data || []
-    // Debug logging
-    console.log('=== Active datasources loaded ===')
-    dataSources.value.forEach(ds => {
-      console.log(`  ID: ${ds.dataSourceId} (${typeof ds.dataSourceId}), Name: ${ds.dataSourceName}`)
-    })
   }
 
-  // 如果有ID，则加载报表
   const reportId = route.query.id
   if (reportId) {
     loadReport(reportId)
@@ -519,7 +512,6 @@ const loadReport = async (id) => {
     if (res.success) {
       const data = res.data
 
-      // 先赋值基本字段（避免逐个触发响应式）
       form.reportId = data.reportId
       form.reportName = data.reportName || ''
       form.reportCategory = data.reportCategory || ''
@@ -529,7 +521,6 @@ const loadReport = async (id) => {
       form.parameters = data.parameters || []
       form.enableChart = data.enableChart || false
 
-      // 处理 chartConfig
       form.chartConfig = data.chartConfig || {
         chartType: 'bar',
         xField: '',
@@ -537,14 +528,11 @@ const loadReport = async (id) => {
         title: ''
       }
 
-      // 处理 queryConditions
       form.queryConditions = data.queryConditions || []
 
-      // 最后赋值 columns（最大的数组，一次性赋值减少渲染次数）
       const columns = data.columns || data.fields || []
       form.columns = columns
 
-      // 同时填充 availableFields 供字段名下拉筛选使用
       if (columns.length > 0) {
         availableFields.value = columns.map(f => ({
           fieldName: f.fieldName,
@@ -553,23 +541,16 @@ const loadReport = async (id) => {
         }))
       }
     }
-  } catch (error) {
-    console.error('加载报表失败:', error)
+  } catch {
+    // 加载失败
   }
 }
 
 const handleDataSourceChange = async () => {
-  // Debug logging
-  console.log('=== DataSource changed ===')
-  console.log('New form.dataSourceId:', form.dataSourceId, typeof form.dataSourceId)
-
-  // 数据源切换时清除SQL和字段
   form.sqlQuery = ''
   form.columns = []
   form.queryConditions = []
-  availableFields.value = []  // 清空可用字段列表
-
-  // 注意：已移除预加载表结构功能，避免加载大量表数据影响性能
+  availableFields.value = []
 }
 
 const handleTestQuery = async () => {
@@ -591,8 +572,8 @@ const handleTestQuery = async () => {
     if (res.success) {
       ElMessage.success(`查询成功，返回 ${res.data.length} 条记录`)
     }
-  } catch (error) {
-    console.error('测试查询失败:', error)
+  } catch {
+    // 测试失败
   }
 }
 
@@ -633,40 +614,26 @@ const handleAutoDetectFields = async () => {
     return
   }
 
-  // Debug logging
-  console.log('=== Auto-detect called ===')
-  console.log('form.dataSourceId:', form.dataSourceId, typeof form.dataSourceId)
-  console.log('form.sqlQuery:', form.sqlQuery)
-
   try {
-    // 调用 getQuerySchema API 只获取字段结构
-    const requestData = {
+    const res = await reportApi.getQuerySchema({
       dataSourceId: form.dataSourceId,
       sql: form.sqlQuery
-    }
-    console.log('API request data:', JSON.stringify(requestData))
-
-    const res = await reportApi.getQuerySchema(requestData)
-
-    console.log('API response success:', res.success)
-    console.log('API response first 3 fields:', res.data?.slice(0, 3))
+    })
 
     if (res.success && res.data.length > 0) {
-      // 直接使用后端返回的字段元数据
       const detectedFields = res.data.map(field => ({
         fieldName: field.fieldName,
         displayName: field.fieldName,
-        dataType: field.systemDataType,  // 直接使用后端映射的类型
+        dataType: field.systemDataType,
         width: 120,
         align: field.systemDataType === 'Number' ? 'right' : 'left',
         isVisible: true,
-        isSortable: false,  // 默认不排序
+        isSortable: false,
         summaryType: 'none',
         summaryDecimals: null
       }))
 
       form.columns = detectedFields
-      // 同时更新 availableFields 供字段名下拉筛选使用
       availableFields.value = detectedFields.map(f => ({
         fieldName: f.fieldName,
         displayName: f.displayName,
@@ -677,7 +644,6 @@ const handleAutoDetectFields = async () => {
       ElMessage.warning('查询结果为空，无法自动识别字段')
     }
   } catch (error) {
-    console.error('自动识别字段失败:', error)
     ElMessage.error('自动识别字段失败: ' + (error.message || '未知错误'))
   }
 }
@@ -718,34 +684,24 @@ const handleSave = async () => {
   const valid = await formRef.value.validate().catch(() => false)
   if (!valid) return
 
-  // Debug logging
-  console.log('=== Save report ===')
-  console.log('form.dataSourceId:', form.dataSourceId)
-  console.log('form.reportId:', form.reportId)
-  console.log('form.columns count:', form.columns.length)
-
   saving.value = true
   try {
     const saveData = {
       ...form,
-      parameters: [],  // 添加必需的 parameters 字段
+      parameters: [],
       chartConfig: form.enableChart ? form.chartConfig : null,
       queryConditions: form.queryConditions.length > 0 ? form.queryConditions : null
     }
-    console.log('Save data:', JSON.stringify(saveData, null, 2).substring(0, 500))
 
     if (form.reportId) {
-      console.log('Updating existing report, ID:', form.reportId)
       await reportApi.updateReport(form.reportId, saveData)
     } else {
-      console.log('Creating new report')
       await reportApi.createReport(saveData)
     }
     ElMessage.success('保存成功')
     router.push('/report/design')
   } catch (error) {
-    console.error('保存失败:', error)
-    console.error('Error details:', error.response?.data || error.message)
+    ElMessage.error('保存失败: ' + (error.response?.data?.message || error.message || '未知错误'))
   } finally {
     saving.value = false
   }

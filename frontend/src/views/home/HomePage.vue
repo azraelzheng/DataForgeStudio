@@ -174,18 +174,16 @@ onMounted(async () => {
 
 const loadStats = async () => {
   try {
-    // 调用 API 获取许可证使用统计
     const response = await licenseApi.getLicenseStats()
     if (response.success && response.data) {
       stats.value.reportCount = response.data.currentReports || 0
       stats.value.userCount = response.data.currentUsers || 0
       stats.value.dataSourceCount = response.data.currentDataSources || 0
     }
-  } catch (error) {
-    console.error('加载统计数据失败:', error)
+  } catch {
+    // 加载失败保持默认值
   }
 
-  // 计算系统运行天数
   const startDate = getSystemStartDate()
   const now = new Date()
   const days = Math.floor((now - startDate) / (1000 * 60 * 60 * 24))
@@ -194,7 +192,6 @@ const loadStats = async () => {
 
 const loadRecentReports = async () => {
   try {
-    // 调用 API 获取最近报表（取前5条）
     const response = await reportApi.getReports({ page: 1, pageSize: 5 })
     if (response.success && response.data) {
       recentReports.value = (response.data.items || []).map(report => ({
@@ -205,9 +202,7 @@ const loadRecentReports = async () => {
         lastViewTime: report.updatedTime || report.createdTime
       }))
     }
-  } catch (error) {
-    console.error('加载最近报表失败:', error)
-    // 如果许可证过期，API 会返回错误，此时清空列表
+  } catch {
     recentReports.value = []
   }
 }

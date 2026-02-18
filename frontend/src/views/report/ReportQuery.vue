@@ -633,8 +633,8 @@ const loadReports = async () => {
     if (res.success) {
       reports.value = (res.data.Items || res.data.items || []).filter(r => r.isEnabled)
     }
-  } catch (error) {
-    console.error('加载报表失败:', error)
+  } catch {
+    // 加载失败保持空列表
   }
 }
 
@@ -656,8 +656,8 @@ const selectReport = async (report) => {
       resetConditions()
       reportData.value = []
     }
-  } catch (error) {
-    console.error('加载报表详情失败:', error)
+  } catch {
+    // 加载失败
   }
 }
 
@@ -974,19 +974,15 @@ const handleQuery = async () => {
     const res = await reportApi.executeReport(selectedReport.value.reportId, { parameters: params })
     if (res.success) {
       reportData.value = res.data
-      // 重置筛选和分页
       resetColumnFilters()
-      // 查询成功后折叠条件（如果有多行条件）
       if (hasMoreConditions.value) {
         conditionsCollapsed.value = true
       }
-      // 数据加载后更新表格高度
       updateTableHeight()
     } else {
       ElMessage.error(res.message || '查询失败')
     }
-  } catch (error) {
-    console.error('查询失败:', error)
+  } catch {
     ElMessage.error('查询失败：网络错误')
   } finally {
     querying.value = false
@@ -1046,8 +1042,7 @@ const handleExportExcel = async () => {
     a.click()
     window.URL.revokeObjectURL(url)
     ElMessage.success('导出成功')
-  } catch (error) {
-    console.error('导出失败:', error)
+  } catch {
     ElMessage.error('导出失败')
   } finally {
     exporting.value = false

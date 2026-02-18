@@ -59,7 +59,7 @@ public static class DbInitializer
             await context.SaveChangesAsync();
         }
 
-        // 如果没有权限，创建所有权限
+        // 创建权限（如果不存在）
         // 注意：如果 forceResetPermissions=true，权限已经在 ResetPermissionsAsync 中创建了
         if (!await context.Permissions.AnyAsync())
         {
@@ -90,11 +90,8 @@ public static class DbInitializer
         var oldRolePermissions = await context.RolePermissions
             .Where(rp => rp.RoleId == adminRole.RoleId)
             .ToListAsync();
-        if (oldRolePermissions.Any())
-        {
-            context.RolePermissions.RemoveRange(oldRolePermissions);
-            await context.SaveChangesAsync();
-        }
+        context.RolePermissions.RemoveRange(oldRolePermissions);
+        await context.SaveChangesAsync();
 
         // 为超级管理员角色分配所有权限
         var allPermissions = await context.Permissions.ToListAsync();
@@ -131,12 +128,6 @@ public static class DbInitializer
     /// </summary>
     private static async Task CreateAllPermissionsAsync(DataForgeStudioDbContext context)
     {
-        // 如果权限已存在，不重复创建
-        if (await context.Permissions.AnyAsync())
-        {
-            return;
-        }
-
         var permissions = new List<Permission>
         {
             // 用户管理权限
@@ -204,17 +195,11 @@ public static class DbInitializer
     {
         // 删除所有角色-权限关联
         var existingRolePermissions = await context.RolePermissions.ToListAsync();
-        if (existingRolePermissions.Any())
-        {
-            context.RolePermissions.RemoveRange(existingRolePermissions);
-        }
+        context.RolePermissions.RemoveRange(existingRolePermissions);
 
         // 删除所有现有权限
         var existingPermissions = await context.Permissions.ToListAsync();
-        if (existingPermissions.Any())
-        {
-            context.Permissions.RemoveRange(existingPermissions);
-        }
+        context.Permissions.RemoveRange(existingPermissions);
 
         await context.SaveChangesAsync();
 

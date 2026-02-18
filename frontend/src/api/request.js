@@ -7,21 +7,15 @@ const request = axios.create({
   timeout: 30000
 })
 
-// 请求拦截器 - 添加调试日志
 request.interceptors.request.use(
   (config) => {
-    // 从 localStorage 获取 token
     const token = localStorage.getItem('token')
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`
     }
-    console.log('API Request:', config.method?.toUpperCase(), config.baseURL + config.url)
     return config
   },
-  (error) => {
-    console.error('Request Error:', error)
-    return Promise.reject(error)
-  }
+  (error) => Promise.reject(error)
 )
 
 // PascalCase 转 camelCase 的工具函数
@@ -45,64 +39,45 @@ function toCamelCase(obj) {
   return result
 }
 
-// 响应拦截器
 request.interceptors.response.use(
   (response) => {
-    // 如果是 blob 类型（文件下载），直接返回原始数据
     if (response.config.responseType === 'blob') {
       return response.data
     }
 
     const res = response.data
-
-    console.log('API Response:', res) // Debug log
-
-    // 检查业务状态码 - 支持 PascalCase (后端) 和 camelCase
     const isSuccess = res.Success === true || res.success === true
-    const isFailure = res.Success === false || res.success === false
 
-    if (isFailure) {
+    if (!isSuccess && (res.Success === false || res.success === false)) {
       const message = res.Message || res.message || '请求失败'
       ElMessage.error(message)
       return Promise.reject(new Error(message))
     }
 
-    // 转换后端的 PascalCase 到前端的 camelCase
     const rawData = res.Data !== undefined ? res.Data : res.data
-    const convertedData = toCamelCase(rawData)
-
     return {
       success: res.Success !== undefined ? res.Success : res.success,
       message: res.Message !== undefined ? res.Message : res.message,
-      data: convertedData,
+      data: toCamelCase(rawData),
       errorCode: res.ErrorCode !== undefined ? res.ErrorCode : res.errorCode,
       timestamp: res.Timestamp !== undefined ? res.Timestamp : res.timestamp
     }
   },
   (error) => {
-    console.error('Response Error:', error)
-
-    // 处理 HTTP 错误状态码
     if (error.response) {
       const status = error.response.status
+      const errorMessages = {
+        401: '未授权，请重新登录',
+        403: '无权访问',
+        404: '请求的资源不存在',
+        500: '服务器内部错误'
+      }
+      const message = errorMessages[status] || error.response.data?.message || '网络错误'
+      ElMessage.error(message)
 
-      switch (status) {
-        case 401:
-          ElMessage.error('未授权，请重新登录')
-          localStorage.removeItem('token')
-          window.location.href = '/login'
-          break
-        case 403:
-          ElMessage.error('无权访问')
-          break
-        case 404:
-          ElMessage.error('请求的资源不存在')
-          break
-        case 500:
-          ElMessage.error('服务器内部错误')
-          break
-        default:
-          ElMessage.error(error.response.data?.message || '网络错误')
+      if (status === 401) {
+        localStorage.removeItem('token')
+        window.location.href = '/login'
       }
     } else if (error.request) {
       ElMessage.error('网络连接失败，请检查网络')

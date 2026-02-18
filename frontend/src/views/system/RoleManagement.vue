@@ -273,13 +273,12 @@ const loadData = async () => {
       ...searchForm
     })
     if (res.success) {
-      // 处理 PascalCase (后端) 和 camelCase 两种情况
       const data = res.data
       tableData.value = data.Items || data.items || []
       pagination.total = data.TotalCount || data.total || 0
     }
-  } catch (error) {
-    console.error('加载数据失败:', error)
+  } catch {
+    // 加载失败
   } finally {
     loading.value = false
   }
@@ -329,8 +328,8 @@ const handleSubmit = async () => {
     ElMessage.success(isEdit.value ? '更新成功' : '创建成功')
     dialogVisible.value = false
     loadData()
-  } catch (error) {
-    console.error('操作失败:', error)
+  } catch {
+    // 操作失败
   } finally {
     submitting.value = false
   }
@@ -340,10 +339,8 @@ const handleAssignPermissions = async (row) => {
   currentRole.value = row
   permissionDialogVisible.value = true
 
-  // 等待对话框渲染完成
   await nextTick()
 
-  // 如果角色没有权限信息，先从API获取
   if (!row.permissions || row.permissions.length === 0) {
     try {
       const res = await roleApi.getRoles({ page: 1, pageSize: 1000 })
@@ -354,15 +351,13 @@ const handleAssignPermissions = async (row) => {
           row.permissions = fullRole.permissions
         }
       }
-    } catch (error) {
-      console.error('获取角色权限失败:', error)
+    } catch {
+      // 获取失败
     }
   }
 
-  // 再次等待确保树组件已渲染
   await nextTick()
 
-  // 设置已选中的权限
   const checkedKeys = row.permissions || []
   if (permissionTreeRef.value) {
     permissionTreeRef.value.setCheckedKeys(checkedKeys)
@@ -372,9 +367,7 @@ const handleAssignPermissions = async (row) => {
 const handleSavePermissions = async () => {
   savingPermissions.value = true
   try {
-    // 只获取叶子节点的选中状态（实际权限）
     const checkedKeys = permissionTreeRef.value.getCheckedKeys()
-    // 过滤掉父节点（包含冒号的key，如 "report", "user"）
     const permissionKeys = checkedKeys.filter(key => key.includes(':'))
 
     await roleApi.assignPermissions(currentRole.value.roleId, {
@@ -382,11 +375,9 @@ const handleSavePermissions = async () => {
     })
     ElMessage.success('权限配置成功')
     permissionDialogVisible.value = false
-
-    // 刷新列表数据以更新权限显示
     loadData()
-  } catch (error) {
-    console.error('配置权限失败:', error)
+  } catch {
+    // 配置失败
   } finally {
     savingPermissions.value = false
   }
@@ -405,7 +396,7 @@ const handleDelete = async (row) => {
     loadData()
   } catch (error) {
     if (error !== 'cancel') {
-      console.error('删除失败:', error)
+      // 删除失败
     }
   }
 }

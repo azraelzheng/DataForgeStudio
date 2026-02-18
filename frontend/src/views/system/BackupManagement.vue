@@ -299,8 +299,8 @@ const loadData = async () => {
       tableData.value = data.Items || data.items || []
       pagination.total = data.TotalCount || data.total || 0
     }
-  } catch (error) {
-    console.error('加载数据失败:', error)
+  } catch {
+    // 加载失败
   } finally {
     loading.value = false
   }
@@ -313,8 +313,8 @@ const loadSchedules = async () => {
     if (res.success) {
       schedules.value = res.data || []
     }
-  } catch (error) {
-    console.error('加载备份计划失败:', error)
+  } catch {
+    // 加载失败
   } finally {
     schedulesLoading.value = false
   }
@@ -338,8 +338,8 @@ const handleCreateBackup = async () => {
       backupForm.description = ''
       loadData()
     }
-  } catch (error) {
-    console.error('创建备份失败:', error)
+  } catch {
+    // 创建失败
   } finally {
     creating.value = false
   }
@@ -367,7 +367,7 @@ const handleRestore = async (row) => {
     }
   } catch (error) {
     if (error !== 'cancel') {
-      console.error('恢复备份失败:', error)
+      // 恢复失败
     }
   } finally {
     row.restoring = false
@@ -391,7 +391,7 @@ const handleDelete = async (row) => {
     loadData()
   } catch (error) {
     if (error !== 'cancel') {
-      console.error('删除失败:', error)
+      // 删除失败
     }
   }
 }
@@ -454,8 +454,8 @@ const handleSaveSchedule = async () => {
     }
     scheduleDialogVisible.value = false
     loadSchedules()
-  } catch (error) {
-    console.error('保存失败:', error)
+  } catch {
+    // 保存失败
   } finally {
     savingSchedule.value = false
   }
@@ -466,8 +466,7 @@ const handleToggleSchedule = async (row) => {
     await systemApi.toggleBackupSchedule(row.scheduleId)
     ElMessage.success(row.isEnabled ? '已启用' : '已禁用')
     loadSchedules()
-  } catch (error) {
-    console.error('切换状态失败:', error)
+  } catch {
     row.isEnabled = !row.isEnabled
   }
 }
@@ -482,7 +481,7 @@ const handleDeleteSchedule = async (row) => {
     loadSchedules()
   } catch (error) {
     if (error !== 'cancel') {
-      console.error('删除失败:', error)
+      // 删除失败
     }
   }
 }

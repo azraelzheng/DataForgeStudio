@@ -140,7 +140,6 @@ const getExtensions = () => {
   return extensions
 }
 
-// 格式化 SQL
 const formatSQL = (view) => {
   const content = view.state.doc.toString()
   try {
@@ -159,8 +158,7 @@ const formatSQL = (view) => {
     })
     view.dispatch(transaction)
     return true
-  } catch (error) {
-    console.error('SQL 格式化失败:', error)
+  } catch {
     return false
   }
 }
@@ -207,13 +205,11 @@ const transformTableStructure = (response) => {
   return []
 }
 
-// 从后端获取表结构的通用函数
 const fetchTablesFromBackend = async (dataSourceId) => {
   try {
     const res = await dataSourceApi.getTableStructure(dataSourceId)
     return transformTableStructure(res)
-  } catch (error) {
-    console.warn('获取表结构失败:', error)
+  } catch {
     return []
   }
 }

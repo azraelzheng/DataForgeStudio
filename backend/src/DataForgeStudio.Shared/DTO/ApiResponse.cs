@@ -3,7 +3,6 @@ namespace DataForgeStudio.Shared.DTO;
 /// <summary>
 /// API 响应基类
 /// </summary>
-/// <typeparam name="T">数据类型</typeparam>
 public class ApiResponse<T>
 {
     /// <summary>
@@ -14,17 +13,17 @@ public class ApiResponse<T>
     /// <summary>
     /// 消息
     /// </summary>
-    public string Message { get; set; }
+    public string Message { get; set; } = string.Empty;
 
     /// <summary>
     /// 错误代码
     /// </summary>
-    public string ErrorCode { get; set; }
+    public string? ErrorCode { get; set; }
 
     /// <summary>
     /// 数据
     /// </summary>
-    public T Data { get; set; }
+    public T? Data { get; set; }
 
     /// <summary>
     /// 时间戳
@@ -47,7 +46,7 @@ public class ApiResponse<T>
     /// <summary>
     /// 失败响应
     /// </summary>
-    public static ApiResponse<T> Fail(string message, string errorCode = null)
+    public static ApiResponse<T> Fail(string message, string? errorCode = null)
     {
         return new ApiResponse<T>
         {
@@ -79,7 +78,7 @@ public class ApiResponse : ApiResponse<object>
     /// <summary>
     /// 失败响应
     /// </summary>
-    public static new ApiResponse Fail(string message, string errorCode = null)
+    public static new ApiResponse Fail(string message, string? errorCode = null)
     {
         return new ApiResponse
         {
@@ -113,7 +112,7 @@ public class PagedRequest
     public int PageSize
     {
         get => _pageSize;
-        set => _pageSize = value < 1 ? 20 : (value > 100 ? 100 : value);
+        set => _pageSize = Math.Clamp(value, 1, 100);
     }
 
     /// <summary>

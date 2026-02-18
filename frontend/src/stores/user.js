@@ -27,23 +27,19 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
-  // 检查 token 有效性（用于页面加载或从其他标签页切换回来时）
   const checkAuth = async () => {
     const storedToken = localStorage.getItem('token')
     if (!storedToken) {
-      // localStorage 中没有 token，清除 store 状态
       token.value = ''
       userInfo.value = null
       permissions.value = []
       return false
     }
 
-    // 如果 store 中的 token 与 localStorage 不同步，更新它
     if (token.value !== storedToken) {
       token.value = storedToken
     }
 
-    // 如果有 token 但没有用户信息，尝试获取
     if (!userInfo.value) {
       try {
         await getCurrentUser()
@@ -81,7 +77,6 @@ export const useUserStore = defineStore('user', () => {
   const login = async (credentials) => {
     try {
       const res = await authApi.login(credentials)
-      console.log('Login response:', res) // Debug log
       if (res.success) {
         // 后端返回的是 PascalCase: Token, UserInfo
         const token = res.data.Token || res.data.token
@@ -93,19 +88,16 @@ export const useUserStore = defineStore('user', () => {
       }
       ElMessage.error(res.message || '登录失败')
       return false
-    } catch (error) {
-      console.error('Login error:', error)
+    } catch {
       ElMessage.error('登录失败')
       return false
     }
   }
 
   const logout = () => {
-    // 使用 setToken 清除所有存储
     setToken('')
     userInfo.value = null
     permissions.value = []
-    console.log('User logged out, token cleared')
   }
 
   const getCurrentUser = async () => {
@@ -133,8 +125,7 @@ export const useUserStore = defineStore('user', () => {
       }
       ElMessage.error(res.message || '修改密码失败')
       return false
-    } catch (error) {
-      console.error('Change password error:', error)
+    } catch {
       ElMessage.error('修改密码失败')
       return false
     }

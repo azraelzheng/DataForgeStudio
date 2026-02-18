@@ -190,81 +190,50 @@ public static class EncryptionHelper
     /// <summary>
     /// 计算 SHA256 哈希
     /// </summary>
-    /// <param name="input">输入字符串</param>
-    /// <returns>哈希值（十六进制）</returns>
-    public static string ComputeSha256Hash(string input)
-    {
-        using var sha256 = SHA256.Create();
-        var bytes = Encoding.UTF8.GetBytes(input);
-        var hash = sha256.ComputeHash(bytes);
-        return Convert.ToHexString(hash).ToLower();
-    }
+    public static string ComputeSha256Hash(string input) => ComputeHash(SHA256.Create(), input);
 
     /// <summary>
     /// 计算 SHA512 哈希
     /// </summary>
-    /// <param name="input">输入字符串</param>
-    /// <returns>哈希值（十六进制）</returns>
-    public static string ComputeSha512Hash(string input)
-    {
-        using var sha512 = SHA512.Create();
-        var bytes = Encoding.UTF8.GetBytes(input);
-        var hash = sha512.ComputeHash(bytes);
-        return Convert.ToHexString(hash).ToLower();
-    }
+    public static string ComputeSha512Hash(string input) => ComputeHash(SHA512.Create(), input);
 
     /// <summary>
     /// 计算 MD5 哈希
     /// </summary>
-    /// <param name="input">输入字符串</param>
-    /// <returns>哈希值（十六进制）</returns>
-    public static string ComputeMd5Hash(string input)
+    public static string ComputeMd5Hash(string input) => ComputeHash(MD5.Create(), input);
+
+    private static string ComputeHash(HashAlgorithm algorithm, string input)
     {
-        using var md5 = MD5.Create();
+        using var hashAlg = algorithm;
         var bytes = Encoding.UTF8.GetBytes(input);
-        var hash = md5.ComputeHash(bytes);
+        var hash = hashAlg.ComputeHash(bytes);
         return Convert.ToHexString(hash).ToLower();
     }
 
     #endregion
 
-    #region 便捷方法
+    #region 便捷方法（已弃用）
 
     /// <summary>
-    /// AES 加密（使用默认密钥和IV）
-    /// 注意：此方法已弃用，请使用 AesEncrypt 并传入配置的密钥
+    /// AES 加密（使用默认密钥和IV）- 已弃用
     /// </summary>
-    /// <param name="plainText">明文</param>
-    /// <returns>密文（Base64）</returns>
-    [Obsolete("此方法已弃用。请使用 AesEncrypt(plainText, key, iv) 并从配置读取密钥。")]
+    [Obsolete("请使用 AesEncrypt(plainText, key, iv) 并从配置读取密钥。")]
     public static string EncryptAES(string plainText)
-    {
-        throw new InvalidOperationException("EncryptAES 方法已弃用。请使用 AesEncrypt(plainText, key, iv) 并从配置读取密钥。");
-    }
+        => throw new InvalidOperationException("EncryptAES 方法已弃用。请使用 AesEncrypt(plainText, key, iv) 并从配置读取密钥。");
 
     /// <summary>
-    /// AES 解密（使用默认密钥和IV）
-    /// 注意：此方法已弃用，请使用 AesDecrypt 并传入配置的密钥
+    /// AES 解密（使用默认密钥和IV）- 已弃用
     /// </summary>
-    /// <param name="cipherText">密文（Base64）</param>
-    /// <returns>明文</returns>
-    [Obsolete("此方法已弃用。请使用 AesDecrypt(cipherText, key, iv) 并从配置读取密钥。")]
+    [Obsolete("请使用 AesDecrypt(cipherText, key, iv) 并从配置读取密钥。")]
     public static string DecryptAES(string cipherText)
-    {
-        throw new InvalidOperationException("DecryptAES 方法已弃用。请使用 AesDecrypt(cipherText, key, iv) 并从配置读取密钥。");
-    }
+        => throw new InvalidOperationException("DecryptAES 方法已弃用。请使用 AesDecrypt(cipherText, key, iv) 并从配置读取密钥。");
 
     /// <summary>
-    /// RSA 加密（使用默认公钥）
+    /// RSA 加密（使用默认公钥）- 已弃用，请使用 RsaEncrypt
     /// </summary>
-    /// <param name="plainText">明文</param>
-    /// <returns>密文（Base64）</returns>
+    [Obsolete("请使用 RsaEncrypt(plainText, publicKey) 并传入公钥。")]
     public static string EncryptRSA(string plainText)
-    {
-        // TODO: 从配置或数据库获取公钥
-        // 这里暂时使用占位符
-        return Convert.ToBase64String(Encoding.UTF8.GetBytes(plainText));
-    }
+        => Convert.ToBase64String(Encoding.UTF8.GetBytes(plainText));
 
     #endregion
 
@@ -273,20 +242,13 @@ public static class EncryptionHelper
     /// <summary>
     /// 获取机器码（用于许可证绑定）
     /// </summary>
-    /// <returns>机器码</returns>
     public static string GetMachineCode()
     {
         try
         {
-            // 获取 CPU ID
             var cpuId = GetCpuId();
-
-            // 获取硬盘序列号
             var diskId = GetDiskSerialNumber();
-
-            // 组合生成机器码
-            var combined = $"{cpuId}-{diskId}";
-            return ComputeSha256Hash(combined).Substring(0, 32);
+            return ComputeSha256Hash($"{cpuId}-{diskId}").Substring(0, 32);
         }
         catch
         {
@@ -294,9 +256,6 @@ public static class EncryptionHelper
         }
     }
 
-    /// <summary>
-    /// 获取 CPU ID
-    /// </summary>
     private static string GetCpuId()
     {
         try
@@ -310,17 +269,13 @@ public static class EncryptionHelper
         }
     }
 
-    /// <summary>
-    /// 获取硬盘序列号
-    /// </summary>
     private static string GetDiskSerialNumber()
     {
         try
         {
             var drive = Environment.GetFolderPath(Environment.SpecialFolder.System);
             var driveInfo = new DriveInfo(Path.GetPathRoot(drive) ?? "C:");
-            var volumeLabel = driveInfo.VolumeLabel;
-            return ComputeMd5Hash(volumeLabel).Substring(0, 8);
+            return ComputeMd5Hash(driveInfo.VolumeLabel).Substring(0, 8);
         }
         catch
         {

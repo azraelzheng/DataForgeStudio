@@ -214,8 +214,8 @@ const loadData = async () => {
       tableData.value = data.Items || data.items || []
       pagination.total = data.TotalCount || data.total || 0
     }
-  } catch (error) {
-    console.error('加载数据失败:', error)
+  } catch {
+    // 加载失败
   } finally {
     loading.value = false
   }
@@ -248,8 +248,8 @@ const handlePreview = async (row) => {
       previewReport.value = res.data
       previewVisible.value = true
     }
-  } catch (error) {
-    console.error('加载报表失败:', error)
+  } catch {
+    // 加载失败
   }
 }
 
@@ -268,7 +268,7 @@ const handleCopy = async (row) => {
     }
   } catch (error) {
     if (error !== 'cancel') {
-      console.error('复制失败:', error)
+      // 复制失败
     }
   }
 }
@@ -282,8 +282,7 @@ const handleToggleStatus = async (row) => {
     } else {
       ElMessage.error(res.message || '操作失败')
     }
-  } catch (error) {
-    console.error('更新状态失败:', error)
+  } catch {
     ElMessage.error('更新状态失败')
   }
 }
@@ -301,7 +300,7 @@ const handleDelete = async (row) => {
     loadData()
   } catch (error) {
     if (error !== 'cancel') {
-      console.error('删除失败:', error)
+      // 删除失败
     }
   }
 }
@@ -319,8 +318,8 @@ const handleExportConfig = async () => {
       window.URL.revokeObjectURL(url)
       ElMessage.success('配置导出成功')
     }
-  } catch (error) {
-    console.error('导出配置失败:', error)
+  } catch {
+    // 导出失败
   }
 }
 

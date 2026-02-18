@@ -178,14 +178,10 @@ const isAuthChecking = ref(true)
 
 const currentRoute = computed(() => route)
 
-// 页面加载时检查认证状态
 onMounted(async () => {
-  // 检查认证状态
   const isValid = await userStore.checkAuth()
-  console.log('App mounted - auth check result:', isValid)
   isAuthChecking.value = false
 
-  // 如果未认证且不在登录页，重定向到登录页
   if (!isValid && route.path !== '/login') {
     router.push('/login')
   }
@@ -295,8 +291,8 @@ const handleChangePassword = async () => {
       userStore.logout()
       window.location.href = '/login'
     }
-  } catch (error) {
-    console.error('修改密码失败:', error)
+  } catch {
+    // 密码修改失败已在 store 中处理
   } finally {
     passwordSubmitting.value = false
   }

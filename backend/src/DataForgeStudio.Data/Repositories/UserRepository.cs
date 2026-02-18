@@ -75,14 +75,10 @@ public class UserRepository : Repository<User>, IUserRepository
 
     public async Task<bool> IsUsernameExistsAsync(string username, int? excludeUserId = null)
     {
-        var query = _dbSet.Where(u => u.Username == username);
-
-        if (excludeUserId.HasValue)
-        {
-            query = query.Where(u => u.UserId != excludeUserId.Value);
-        }
-
-        return await query.AnyAsync();
+        return await _dbSet
+            .Where(u => u.Username == username)
+            .Where(u => !excludeUserId.HasValue || u.UserId != excludeUserId.Value)
+            .AnyAsync();
     }
 
     public async Task UpdateLoginInfoAsync(int userId, string ipAddress)

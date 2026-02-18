@@ -264,18 +264,13 @@ public class DataForgeStudioDbContext : DbContext
 
     private void UpdateTimestamps()
     {
-        var entries = ChangeTracker.Entries()
-            .Where(e => e.State == EntityState.Added || e.State == EntityState.Modified);
-
-        foreach (var entry in entries)
+        foreach (var entry in ChangeTracker.Entries())
         {
-            if (entry.State == EntityState.Added)
+            if (entry.State == EntityState.Added && entry.Property("CreatedTime").CurrentValue == null)
             {
-                if (entry.Property("CreatedTime").CurrentValue == null)
-                    entry.Property("CreatedTime").CurrentValue = DateTime.UtcNow;
+                entry.Property("CreatedTime").CurrentValue = DateTime.UtcNow;
             }
-
-            if (entry.State == EntityState.Modified)
+            else if (entry.State == EntityState.Modified)
             {
                 entry.Property("UpdatedTime").CurrentValue = DateTime.UtcNow;
             }

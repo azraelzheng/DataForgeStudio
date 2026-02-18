@@ -193,7 +193,6 @@ const updateTableHeight = () => {
 const loadData = async () => {
   loading.value = true
   try {
-    // 处理日期范围
     const params = { ...searchForm }
     if (dateRange.value && dateRange.value.length === 2) {
       params.startTime = dateRange.value[0]
@@ -210,8 +209,8 @@ const loadData = async () => {
       tableData.value = data.Items || data.items || []
       pagination.total = data.TotalCount || data.total || 0
     }
-  } catch (error) {
-    console.error('加载数据失败:', error)
+  } catch {
+    // 加载失败
   } finally {
     loading.value = false
   }
@@ -250,7 +249,7 @@ const handleClearLogs = async () => {
     }
   } catch (error) {
     if (error !== 'cancel') {
-      console.error('清空失败:', error)
+      // 清空失败
     }
   }
 }
@@ -277,7 +276,7 @@ const handleDeleteSelected = async () => {
     }
   } catch (error) {
     if (error !== 'cancel') {
-      console.error('删除失败:', error)
+      // 删除失败
     }
   }
 }
@@ -291,7 +290,6 @@ const handleExport = async () => {
   try {
     let blob
 
-    // 如果有选中的日志，则导出选中的；否则导出全部
     if (selectedRows.value.length > 0) {
       const logIds = selectedRows.value.map(row => row.logId)
       blob = await systemApi.exportSelectedLogs(logIds)
@@ -306,15 +304,13 @@ const handleExport = async () => {
       ElMessage.success('导出成功')
     }
 
-    // 创建下载链接
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
     link.download = `操作日志_${new Date().getTime()}.xlsx`
     link.click()
     window.URL.revokeObjectURL(url)
-  } catch (error) {
-    console.error('导出失败:', error)
+  } catch {
     ElMessage.error('导出失败')
   } finally {
     exporting.value = false

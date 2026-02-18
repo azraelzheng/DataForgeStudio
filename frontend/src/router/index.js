@@ -103,24 +103,16 @@ const router = createRouter({
   routes
 })
 
-// 路由守卫
 router.beforeEach(async (to, from, next) => {
-  // 设置页面标题
   document.title = to.meta.title ? `${to.meta.title} - DataForgeStudio` : 'DataForgeStudio'
 
   const userStore = useUserStore()
-
-  // 判断是否需要认证
-  const requiresAuth = to.meta.requiresAuth !== false // 默认需要认证
+  const requiresAuth = to.meta.requiresAuth !== false
   const isLoginPage = to.path === '/login'
 
-  // 如果访问登录页
   if (isLoginPage) {
-    // 检查是否已登录（有有效的 token）
     const hasToken = !!localStorage.getItem('token')
     if (hasToken && userStore.userInfo) {
-      // 已登录，重定向到首页
-      console.log('Route guard: Already logged in, redirecting to home')
       next('/home')
       return
     }
@@ -128,53 +120,41 @@ router.beforeEach(async (to, from, next) => {
     return
   }
 
-  // 需要认证的页面
   if (requiresAuth) {
     const hasToken = !!localStorage.getItem('token')
 
     if (!hasToken) {
-      // 没有 token，跳转到登录页
-      console.log('Route guard: No token found, redirecting to login')
       next('/login')
       return
     }
 
-    // 有 token，检查用户信息
     if (!userStore.userInfo) {
       try {
         await userStore.getCurrentUser()
         if (!userStore.userInfo) {
-          console.log('Route guard: Failed to get user info, redirecting to login')
           next('/login')
           return
         }
-      } catch (error) {
-        console.log('Route guard: Token invalid, redirecting to login')
+      } catch {
         next('/login')
         return
       }
     }
   }
 
-  // 检查权限
-  if (to.meta.permission) {
-    if (!userStore.hasPermission(to.meta.permission)) {
-      ElMessage.error(`您没有访问该页面的权限，需要权限：${to.meta.permission}`)
-      next(from.path || '/home')
-      return
-    }
+  if (to.meta.permission && !userStore.hasPermission(to.meta.permission)) {
+    ElMessage.error(`您没有访问该页面的权限，需要权限：${to.meta.permission}`)
+    next(from.path || '/home')
+    return
   }
 
-  // 检查许可证有效性（针对需要许可证的功能）
   if (LICENSE_REQUIRED_ROUTES.some(route => to.path.startsWith(route))) {
     const licenseStore = useLicenseStore()
 
-    // 如果许可证状态未加载，先加载
     if (!licenseStore.license && !licenseStore.licenseStatus) {
       await licenseStore.loadLicense()
     }
 
-    // 检查许可证是否过期或无效
     if (licenseStore.isExpired || licenseStore.licenseStatus === 'expired') {
       ElMessage.error('许可证已过期，无法访问此功能。请续费后继续使用。')
       next('/license')

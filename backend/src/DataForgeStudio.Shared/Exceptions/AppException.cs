@@ -8,26 +8,23 @@ public class AppException : Exception
     /// <summary>
     /// 错误代码
     /// </summary>
-    public string ErrorCode { get; set; }
+    public string ErrorCode { get; set; } = string.Empty;
 
     /// <summary>
     /// 错误消息
     /// </summary>
-    public new string Message { get; set; }
+    public new string Message { get; set; } = string.Empty;
 
-    public AppException()
-    {
-    }
+    public AppException() { }
 
     public AppException(string message) : base(message)
     {
         Message = message;
     }
 
-    public AppException(string errorCode, string message) : base(message)
+    public AppException(string errorCode, string message) : this(message)
     {
         ErrorCode = errorCode;
-        Message = message;
     }
 
     public AppException(string message, Exception innerException) : base(message, innerException)
@@ -35,10 +32,9 @@ public class AppException : Exception
         Message = message;
     }
 
-    public AppException(string errorCode, string message, Exception innerException) : base(message, innerException)
+    public AppException(string errorCode, string message, Exception innerException) : this(message, innerException)
     {
         ErrorCode = errorCode;
-        Message = message;
     }
 }
 

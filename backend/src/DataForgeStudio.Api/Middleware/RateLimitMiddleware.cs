@@ -36,17 +36,15 @@ public class RateLimitMiddleware
         {
             if (DateTime.UtcNow < blockedUntil)
             {
-                _logger.LogWarning($"Rate limit blocked for {clientIp} on {path}");
+                _logger.LogWarning("Rate limit blocked for {ClientIp} on {Path}", clientIp, path);
                 context.Response.StatusCode = 429; // Too Many Requests
                 context.Response.Headers.Add("Retry-After", ((int)(blockedUntil - DateTime.UtcNow).TotalSeconds).ToString());
                 await context.Response.WriteAsync("Too many requests. Please try again later.");
                 return;
             }
-            else
-            {
-                // 解除阻止
-                _blockedUntil.TryRemove(clientIp, out _);
-            }
+
+            // 解除阻止
+            _blockedUntil.TryRemove(clientIp, out _);
         }
 
         // 获取速率限制配置
@@ -73,18 +71,17 @@ public class RateLimitMiddleware
                     // 阻止请求
                     var blockDuration = TimeSpan.FromMinutes(15);
                     _blockedUntil[clientIp] = DateTime.UtcNow.Add(blockDuration);
-                    _logger.LogWarning($"Rate limit exceeded for {clientIp} on {path}. Blocked for {blockDuration.TotalMinutes} minutes.");
+                    _logger.LogWarning("Rate limit exceeded for {ClientIp} on {Path}. Blocked for {Minutes} minutes.",
+                        clientIp, path, blockDuration.TotalMinutes);
 
                     context.Response.StatusCode = 429;
                     context.Response.Headers.Add("Retry-After", "900"); // 15 minutes
                     await context.Response.WriteAsync("Rate limit exceeded. Please try again later.");
                     return;
                 }
-                else
-                {
-                    // 增加计数
-                    _requestCounts[key] = (count + 1, lastRequest);
-                }
+
+                // 增加计数
+                _requestCounts[key] = (count + 1, lastRequest);
             }
         }
         else

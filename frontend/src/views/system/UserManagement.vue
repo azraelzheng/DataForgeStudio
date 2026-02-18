@@ -299,13 +299,12 @@ const loadData = async () => {
       ...searchForm
     })
     if (res.success) {
-      // 处理 PascalCase (后端) 和 camelCase 两种情况
       const data = res.data
       tableData.value = data.Items || data.items || []
       pagination.total = data.TotalCount || data.total || 0
     }
-  } catch (error) {
-    console.error('加载数据失败:', error)
+  } catch {
+    // 加载失败
   } finally {
     loading.value = false
   }
@@ -318,8 +317,8 @@ const loadRoles = async () => {
       const data = res.data
       allRoles.value = data.Items || data.items || []
     }
-  } catch (error) {
-    console.error('加载角色失败:', error)
+  } catch {
+    // 加载失败
   }
 }
 
@@ -371,14 +370,11 @@ const handleSubmit = async () => {
 
   submitting.value = true
   try {
-    let response
     if (isEdit.value) {
-      response = await userApi.updateUser(form.userId, form)
-      // 更新角色
+      await userApi.updateUser(form.userId, form)
       await userApi.assignRoles(form.userId, { roleIds: form.roleIds })
     } else {
-      response = await userApi.createUser(form)
-      // 创建后分配角色
+      const response = await userApi.createUser(form)
       if (form.roleIds && form.roleIds.length > 0) {
         await userApi.assignRoles(response.data.userId, { roleIds: form.roleIds })
       }
@@ -386,8 +382,8 @@ const handleSubmit = async () => {
     ElMessage.success(isEdit.value ? '更新成功' : '创建成功')
     dialogVisible.value = false
     loadData()
-  } catch (error) {
-    console.error('操作失败:', error)
+  } catch {
+    // 操作失败
   } finally {
     submitting.value = false
   }
@@ -402,8 +398,7 @@ const handleToggleStatus = async (row) => {
   try {
     await userApi.updateUser(row.userId, { isActive: row.isActive })
     ElMessage.success('状态更新成功')
-  } catch (error) {
-    console.error('更新状态失败:', error)
+  } catch {
     row.isActive = !row.isActive
   }
 }
@@ -431,8 +426,8 @@ const handleSaveRoles = async () => {
     ElMessage.success('角色分配成功')
     roleDialogVisible.value = false
     loadData()
-  } catch (error) {
-    console.error('分配角色失败:', error)
+  } catch {
+    // 分配失败
   } finally {
     savingRoles.value = false
   }
@@ -455,7 +450,7 @@ const handleResetPassword = async (row) => {
     ElMessage.success('密码重置成功')
   } catch (error) {
     if (error !== 'cancel') {
-      console.error('重置密码失败:', error)
+      // 重置失败
     }
   }
 }
@@ -465,7 +460,6 @@ const handleDelete = async (row) => {
     ElMessage.error('root 用户是系统管理员，不能被删除')
     return
   }
-  // 检查是否有操作记录
   if (row.hasOperationLogs) {
     ElMessage.warning('该用户有操作记录，不能删除，只能停用')
     return
@@ -482,7 +476,7 @@ const handleDelete = async (row) => {
     loadData()
   } catch (error) {
     if (error !== 'cancel') {
-      console.error('删除失败:', error)
+      // 删除失败
     }
   }
 }

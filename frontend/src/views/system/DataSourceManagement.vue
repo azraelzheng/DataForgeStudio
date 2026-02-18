@@ -251,8 +251,8 @@ const loadData = async () => {
       tableData.value = data.Items || data.items || []
       pagination.total = data.TotalCount || data.total || 0
     }
-  } catch (error) {
-    console.error('加载数据失败:', error)
+  } catch {
+    // 加载失败
   } finally {
     loading.value = false
   }
@@ -296,57 +296,45 @@ const handleDialogClosed = () => {
 }
 
 const handleTestConnection = async () => {
-  console.log('handleTestConnection 被调用', form)
-
-  // 验证连接相关的字段
   const fieldsToValidate = ['dbType', 'server', 'port', 'username', 'password']
   let allValid = true
 
   for (const field of fieldsToValidate) {
     try {
       await formRef.value.validateField(field)
-    } catch (error) {
-      console.log(`字段 ${field} 验证失败:`, error)
+    } catch {
       allValid = false
     }
   }
 
-  if (!allValid) {
-    console.log('部分字段验证失败')
-    return
-  }
+  if (!allValid) return
 
   testing.value = true
   try {
-    console.log('开始测试连接...', form)
     const res = await dataSourceApi.testConnectionBeforeSave(form)
-    console.log('连接测试结果:', res)
     if (res.success) {
       ElMessage.success('连接测试成功，正在获取数据库列表...')
-      // 测试成功后获取数据库列表
       await fetchDatabases()
     }
-  } catch (error) {
-    console.error('连接测试失败:', error)
+  } catch {
+    // 测试失败
   } finally {
     testing.value = false
   }
 }
 
-// 获取数据库列表
 const fetchDatabases = async () => {
   try {
     const res = await dataSourceApi.getDatabases(form)
     if (res.success && res.data) {
       databaseList.value = res.data
-      // 如果原来没有选择数据库，自动选择第一个
       if (!form.database && res.data.length > 0) {
         form.database = res.data[0]
       }
       ElMessage.success(`获取到 ${res.data.length} 个数据库`)
     }
-  } catch (error) {
-    console.error('获取数据库列表失败:', error)
+  } catch {
+    // 获取失败
   }
 }
 
@@ -357,8 +345,8 @@ const handleTest = async (row) => {
     if (res.success) {
       ElMessage.success('连接测试成功')
     }
-  } catch (error) {
-    console.error('连接测试失败:', error)
+  } catch {
+    // 测试失败
   } finally {
     row.testing = false
   }
@@ -378,8 +366,8 @@ const handleSubmit = async () => {
     ElMessage.success(isEdit.value ? '更新成功' : '创建成功')
     dialogVisible.value = false
     loadData()
-  } catch (error) {
-    console.error('操作失败:', error)
+  } catch {
+    // 操作失败
   } finally {
     submitting.value = false
   }
@@ -398,7 +386,7 @@ const handleDelete = async (row) => {
     loadData()
   } catch (error) {
     if (error !== 'cancel') {
-      console.error('删除失败:', error)
+      // 删除失败
     }
   }
 }
@@ -411,8 +399,8 @@ const handleToggleActive = async (row) => {
       ElMessage.success(res.message || (row.isActive ? '已停用' : '已启用'))
       loadData()
     }
-  } catch (error) {
-    console.error('操作失败:', error)
+  } catch {
+    // 操作失败
   } finally {
     row.toggling = false
   }

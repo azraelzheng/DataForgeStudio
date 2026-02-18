@@ -224,32 +224,13 @@ public class OperationLogMiddleware
         var moduleText = GetModuleText(module);
         var actionText = GetActionText(action);
 
-        if (action == "Toggle")
+        return action switch
         {
-            if (!string.IsNullOrEmpty(resourceName))
-                return $"{moduleText}切换状态: {resourceName}";
-            return $"{moduleText}切换状态";
-        }
-        else if (action == "TestConnection")
-        {
-            if (!string.IsNullOrEmpty(resourceName))
-                return $"测试数据源连接: {resourceName}";
-            return "测试数据源连接";
-        }
-        else if (action == "GetDatabases")
-        {
-            return "获取数据库列表";
-        }
-        else if (string.IsNullOrEmpty(resourceName))
-        {
-            // 没有资源名称的操作
-            return $"{moduleText}{actionText}";
-        }
-        else
-        {
-            // 有资源名称的操作
-            return $"{moduleText}{actionText}: {resourceName}";
-        }
+            "Toggle" => !string.IsNullOrEmpty(resourceName) ? $"{moduleText}切换状态: {resourceName}" : $"{moduleText}切换状态",
+            "TestConnection" => !string.IsNullOrEmpty(resourceName) ? $"测试数据源连接: {resourceName}" : "测试数据源连接",
+            "GetDatabases" => "获取数据库列表",
+            _ => string.IsNullOrEmpty(resourceName) ? $"{moduleText}{actionText}" : $"{moduleText}{actionText}: {resourceName}"
+        };
     }
 
     private string? ExtractResourceName(string requestBody, string path)

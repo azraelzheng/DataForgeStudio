@@ -355,9 +355,7 @@ const loadStats = async () => {
       stats.currentReports = response.data.currentReports
       stats.currentDataSources = response.data.currentDataSources
     }
-  } catch (error) {
-    console.error('获取统计数据失败:', error)
-    // 保持默认值
+  } catch {
     stats.currentUsers = 0
     stats.currentReports = 0
     stats.currentDataSources = 0
@@ -402,14 +400,9 @@ const handleActivate = async () => {
 
   activating.value = true
   try {
-    // 读取文件内容（许可证文件已经是 base64 编码的加密数据）
     const licenseKey = await readFileAsText(activateForm.licenseFile)
-
-    // 许可证文件内容已经是加密后的 base64 字符串，直接使用
-    // 去除可能的空白字符
     const trimmedKey = licenseKey.trim()
 
-    // 激活许可证
     const success = await licenseStore.activateLicense(trimmedKey)
     if (success) {
       activateForm.licenseFile = null
@@ -417,7 +410,6 @@ const handleActivate = async () => {
       await loadLicense()
     }
   } catch (error) {
-    console.error('激活失败:', error)
     ElMessage.error('许可证激活失败: ' + error.message)
   } finally {
     activating.value = false
