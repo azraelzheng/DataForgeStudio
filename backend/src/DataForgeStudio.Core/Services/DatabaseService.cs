@@ -442,6 +442,51 @@ public class DatabaseService : IDatabaseService
     }
 
     /// <summary>
+    /// 检测字段是否可能为布尔类型（基于命名约定）
+    /// 用于处理 tinyint/int 存储但逻辑上是布尔值的字段
+    /// </summary>
+    private bool IsLikelyBooleanField(string fieldName, string sqlDataType)
+    {
+        if (string.IsNullOrEmpty(fieldName))
+            return false;
+
+        var name = fieldName.ToLower();
+        var type = sqlDataType?.ToLower() ?? "";
+
+        // 只对 tinyint 或 smallint 类型进行布尔推断
+        if (!type.Contains("tinyint") && !type.Contains("smallint"))
+            return false;
+
+        // 布尔字段常见命名模式
+        var booleanPrefixes = new[] { "is", "has", "can", "should", "will", "was", "were", "does", "did", "allow", "enable", "support" };
+        var booleanSuffixes = new[] { "flag", "enabled", "disabled", "active", "visible", "locked", "deleted", "published", "approved", "verified", "confirmed" };
+        var booleanNames = new[] { "active", "enabled", "visible", "locked", "deleted", "published", "approved", "verified", "confirmed", "status" };
+
+        // 检查前缀
+        foreach (var prefix in booleanPrefixes)
+        {
+            if (name.StartsWith(prefix) && name.Length > prefix.Length)
+                return true;
+        }
+
+        // 检查后缀
+        foreach (var suffix in booleanSuffixes)
+        {
+            if (name.EndsWith(suffix) && name.Length > suffix.Length)
+                return true;
+        }
+
+        // 检查完整名称
+        foreach (var booleanName in booleanNames)
+        {
+            if (name.Equals(booleanName))
+                return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
     /// 获取表结构信息
     /// </summary>
     public async Task<ApiResponse<List<TableColumnDto>>> GetTableStructureAsync(DataSource dataSource, string tableName)
@@ -744,6 +789,13 @@ public class DatabaseService : IDatabaseService
 
                 // 如果 SQL 类型名检测不到布尔，使用 .NET 类型作为备用检测
                 if (systemDataType == "String" && column.DataType == typeof(bool))
+                {
+                    systemDataType = "Boolean";
+                }
+
+                // 对于 tinyint/int 类型的字段，检查是否为布尔类型（基于命名约定）
+                // 例如：isSale, hasPermission, canEdit, isActive, enabled, deleted 等
+                if (systemDataType == "Number" && IsLikelyBooleanField(column.ColumnName, sqlDataType))
                 {
                     systemDataType = "Boolean";
                 }
