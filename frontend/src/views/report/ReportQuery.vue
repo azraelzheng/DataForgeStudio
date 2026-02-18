@@ -95,9 +95,9 @@
 
           <!-- 条件内容 - 展开时显示全部 -->
           <div class="conditions-content" v-show="!conditionsCollapsed">
-            <el-form :inline="true" :model="conditionForm" label-width="100px">
-              <el-row :gutter="16">
-                <el-col :span="12" v-for="qc in queryConditions" :key="qc.fieldName + qc.operator">
+            <el-form :model="conditionForm" label-width="100px" class="conditions-form">
+              <div class="conditions-grid">
+                <div class="condition-item" v-for="qc in queryConditions" :key="qc.fieldName + qc.operator">
                   <el-form-item :label="qc.displayName">
                     <!-- 不需要输入值的操作符 -->
                     <template v-if="['null', 'notnull', 'true', 'false'].includes(qc.operator)">
@@ -179,8 +179,8 @@
                       </el-select>
                     </template>
                   </el-form-item>
-                </el-col>
-              </el-row>
+                </div>
+              </div>
             </el-form>
             <div class="conditions-actions">
               <el-button type="primary" @click="handleQuery" :loading="querying">
@@ -193,9 +193,9 @@
 
           <!-- 折叠时显示的首行条件 -->
           <div v-if="conditionsCollapsed" class="conditions-summary">
-            <el-form :inline="true" :model="conditionForm" label-width="100px">
-              <el-row :gutter="16">
-                <el-col :span="12" v-for="qc in queryConditions.slice(0, firstRowConditionsCount)" :key="qc.fieldName + qc.operator">
+            <el-form :model="conditionForm" label-width="100px" class="conditions-form">
+              <div class="conditions-grid conditions-grid-collapsed">
+                <div class="condition-item" v-for="qc in queryConditions.slice(0, firstRowConditionsCount)" :key="qc.fieldName + qc.operator">
                   <el-form-item :label="qc.displayName">
                     <!-- 不需要输入值的操作符 -->
                     <template v-if="['null', 'notnull', 'true', 'false'].includes(qc.operator)">
@@ -277,8 +277,8 @@
                       </el-select>
                     </template>
                   </el-form-item>
-                </el-col>
-              </el-row>
+                </div>
+              </div>
             </el-form>
             <div class="conditions-actions">
               <el-button type="primary" @click="handleQuery" :loading="querying">
@@ -1295,6 +1295,30 @@ const handleExportExcel = async () => {
 
 .conditions-form {
   padding: 0 16px;
+}
+
+/* CSS Grid 响应式布局 - 查询条件自动换行 */
+.conditions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px 16px;
+}
+
+/* 折叠状态下的网格 - 限制最多显示2个 */
+.conditions-grid-collapsed {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+.condition-item {
+  min-width: 0;  /* 允许收缩 */
+}
+
+.condition-item :deep(.el-form-item) {
+  margin-bottom: 0;
+}
+
+.condition-item :deep(.el-form-item__content) {
+  flex: 1;
 }
 
 .conditions-actions {
