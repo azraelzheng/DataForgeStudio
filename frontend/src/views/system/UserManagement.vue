@@ -107,11 +107,11 @@
                 重置密码
               </el-button>
               <el-button
-                v-if="!row.hasOperationLogs"
                 type="danger"
                 link
                 size="small"
                 @click="handleDelete(row)"
+                :disabled="row.username === 'root'"
               >
                 <el-icon><Delete /></el-icon>
                 删除
@@ -463,6 +463,11 @@ const handleResetPassword = async (row) => {
 const handleDelete = async (row) => {
   if (row.username === 'root') {
     ElMessage.error('root 用户是系统管理员，不能被删除')
+    return
+  }
+  // 检查是否有操作记录
+  if (row.hasOperationLogs) {
+    ElMessage.warning('该用户有操作记录，不能删除，只能停用')
     return
   }
   try {

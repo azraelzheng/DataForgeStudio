@@ -206,6 +206,15 @@ public class UserService : IUserService
             return ApiResponse.Fail("root 用户是系统管理员，不能被删除", "FORBIDDEN");
         }
 
+        // 检查是否有操作日志记录
+        var hasOperationLogs = await _context.OperationLogs
+            .AnyAsync(log => log.UserId == userId);
+
+        if (hasOperationLogs)
+        {
+            return ApiResponse.Fail("该用户有操作记录，不能删除，只能停用", "FORBIDDEN");
+        }
+
         _context.Users.Remove(user);
         await _context.SaveChangesAsync();
         return ApiResponse.Ok("用户删除成功");
