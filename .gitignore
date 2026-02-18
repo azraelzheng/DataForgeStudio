@@ -72,3 +72,6 @@ temp/
 
 # ------------- Git Worktrees -------------
 .worktrees/
+
+# Test screenshots
+test_screenshots/
