@@ -1,6 +1,6 @@
 <template>
   <div class="user-management">
-    <el-card>
+    <el-card class="flex-card">
       <template #header>
         <div class="card-header">
           <span>用户管理</span>
@@ -35,8 +35,9 @@
       </div>
 
       <!-- 用户表格 -->
-      <template v-if="tableData && tableData.length > 0">
-        <el-table :data="tableData" v-loading="loading" border stripe>
+      <div class="table-wrapper" ref="tableWrapper">
+        <template v-if="tableData && tableData.length > 0">
+          <el-table :data="tableData" :height="tableHeight" v-loading="loading" border stripe>
           <el-table-column prop="username" label="用户名" width="180">
             <template #default="{ row }">
               <span>{{ row.username }}</span>
@@ -115,9 +116,10 @@
               </el-button>
             </template>
           </el-table-column>
-        </el-table>
-      </template>
-      <el-empty v-else-if="!loading" description="暂无用户数据" />
+          </el-table>
+        </template>
+        <el-empty v-else-if="!loading" description="暂无用户数据" />
+      </div>
 
       <!-- 分页 -->
       <el-pagination
@@ -208,7 +210,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { userApi, roleApi } from '../../api/request'
 
@@ -219,6 +221,10 @@ const roleDialogVisible = ref(false)
 const isEdit = ref(false)
 const submitting = ref(false)
 const savingRoles = ref(false)
+
+// 动态表格高度
+const tableWrapper = ref(null)
+const tableHeight = ref(null)
 
 const tableData = ref([])
 const allRoles = ref([])
@@ -265,7 +271,22 @@ const pagination = reactive({
 onMounted(() => {
   loadData()
   loadRoles()
+  nextTick(updateTableHeight)
+  window.addEventListener('resize', updateTableHeight)
 })
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateTableHeight)
+})
+
+// 更新表格高度
+const updateTableHeight = () => {
+  nextTick(() => {
+    if (tableWrapper.value) {
+      tableHeight.value = tableWrapper.value.clientHeight
+    }
+  })
+}
 
 const loadData = async () => {
   loading.value = true
@@ -463,6 +484,8 @@ const handleDelete = async (row) => {
 <style scoped>
 .user-management {
   height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .card-header {
@@ -501,5 +524,38 @@ const handleDelete = async (row) => {
   gap: 8px;
   align-items: flex-end;
   height: 32px;
+}
+
+/* Flex 布局样式 */
+.flex-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.flex-card :deep(.el-card__header) {
+  flex-shrink: 0;
+}
+
+.flex-card :deep(.el-card__body) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.search-grid {
+  flex-shrink: 0;
+}
+
+.table-wrapper {
+  flex: 1;
+  overflow: hidden;
+  min-height: 100px;
+}
+
+.el-pagination {
+  flex-shrink: 0;
 }
 </style>
