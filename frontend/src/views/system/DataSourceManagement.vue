@@ -12,11 +12,13 @@
       </template>
 
       <!-- 搜索表单 -->
-      <el-form :inline="true" :model="searchForm" class="search-form">
-        <el-form-item label="数据源名称">
+      <div class="search-grid">
+        <div class="search-item">
+          <label class="search-label">数据源名称</label>
           <el-input v-model="searchForm.dataSourceName" placeholder="请输入数据源名称" clearable />
-        </el-form-item>
-        <el-form-item label="数据库类型">
+        </div>
+        <div class="search-item">
+          <label class="search-label">数据库类型</label>
           <el-select v-model="searchForm.dbType" placeholder="请选择数据库类型" clearable>
             <el-option label="全部" value="" />
             <el-option label="SQL Server" value="SqlServer" />
@@ -24,15 +26,15 @@
             <el-option label="Oracle" value="Oracle" />
             <el-option label="PostgreSQL" value="PostgreSQL" />
           </el-select>
-        </el-form-item>
-        <el-form-item>
+        </div>
+        <div class="search-actions">
           <el-button type="primary" @click="handleSearch">
             <el-icon><Search /></el-icon>
             查询
           </el-button>
           <el-button @click="handleReset">重置</el-button>
-        </el-form-item>
-      </el-form>
+        </div>
+      </div>
 
       <!-- 数据源表格 -->
       <template v-if="tableData && tableData.length > 0">
@@ -421,7 +423,35 @@ const getDbTypeText = (type) => {
   align-items: center;
 }
 
-.search-form {
-  margin-bottom: 20px;
+.search-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px 16px;
+  margin-bottom: 16px;
+  align-items: end;
+}
+
+.search-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.search-label {
+  font-size: 14px;
+  color: #606266;
+  font-weight: 500;
+}
+
+.search-item :deep(.el-input),
+.search-item :deep(.el-select) {
+  width: 100%;
+}
+
+.search-actions {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  height: 32px;
 }
 </style>

@@ -18,11 +18,13 @@
       </template>
 
       <!-- 搜索表单 -->
-      <el-form :inline="true" :model="searchForm" class="search-form">
-        <el-form-item label="报表名称">
+      <div class="search-grid">
+        <div class="search-item">
+          <label class="search-label">报表名称</label>
           <el-input v-model="searchForm.reportName" placeholder="请输入报表名称" clearable />
-        </el-form-item>
-        <el-form-item label="分类">
+        </div>
+        <div class="search-item">
+          <label class="search-label">分类</label>
           <el-select v-model="searchForm.category" placeholder="请选择分类" clearable>
             <el-option label="全部" value="" />
             <el-option label="销售" value="销售" />
@@ -30,22 +32,23 @@
             <el-option label="财务" value="财务" />
             <el-option label="其他" value="其他" />
           </el-select>
-        </el-form-item>
-        <el-form-item label="状态">
+        </div>
+        <div class="search-item">
+          <label class="search-label">状态</label>
           <el-select v-model="searchForm.isEnabled" placeholder="请选择状态" clearable>
             <el-option label="全部" value="" />
             <el-option label="启用" :value="true" />
             <el-option label="停用" :value="false" />
           </el-select>
-        </el-form-item>
-        <el-form-item>
+        </div>
+        <div class="search-actions">
           <el-button type="primary" @click="handleSearch">
             <el-icon><Search /></el-icon>
             查询
           </el-button>
           <el-button @click="handleReset">重置</el-button>
-        </el-form-item>
-      </el-form>
+        </div>
+      </div>
 
       <!-- 报表表格 -->
       <template v-if="tableData && tableData.length > 0">
@@ -313,8 +316,36 @@ const formatDate = (dateStr) => {
   align-items: center;
 }
 
-.search-form {
-  margin-bottom: 20px;
+.search-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px 16px;
+  margin-bottom: 16px;
+  align-items: end;
+}
+
+.search-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.search-label {
+  font-size: 14px;
+  color: #606266;
+  font-weight: 500;
+}
+
+.search-item :deep(.el-input),
+.search-item :deep(.el-select) {
+  width: 100%;
+}
+
+.search-actions {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  height: 32px;
 }
 
 .report-info {

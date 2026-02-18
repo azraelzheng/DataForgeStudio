@@ -12,11 +12,13 @@
       </template>
 
       <!-- 搜索表单 -->
-      <el-form :inline="true" :model="searchForm" class="search-form">
-        <el-form-item label="操作人">
+      <div class="search-grid">
+        <div class="search-item">
+          <label class="search-label">操作人</label>
           <el-input v-model="searchForm.username" placeholder="请输入操作人" clearable />
-        </el-form-item>
-        <el-form-item label="操作类型">
+        </div>
+        <div class="search-item">
+          <label class="search-label">操作类型</label>
           <el-select v-model="searchForm.action" placeholder="请选择操作类型" clearable>
             <el-option label="全部" value="" />
             <el-option label="创建" value="Create" />
@@ -27,8 +29,9 @@
             <el-option label="获取数据库列表" value="GetDatabases" />
             <el-option label="修改" value="Modify" />
           </el-select>
-        </el-form-item>
-        <el-form-item label="模块">
+        </div>
+        <div class="search-item">
+          <label class="search-label">模块</label>
           <el-select v-model="searchForm.module" placeholder="请选择模块" clearable>
             <el-option label="全部" value="" />
             <el-option label="用户管理" value="User" />
@@ -39,8 +42,9 @@
             <el-option label="系统管理" value="System" />
             <el-option label="其他" value="Other" />
           </el-select>
-        </el-form-item>
-        <el-form-item label="时间范围">
+        </div>
+        <div class="search-item search-item-daterange">
+          <label class="search-label">时间范围</label>
           <el-date-picker
             v-model="dateRange"
             type="daterange"
@@ -49,8 +53,8 @@
             end-placeholder="结束日期"
             value-format="YYYY-MM-DD"
           />
-        </el-form-item>
-        <el-form-item>
+        </div>
+        <div class="search-actions">
           <el-button type="primary" @click="handleSearch">
             <el-icon><Search /></el-icon>
             查询
@@ -64,8 +68,8 @@
             <el-icon><Download /></el-icon>
             导出
           </el-button>
-        </el-form-item>
-      </el-form>
+        </div>
+      </div>
 
       <!-- 日志表格 -->
       <el-table
@@ -349,8 +353,44 @@ const formatJson = (data) => {
   align-items: center;
 }
 
-.search-form {
-  margin-bottom: 20px;
+.search-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px 16px;
+  margin-bottom: 16px;
+  align-items: end;
+}
+
+.search-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.search-label {
+  font-size: 14px;
+  color: #606266;
+  font-weight: 500;
+}
+
+.search-item :deep(.el-input),
+.search-item :deep(.el-select) {
+  width: 100%;
+}
+
+.search-item-daterange {
+  min-width: 340px;
+}
+
+.search-item-daterange :deep(.el-date-editor) {
+  width: 100%;
+}
+
+.search-actions {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  flex-wrap: wrap;
 }
 
 pre {

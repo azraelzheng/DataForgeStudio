@@ -12,18 +12,19 @@
       </template>
 
       <!-- 搜索表单 -->
-      <el-form :inline="true" :model="searchForm" class="search-form">
-        <el-form-item label="角色名称">
+      <div class="search-grid">
+        <div class="search-item">
+          <label class="search-label">角色名称</label>
           <el-input v-model="searchForm.roleName" placeholder="请输入角色名称" clearable />
-        </el-form-item>
-        <el-form-item>
+        </div>
+        <div class="search-actions">
           <el-button type="primary" @click="handleSearch">
             <el-icon><Search /></el-icon>
             查询
           </el-button>
           <el-button @click="handleReset">重置</el-button>
-        </el-form-item>
-      </el-form>
+        </div>
+      </div>
 
       <!-- 角色表格 -->
       <template v-if="tableData && tableData.length > 0">
@@ -404,7 +405,35 @@ const handleDelete = async (row) => {
   align-items: center;
 }
 
-.search-form {
-  margin-bottom: 20px;
+.search-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px 16px;
+  margin-bottom: 16px;
+  align-items: end;
+}
+
+.search-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.search-label {
+  font-size: 14px;
+  color: #606266;
+  font-weight: 500;
+}
+
+.search-item :deep(.el-input),
+.search-item :deep(.el-select) {
+  width: 100%;
+}
+
+.search-actions {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  height: 32px;
 }
 </style>
