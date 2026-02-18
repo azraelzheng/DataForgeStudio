@@ -1,138 +1,143 @@
 <template>
   <div class="backup-management">
-    <el-row :gutter="20" class="flex-row">
-      <!-- 创建备份 -->
-      <el-col :span="24">
-        <el-card>
-          <template #header>
-            <span>创建备份</span>
-          </template>
-          <el-form :model="backupForm" ref="backupFormRef" :inline="true">
-            <el-form-item label="备注">
-              <el-input v-model="backupForm.description" placeholder="请输入备注（可选）" style="width: 300px;" />
-            </el-form-item>
-            <el-form-item>
-              <el-button type="primary" @click="handleCreateBackup" :loading="creating">
-                <el-icon><Plus /></el-icon>
-                创建备份
-              </el-button>
-            </el-form-item>
-          </el-form>
-        </el-card>
-      </el-col>
+    <!-- 顶部工具栏：创建备份 + 快捷操作 -->
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <el-input
+          v-model="backupForm.description"
+          placeholder="备份备注（可选）"
+          style="width: 240px;"
+          clearable
+        />
+        <el-button type="primary" @click="handleCreateBackup" :loading="creating">
+          <el-icon><Plus /></el-icon>
+          创建备份
+        </el-button>
+      </div>
+      <div class="toolbar-right">
+        <el-button @click="loadData; loadSchedules()">
+          <el-icon><Refresh /></el-icon>
+          刷新全部
+        </el-button>
+      </div>
+    </div>
 
-      <!-- 备份计划 -->
-      <el-col :span="24" style="margin-top: 20px;" class="flex-col">
-        <el-card class="flex-card">
+    <!-- 主内容区：左右布局 -->
+    <div class="main-content">
+      <!-- 左侧：备份计划 -->
+      <div class="schedule-panel">
+        <el-card class="panel-card">
           <template #header>
             <div class="card-header">
               <span>备份计划</span>
-              <el-button type="primary" @click="handleAddSchedule">
+              <el-button type="primary" size="small" @click="handleAddSchedule">
                 <el-icon><Plus /></el-icon>
-                新增计划
+                新增
               </el-button>
             </div>
           </template>
 
           <div class="table-wrapper" ref="scheduleTableWrapper">
-            <el-table :data="schedules" v-loading="schedulesLoading" border stripe :height="scheduleTableHeight">
-            <el-table-column prop="scheduleName" label="计划名称" width="150" />
-            <el-table-column prop="scheduleType" label="类型" width="100">
-              <template #default="{ row }">
-                <el-tag :type="row.scheduleType === 'Recurring' ? 'primary' : 'warning'">
-                  {{ row.scheduleType === 'Recurring' ? '重复' : '单次' }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column label="执行时间" min-width="200">
-              <template #default="{ row }">
-                <span v-if="row.scheduleType === 'Recurring'">
-                  {{ formatRecurringDays(row.recurringDays) }} {{ row.scheduledTime }}
-                </span>
-                <span v-else>
-                  {{ formatOnceDate(row.onceDate) }}
-                </span>
-              </template>
-            </el-table-column>
-            <el-table-column prop="retentionCount" label="保留数量" width="100" />
-            <el-table-column prop="nextRunTime" label="下次执行" width="180">
-              <template #default="{ row }">
-                {{ formatDateTime(row.nextRunTime) }}
-              </template>
-            </el-table-column>
-            <el-table-column prop="isEnabled" label="状态" width="80">
-              <template #default="{ row }">
-                <el-switch v-model="row.isEnabled" @change="handleToggleSchedule(row)" />
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" width="120" fixed="right">
-              <template #default="{ row }">
-                <el-button type="primary" link size="small" @click="handleEditSchedule(row)">编辑</el-button>
-                <el-button type="danger" link size="small" @click="handleDeleteSchedule(row)">删除</el-button>
-              </template>
-            </el-table-column>
-          </el-table>
+            <el-table
+              :data="schedules"
+              v-loading="schedulesLoading"
+              border
+              stripe
+              :height="scheduleTableHeight"
+              size="small"
+            >
+              <el-table-column prop="scheduleName" label="计划名称" min-width="100" />
+              <el-table-column prop="scheduleType" label="类型" width="70">
+                <template #default="{ row }">
+                  <el-tag :type="row.scheduleType === 'Recurring' ? 'primary' : 'warning'" size="small">
+                    {{ row.scheduleType === 'Recurring' ? '重复' : '单次' }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="执行时间" min-width="120">
+                <template #default="{ row }">
+                  <span v-if="row.scheduleType === 'Recurring'" class="schedule-time">
+                    {{ formatRecurringDays(row.recurringDays) }} {{ row.scheduledTime }}
+                  </span>
+                  <span v-else class="schedule-time">
+                    {{ formatOnceDate(row.onceDate) }}
+                  </span>
+                </template>
+              </el-table-column>
+              <el-table-column prop="nextRunTime" label="下次执行" width="130">
+                <template #default="{ row }">
+                  {{ formatDateTime(row.nextRunTime) }}
+                </template>
+              </el-table-column>
+              <el-table-column prop="isEnabled" label="状态" width="60" align="center">
+                <template #default="{ row }">
+                  <el-switch v-model="row.isEnabled" size="small" @change="handleToggleSchedule(row)" />
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="80" fixed="right">
+                <template #default="{ row }">
+                  <el-button type="primary" link size="small" @click="handleEditSchedule(row)">编辑</el-button>
+                  <el-button type="danger" link size="small" @click="handleDeleteSchedule(row)">删除</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
           </div>
         </el-card>
-      </el-col>
+      </div>
 
-      <!-- 备份列表 -->
-      <el-col :span="24" style="margin-top: 20px;" class="flex-col flex-grow">
-        <el-card class="flex-card">
+      <!-- 右侧：备份列表 -->
+      <div class="backup-panel">
+        <el-card class="panel-card">
           <template #header>
             <div class="card-header">
               <span>备份列表</span>
-              <el-button type="primary" link @click="loadData">
-                <el-icon><Refresh /></el-icon>
-                刷新
-              </el-button>
+              <div class="header-actions">
+                <el-input
+                  v-model="searchForm.backupName"
+                  placeholder="搜索备份名称"
+                  clearable
+                  style="width: 180px;"
+                  @keyup.enter="handleSearch"
+                />
+                <el-button type="primary" size="small" @click="handleSearch">
+                  <el-icon><Search /></el-icon>
+                </el-button>
+              </div>
             </div>
           </template>
 
-          <!-- 搜索表单 -->
-          <el-form :inline="true" :model="searchForm" class="search-form">
-            <el-form-item label="备份名称">
-              <el-input v-model="searchForm.backupName" placeholder="请输入备份名称" clearable />
-            </el-form-item>
-            <el-form-item>
-              <el-button type="primary" @click="handleSearch">
-                <el-icon><Search /></el-icon>
-                查询
-              </el-button>
-              <el-button @click="handleReset">重置</el-button>
-            </el-form-item>
-          </el-form>
-
-          <!-- 备份表格 -->
           <div class="table-wrapper" ref="backupTableWrapper">
-            <el-table :data="tableData" v-loading="loading" border stripe :height="backupTableHeight">
-            <el-table-column prop="backupName" label="备份名称" width="200" />
-            <el-table-column prop="fileName" label="文件名" min-width="200" />
-            <el-table-column prop="fileSize" label="文件大小" width="120">
-              <template #default="{ row }">
-                {{ formatFileSize(row.fileSize) }}
-              </template>
-            </el-table-column>
-            <el-table-column prop="description" label="备注" min-width="200" show-overflow-tooltip />
-            <el-table-column prop="createdBy" label="创建人" width="120" />
-            <el-table-column prop="createdTime" label="创建时间" width="180" />
-            <el-table-column label="操作" width="180" fixed="right">
-              <template #default="{ row }">
-                <el-button type="warning" link size="small" @click="handleRestore(row)" :loading="row.restoring">
-                  <el-icon><RefreshLeft /></el-icon>
-                  恢复
-                </el-button>
-                <el-button type="primary" link size="small" @click="handleDownload(row)">
-                  <el-icon><Download /></el-icon>
-                  下载
-                </el-button>
-                <el-button type="danger" link size="small" @click="handleDelete(row)">
-                  <el-icon><Delete /></el-icon>
-                  删除
-                </el-button>
-              </template>
-            </el-table-column>
-          </el-table>
+            <el-table
+              :data="tableData"
+              v-loading="loading"
+              border
+              stripe
+              :height="backupTableHeight"
+            >
+              <el-table-column prop="backupName" label="备份名称" min-width="160" />
+              <el-table-column prop="fileName" label="文件名" min-width="180" show-overflow-tooltip />
+              <el-table-column prop="fileSize" label="大小" width="90">
+                <template #default="{ row }">
+                  {{ formatFileSize(row.fileSize) }}
+                </template>
+              </el-table-column>
+              <el-table-column prop="description" label="备注" min-width="150" show-overflow-tooltip />
+              <el-table-column prop="createdBy" label="创建人" width="90" />
+              <el-table-column prop="createdTime" label="创建时间" width="150" />
+              <el-table-column label="操作" width="160" fixed="right">
+                <template #default="{ row }">
+                  <el-button type="warning" link size="small" @click="handleRestore(row)" :loading="row.restoring">
+                    恢复
+                  </el-button>
+                  <el-button type="primary" link size="small" @click="handleDownload(row)">
+                    下载
+                  </el-button>
+                  <el-button type="danger" link size="small" @click="handleDelete(row)">
+                    删除
+                  </el-button>
+                </template>
+              </el-table-column>
+            </el-table>
           </div>
 
           <!-- 分页 -->
@@ -141,14 +146,14 @@
             v-model:page-size="pagination.pageSize"
             :page-sizes="[10, 20, 50, 100]"
             :total="pagination.total"
-            layout="total, sizes, prev, pager, next, jumper"
+            layout="total, sizes, prev, pager, next"
             @size-change="loadData"
             @current-change="loadData"
-            style="margin-top: 20px; justify-content: flex-end;"
+            class="pagination"
           />
         </el-card>
-      </el-col>
-    </el-row>
+      </div>
+    </div>
 
     <!-- 计划编辑对话框 -->
     <el-dialog v-model="scheduleDialogVisible" :title="editingSchedule ? '编辑计划' : '新增计划'" width="500px">
@@ -223,7 +228,6 @@ const scheduleTableHeight = ref(null)
 const backupTableWrapper = ref(null)
 const backupTableHeight = ref(null)
 
-const backupFormRef = ref()
 const loading = ref(false)
 const creating = ref(false)
 
@@ -261,22 +265,20 @@ const scheduleForm = reactive({
 
 // 更新表格高度
 const updateTableHeights = () => {
-  if (scheduleTableWrapper.value) {
-    scheduleTableHeight.value = scheduleTableWrapper.value.clientHeight
-  }
-  if (backupTableWrapper.value) {
-    backupTableHeight.value = backupTableWrapper.value.clientHeight
-  }
+  nextTick(() => {
+    if (scheduleTableWrapper.value) {
+      scheduleTableHeight.value = scheduleTableWrapper.value.clientHeight
+    }
+    if (backupTableWrapper.value) {
+      backupTableHeight.value = backupTableWrapper.value.clientHeight
+    }
+  })
 }
 
 onMounted(() => {
   loadData()
   loadSchedules()
-  // 初始化表格高度
-  nextTick(() => {
-    updateTableHeights()
-  })
-  // 监听窗口大小变化
+  nextTick(updateTableHeights)
   window.addEventListener('resize', updateTableHeights)
 })
 
@@ -323,27 +325,16 @@ const handleSearch = () => {
   loadData()
 }
 
-const handleReset = () => {
-  searchForm.backupName = ''
-  handleSearch()
-}
-
 const handleCreateBackup = async () => {
-  const valid = await backupFormRef.value.validate().catch(() => false)
-  if (!valid) return
-
   creating.value = true
   try {
-    // 生成默认备份名称
-    if (!backupForm.backupName) {
-      const now = new Date()
-      backupForm.backupName = `backup_${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`
-    }
-
-    const res = await systemApi.createBackup(backupForm)
+    const backupName = `backup_${new Date().toISOString().replace(/[-:T]/g, '').slice(0, 15)}`
+    const res = await systemApi.createBackup({
+      backupName,
+      description: backupForm.description
+    })
     if (res.success) {
       ElMessage.success('备份创建成功')
-      backupForm.backupName = ''
       backupForm.description = ''
       loadData()
     }
@@ -357,13 +348,12 @@ const handleCreateBackup = async () => {
 const handleRestore = async (row) => {
   try {
     await ElMessageBox.confirm(
-      `确定要恢复备份"${row.backupName}"吗？\n\n警告：此操作将覆盖当前数据库，请确保已做好数据备份！`,
+      `确定要恢复备份"${row.backupName}"吗？\n\n警告：此操作将覆盖当前数据库！`,
       '恢复备份',
       {
         confirmButtonText: '确定恢复',
         cancelButtonText: '取消',
-        type: 'warning',
-        dangerouslyUseHTMLString: true
+        type: 'warning'
       }
     )
 
@@ -385,12 +375,7 @@ const handleRestore = async (row) => {
 }
 
 const handleDownload = async (row) => {
-  try {
-    // TODO: 实现下载功能
-    ElMessage.info('下载功能待实现')
-  } catch (error) {
-    console.error('下载失败:', error)
-  }
+  ElMessage.info('下载功能待实现')
 }
 
 const handleDelete = async (row) => {
@@ -504,8 +489,8 @@ const handleDeleteSchedule = async (row) => {
 
 const formatRecurringDays = (days) => {
   if (!days || days.length === 0) return '-'
-  const dayNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
-  return days.map(d => dayNames[d]).join('、')
+  const dayNames = ['日', '一', '二', '三', '四', '五', '六']
+  return days.map(d => dayNames[d]).join('')
 }
 
 const formatOnceDate = (date) => {
@@ -524,43 +509,70 @@ const formatDateTime = (date) => {
   height: 100%;
   display: flex;
   flex-direction: column;
+  gap: 12px;
 }
 
-.flex-row {
+/* 顶部工具栏 */
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.toolbar-left {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.toolbar-right {
+  display: flex;
+  gap: 8px;
+}
+
+/* 主内容区：左右布局 */
+.main-content {
   flex: 1;
   display: flex;
-  flex-direction: column;
+  gap: 12px;
   min-height: 0;
+  overflow: hidden;
 }
 
-.flex-col {
+/* 左侧备份计划面板 */
+.schedule-panel {
+  width: 420px;
   flex-shrink: 0;
-}
-
-.flex-grow {
-  flex: 1;
-  min-height: 0;
   display: flex;
   flex-direction: column;
 }
 
-.flex-card {
+/* 右侧备份列表面板 */
+.backup-panel {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 卡片样式 */
+.panel-card {
   height: 100%;
   display: flex;
   flex-direction: column;
 }
 
-.flex-card :deep(.el-card__body) {
+.panel-card :deep(.el-card__body) {
   flex: 1;
   display: flex;
   flex-direction: column;
+  padding: 12px;
   min-height: 0;
-  padding-bottom: 10px;
-}
-
-.table-wrapper {
-  flex: 1;
-  min-height: 0;
+  overflow: hidden;
 }
 
 .card-header {
@@ -569,8 +581,61 @@ const formatDateTime = (date) => {
   align-items: center;
 }
 
-.search-form {
-  margin-bottom: 20px;
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* 表格容器 */
+.table-wrapper {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* 分页 */
+.pagination {
   flex-shrink: 0;
+  margin-top: 12px;
+  justify-content: flex-end;
+}
+
+/* 计划时间文字 */
+.schedule-time {
+  font-size: 12px;
+}
+
+/* 响应式：窄屏时改为上下布局 */
+@media (max-width: 1200px) {
+  .main-content {
+    flex-direction: column;
+  }
+
+  .schedule-panel {
+    width: 100%;
+    height: 280px;
+    flex-shrink: 0;
+  }
+
+  .backup-panel {
+    flex: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .toolbar {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .toolbar-left,
+  .toolbar-right {
+    justify-content: center;
+  }
+
+  .schedule-panel {
+    height: 250px;
+  }
 }
 </style>
