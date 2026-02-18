@@ -1,6 +1,6 @@
 <template>
   <div class="log-management">
-    <el-card>
+    <el-card class="flex-card">
       <template #header>
         <div class="card-header">
           <span>操作日志</span>
@@ -72,35 +72,38 @@
       </div>
 
       <!-- 日志表格 -->
-      <el-table
-        :data="tableData"
-        v-loading="loading"
-        border
-        stripe
-        @selection-change="handleSelectionChange"
-      >
-        <el-table-column type="selection" width="55" />
-        <el-table-column prop="username" label="操作人" width="120" />
-        <el-table-column prop="action" label="操作类型" width="100">
-          <template #default="{ row }">
-            <el-tag :type="getActionType(row.action)" size="small">
-              {{ getActionText(row.action) }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="module" label="模块" width="100" />
-        <el-table-column prop="description" label="操作描述" min-width="250" show-overflow-tooltip />
-        <el-table-column prop="ip" label="IP地址" width="140" />
-        <el-table-column prop="createdTime" label="操作时间" width="180" />
-        <el-table-column label="操作" width="100" fixed="right">
-          <template #default="{ row }">
-            <el-button type="primary" link size="small" @click="handleViewDetail(row)">
-              <el-icon><View /></el-icon>
-              详情
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+      <div class="table-wrapper" ref="tableWrapper">
+        <el-table
+          :data="tableData"
+          v-loading="loading"
+          border
+          stripe
+          :height="tableHeight"
+          @selection-change="handleSelectionChange"
+        >
+          <el-table-column type="selection" width="55" />
+          <el-table-column prop="username" label="操作人" width="120" />
+          <el-table-column prop="action" label="操作类型" width="100">
+            <template #default="{ row }">
+              <el-tag :type="getActionType(row.action)" size="small">
+                {{ getActionText(row.action) }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="module" label="模块" width="100" />
+          <el-table-column prop="description" label="操作描述" min-width="250" show-overflow-tooltip />
+          <el-table-column prop="ip" label="IP地址" width="140" />
+          <el-table-column prop="createdTime" label="操作时间" width="180" />
+          <el-table-column label="操作" width="100" fixed="right">
+            <template #default="{ row }">
+              <el-button type="primary" link size="small" @click="handleViewDetail(row)">
+                <el-icon><View /></el-icon>
+                详情
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
 
       <!-- 分页 -->
       <el-pagination
@@ -111,7 +114,6 @@
         layout="total, sizes, prev, pager, next, jumper"
         @size-change="loadData"
         @current-change="loadData"
-        style="margin-top: 20px; justify-content: flex-end;"
       />
     </el-card>
 
@@ -139,7 +141,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { systemApi } from '../../api/request'
 
@@ -149,6 +151,8 @@ const detailDialogVisible = ref(false)
 const currentLog = ref(null)
 const dateRange = ref([])
 const selectedRows = ref([])
+const tableWrapper = ref(null)
+const tableHeight = ref(null)
 
 const tableData = ref([])
 
@@ -169,7 +173,22 @@ const pagination = reactive({
 // 检查是否有查询条件
 onMounted(() => {
   loadData()
+  nextTick(() => {
+    updateTableHeight()
+  })
+  window.addEventListener('resize', updateTableHeight)
 })
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateTableHeight)
+})
+
+// 动态计算表格高度
+const updateTableHeight = () => {
+  if (tableWrapper.value) {
+    tableHeight.value = tableWrapper.value.clientHeight
+  }
+}
 
 const loadData = async () => {
   loading.value = true
@@ -345,6 +364,26 @@ const formatJson = (data) => {
 <style scoped>
 .log-management {
   height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.flex-card :deep(.el-card__header) {
+  flex-shrink: 0;
+}
+
+.flex-card :deep(.el-card__body) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .card-header {
@@ -354,6 +393,7 @@ const formatJson = (data) => {
 }
 
 .search-grid {
+  flex-shrink: 0;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 12px 16px;
@@ -391,6 +431,18 @@ const formatJson = (data) => {
   gap: 8px;
   align-items: flex-end;
   height: 32px;
+}
+
+.table-wrapper {
+  flex: 1;
+  overflow: hidden;
+  min-height: 100px;
+}
+
+.el-pagination {
+  flex-shrink: 0;
+  margin-top: 20px;
+  justify-content: flex-end;
 }
 
 pre {
