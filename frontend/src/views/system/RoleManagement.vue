@@ -1,6 +1,6 @@
 <template>
   <div class="role-management">
-    <el-card>
+    <el-card class="flex-card">
       <template #header>
         <div class="card-header">
           <span>权限组管理</span>
@@ -27,8 +27,9 @@
       </div>
 
       <!-- 角色表格 -->
-      <template v-if="tableData && tableData.length > 0">
-        <el-table :data="tableData" v-loading="loading" border stripe>
+      <div class="table-wrapper" ref="tableWrapper">
+        <template v-if="tableData && tableData.length > 0">
+          <el-table :data="tableData" v-loading="loading" border stripe :height="tableHeight">
           <el-table-column prop="roleName" label="角色名称" width="200" />
           <el-table-column prop="description" label="描述" min-width="300" />
           <el-table-column label="系统角色" width="100" align="center">
@@ -56,8 +57,9 @@
             </template>
           </el-table-column>
         </el-table>
-      </template>
-      <el-empty v-else-if="!loading" description="暂无角色数据" />
+        </template>
+        <el-empty v-else-if="!loading" description="暂无角色数据" />
+      </div>
 
       <!-- 分页 -->
       <el-pagination
@@ -116,12 +118,14 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onActivated, nextTick } from 'vue'
+import { ref, reactive, onMounted, onActivated, onUnmounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { roleApi } from '../../api/request'
 
 const formRef = ref()
 const permissionTreeRef = ref()
+const tableWrapper = ref(null)
+const tableHeight = ref(null)
 const loading = ref(false)
 const dialogVisible = ref(false)
 const permissionDialogVisible = ref(false)
@@ -238,8 +242,21 @@ const pagination = reactive({
   total: 0
 })
 
+// 动态计算表格高度
+const updateTableHeight = () => {
+  if (tableWrapper.value) {
+    tableHeight.value = tableWrapper.value.clientHeight
+  }
+}
+
 onMounted(() => {
   loadData()
+  nextTick(updateTableHeight)
+  window.addEventListener('resize', updateTableHeight)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateTableHeight)
 })
 
 // 当组件被激活时（从其他页面返回），重新加载数据以确保显示最新信息
@@ -397,6 +414,8 @@ const handleDelete = async (row) => {
 <style scoped>
 .role-management {
   height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .card-header {
@@ -435,5 +454,38 @@ const handleDelete = async (row) => {
   gap: 8px;
   align-items: flex-end;
   height: 32px;
+}
+
+/* Flex 布局样式 */
+.flex-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.flex-card :deep(.el-card__header) {
+  flex-shrink: 0;
+}
+
+.flex-card :deep(.el-card__body) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.search-grid {
+  flex-shrink: 0;
+}
+
+.table-wrapper {
+  flex: 1;
+  overflow: hidden;
+  min-height: 100px;
+}
+
+.el-pagination {
+  flex-shrink: 0;
 }
 </style>
