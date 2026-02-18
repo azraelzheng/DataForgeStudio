@@ -430,7 +430,6 @@ const formatJson = (data) => {
   display: flex;
   gap: 8px;
   align-items: flex-end;
-  height: 32px;
 }
 
 .table-wrapper {
