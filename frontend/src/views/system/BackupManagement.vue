@@ -1,6 +1,6 @@
 <template>
   <div class="backup-management">
-    <el-row :gutter="20">
+    <el-row :gutter="20" class="flex-row">
       <!-- 创建备份 -->
       <el-col :span="24">
         <el-card>
@@ -22,8 +22,8 @@
       </el-col>
 
       <!-- 备份计划 -->
-      <el-col :span="24" style="margin-top: 20px;">
-        <el-card>
+      <el-col :span="24" style="margin-top: 20px;" class="flex-col">
+        <el-card class="flex-card">
           <template #header>
             <div class="card-header">
               <span>备份计划</span>
@@ -34,7 +34,8 @@
             </div>
           </template>
 
-          <el-table :data="schedules" v-loading="schedulesLoading" border stripe>
+          <div class="table-wrapper" ref="scheduleTableWrapper">
+            <el-table :data="schedules" v-loading="schedulesLoading" border stripe :height="scheduleTableHeight">
             <el-table-column prop="scheduleName" label="计划名称" width="150" />
             <el-table-column prop="scheduleType" label="类型" width="100">
               <template #default="{ row }">
@@ -71,12 +72,13 @@
               </template>
             </el-table-column>
           </el-table>
+          </div>
         </el-card>
       </el-col>
 
       <!-- 备份列表 -->
-      <el-col :span="24" style="margin-top: 20px;">
-        <el-card>
+      <el-col :span="24" style="margin-top: 20px;" class="flex-col flex-grow">
+        <el-card class="flex-card">
           <template #header>
             <div class="card-header">
               <span>备份列表</span>
@@ -102,7 +104,8 @@
           </el-form>
 
           <!-- 备份表格 -->
-          <el-table :data="tableData" v-loading="loading" border stripe>
+          <div class="table-wrapper" ref="backupTableWrapper">
+            <el-table :data="tableData" v-loading="loading" border stripe :height="backupTableHeight">
             <el-table-column prop="backupName" label="备份名称" width="200" />
             <el-table-column prop="fileName" label="文件名" min-width="200" />
             <el-table-column prop="fileSize" label="文件大小" width="120">
@@ -130,6 +133,7 @@
               </template>
             </el-table-column>
           </el-table>
+          </div>
 
           <!-- 分页 -->
           <el-pagination
@@ -209,9 +213,15 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { systemApi } from '../../api/request'
+
+// 动态表格高度相关
+const scheduleTableWrapper = ref(null)
+const scheduleTableHeight = ref(null)
+const backupTableWrapper = ref(null)
+const backupTableHeight = ref(null)
 
 const backupFormRef = ref()
 const loading = ref(false)
@@ -249,9 +259,29 @@ const scheduleForm = reactive({
   retentionCount: 10
 })
 
+// 更新表格高度
+const updateTableHeights = () => {
+  if (scheduleTableWrapper.value) {
+    scheduleTableHeight.value = scheduleTableWrapper.value.clientHeight
+  }
+  if (backupTableWrapper.value) {
+    backupTableHeight.value = backupTableWrapper.value.clientHeight
+  }
+}
+
 onMounted(() => {
   loadData()
   loadSchedules()
+  // 初始化表格高度
+  nextTick(() => {
+    updateTableHeights()
+  })
+  // 监听窗口大小变化
+  window.addEventListener('resize', updateTableHeights)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateTableHeights)
 })
 
 const loadData = async () => {
@@ -492,6 +522,45 @@ const formatDateTime = (date) => {
 <style scoped>
 .backup-management {
   height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-row {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.flex-col {
+  flex-shrink: 0;
+}
+
+.flex-grow {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-card :deep(.el-card__body) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding-bottom: 10px;
+}
+
+.table-wrapper {
+  flex: 1;
+  min-height: 0;
 }
 
 .card-header {
@@ -502,5 +571,6 @@ const formatDateTime = (date) => {
 
 .search-form {
   margin-bottom: 20px;
+  flex-shrink: 0;
 }
 </style>
