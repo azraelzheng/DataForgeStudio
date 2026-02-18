@@ -1,6 +1,6 @@
 <template>
   <div class="report-design-list">
-    <el-card>
+    <el-card class="flex-card">
       <template #header>
         <div class="card-header">
           <span>报表设计管理</span>
@@ -51,59 +51,61 @@
       </div>
 
       <!-- 报表表格 -->
-      <template v-if="tableData && tableData.length > 0">
-        <el-table :data="tableData" v-loading="loading" border stripe>
-          <el-table-column prop="reportName" label="报表名称" width="200" />
-          <el-table-column prop="reportCategory" label="分类" width="100" />
-          <el-table-column prop="dataSourceName" label="数据源" width="150" />
-          <el-table-column label="状态" width="80" align="center">
-            <template #default="{ row }">
-              <el-tag :type="row.isEnabled ? 'success' : 'danger'" size="small">
-                {{ row.isEnabled ? '启用' : '停用' }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="viewCount" label="查看次数" width="100" align="center" />
-          <el-table-column prop="lastViewTime" label="最后查看" width="180">
-            <template #default="{ row }">
-              {{ row.lastViewTime ? formatDate(row.lastViewTime) : '-' }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="createdTime" label="创建时间" width="180" />
-          <el-table-column label="操作" width="320" fixed="right">
-            <template #default="{ row }">
-              <el-button type="primary" link size="small" @click="handleEdit(row)">
-                <el-icon><Edit /></el-icon>
-                编辑
-              </el-button>
-              <el-button type="info" link size="small" @click="handlePreview(row)">
-                <el-icon><View /></el-icon>
-                预览
-              </el-button>
-              <el-button type="success" link size="small" @click="handleCopy(row)">
-                <el-icon><DocumentCopy /></el-icon>
-                复制
-              </el-button>
-              <el-button
-                :type="row.isEnabled ? 'warning' : 'success'"
-                link
-                size="small"
-                @click="handleToggleStatus(row)"
-              >
-                <el-icon><Switch /></el-icon>
-                {{ row.isEnabled ? '停用' : '启用' }}
-              </el-button>
-              <el-button type="danger" link size="small" @click="handleDelete(row)">
-                <el-icon><Delete /></el-icon>
-                删除
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-      </template>
-      <el-empty v-else-if="!loading" description="暂无报表数据，点击右上角创建报表">
-        <el-button type="primary" @click="handleCreate">创建报表</el-button>
-      </el-empty>
+      <div class="table-wrapper" ref="tableWrapper">
+        <template v-if="tableData && tableData.length > 0">
+          <el-table :data="tableData" v-loading="loading" border stripe :height="tableHeight">
+            <el-table-column prop="reportName" label="报表名称" width="200" />
+            <el-table-column prop="reportCategory" label="分类" width="100" />
+            <el-table-column prop="dataSourceName" label="数据源" width="150" />
+            <el-table-column label="状态" width="80" align="center">
+              <template #default="{ row }">
+                <el-tag :type="row.isEnabled ? 'success' : 'danger'" size="small">
+                  {{ row.isEnabled ? '启用' : '停用' }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="viewCount" label="查看次数" width="100" align="center" />
+            <el-table-column prop="lastViewTime" label="最后查看" width="180">
+              <template #default="{ row }">
+                {{ row.lastViewTime ? formatDate(row.lastViewTime) : '-' }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="createdTime" label="创建时间" width="180" />
+            <el-table-column label="操作" width="320" fixed="right">
+              <template #default="{ row }">
+                <el-button type="primary" link size="small" @click="handleEdit(row)">
+                  <el-icon><Edit /></el-icon>
+                  编辑
+                </el-button>
+                <el-button type="info" link size="small" @click="handlePreview(row)">
+                  <el-icon><View /></el-icon>
+                  预览
+                </el-button>
+                <el-button type="success" link size="small" @click="handleCopy(row)">
+                  <el-icon><DocumentCopy /></el-icon>
+                  复制
+                </el-button>
+                <el-button
+                  :type="row.isEnabled ? 'warning' : 'success'"
+                  link
+                  size="small"
+                  @click="handleToggleStatus(row)"
+                >
+                  <el-icon><Switch /></el-icon>
+                  {{ row.isEnabled ? '停用' : '启用' }}
+                </el-button>
+                <el-button type="danger" link size="small" @click="handleDelete(row)">
+                  <el-icon><Delete /></el-icon>
+                  删除
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </template>
+        <el-empty v-else-if="!loading" description="暂无报表数据，点击右上角创建报表">
+          <el-button type="primary" @click="handleCreate">创建报表</el-button>
+        </el-empty>
+      </div>
 
       <!-- 分页 -->
       <el-pagination
@@ -114,7 +116,6 @@
         layout="total, sizes, prev, pager, next, jumper"
         @size-change="loadData"
         @current-change="loadData"
-        style="margin-top: 20px; justify-content: flex-end;"
       />
     </el-card>
 
@@ -142,7 +143,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onActivated } from 'vue'
+import { ref, reactive, onMounted, onActivated, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { reportApi } from '../../api/request'
@@ -152,6 +153,8 @@ const loading = ref(false)
 const tableData = ref([])
 const previewVisible = ref(false)
 const previewReport = ref(null)
+const tableWrapper = ref(null)
+const tableHeight = ref(null)
 
 const searchForm = reactive({
   reportName: '',
@@ -167,12 +170,35 @@ const pagination = reactive({
 
 onMounted(() => {
   loadData()
+  // 初始化表格高度
+  nextTick(() => {
+    updateTableHeight()
+  })
+  // 监听窗口大小变化
+  window.addEventListener('resize', updateTableHeight)
 })
 
 // 当从 keep-alive 缓存中重新激活时，刷新数据
 onActivated(() => {
   loadData()
+  // 重新激活时更新表格高度
+  nextTick(() => {
+    updateTableHeight()
+  })
 })
+
+onUnmounted(() => {
+  // 清理 resize 监听
+  window.removeEventListener('resize', updateTableHeight)
+})
+
+// 更新表格高度
+const updateTableHeight = () => {
+  if (tableWrapper.value) {
+    // 使用 wrapper 的实际高度作为表格高度
+    tableHeight.value = tableWrapper.value.clientHeight
+  }
+}
 
 const loadData = async () => {
   loading.value = true
@@ -308,6 +334,26 @@ const formatDate = (dateStr) => {
 <style scoped>
 .report-design-list {
   height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.flex-card :deep(.el-card__header) {
+  flex-shrink: 0;
+}
+
+.flex-card :deep(.el-card__body) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .card-header {
@@ -322,6 +368,7 @@ const formatDate = (dateStr) => {
   gap: 12px 16px;
   margin-bottom: 16px;
   align-items: end;
+  flex-shrink: 0;
 }
 
 .search-item {
@@ -346,6 +393,18 @@ const formatDate = (dateStr) => {
   gap: 8px;
   align-items: flex-end;
   height: 32px;
+}
+
+.table-wrapper {
+  flex: 1;
+  overflow: hidden;
+  min-height: 100px;
+}
+
+.el-pagination {
+  flex-shrink: 0;
+  margin-top: 16px;
+  justify-content: flex-end;
 }
 
 .report-info {
