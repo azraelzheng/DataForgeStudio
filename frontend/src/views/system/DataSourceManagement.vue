@@ -1,6 +1,6 @@
 <template>
   <div class="datasource-management">
-    <el-card>
+    <el-card class="flex-card">
       <template #header>
         <div class="card-header">
           <span>数据源管理</span>
@@ -37,8 +37,9 @@
       </div>
 
       <!-- 数据源表格 -->
-      <template v-if="tableData && tableData.length > 0">
-        <el-table :data="tableData" v-loading="loading" border stripe>
+      <div class="table-wrapper" ref="tableWrapper">
+        <template v-if="tableData && tableData.length > 0">
+          <el-table :data="tableData" v-loading="loading" border stripe :height="tableHeight">
           <el-table-column prop="dataSourceName" label="数据源名称" width="200" />
           <el-table-column prop="dbType" label="数据库类型" width="120">
             <template #default="{ row }">
@@ -76,8 +77,9 @@
             </template>
           </el-table-column>
         </el-table>
-      </template>
-      <el-empty v-else-if="!loading" description="暂无数据源，请添加数据源" />
+        </template>
+        <el-empty v-else-if="!loading" description="暂无数据源，请添加数据源" />
+      </div>
 
       <!-- 分页 -->
       <el-pagination
@@ -158,11 +160,13 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { dataSourceApi } from '../../api/request'
 
 const formRef = ref()
+const tableWrapper = ref(null)
+const tableHeight = ref(null)
 const loading = ref(false)
 const dialogVisible = ref(false)
 const isEdit = ref(false)
@@ -217,8 +221,21 @@ const defaultPorts = {
   PostgreSQL: 5432
 }
 
+// 更新表格高度
+const updateTableHeight = () => {
+  if (tableWrapper.value) {
+    tableHeight.value = tableWrapper.value.clientHeight
+  }
+}
+
 onMounted(() => {
   loadData()
+  nextTick(updateTableHeight)
+  window.addEventListener('resize', updateTableHeight)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateTableHeight)
 })
 
 const loadData = async () => {
@@ -415,6 +432,26 @@ const getDbTypeText = (type) => {
 <style scoped>
 .datasource-management {
   height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.flex-card :deep(.el-card__header) {
+  flex-shrink: 0;
+}
+
+.flex-card :deep(.el-card__body) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .card-header {
@@ -424,6 +461,7 @@ const getDbTypeText = (type) => {
 }
 
 .search-grid {
+  flex-shrink: 0;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 12px 16px;
@@ -453,5 +491,15 @@ const getDbTypeText = (type) => {
   gap: 8px;
   align-items: flex-end;
   height: 32px;
+}
+
+.table-wrapper {
+  flex: 1;
+  overflow: hidden;
+  min-height: 100px;
+}
+
+.el-pagination {
+  flex-shrink: 0;
 }
 </style>
