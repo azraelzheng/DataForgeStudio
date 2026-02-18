@@ -395,7 +395,7 @@ const formatJson = (data) => {
 .search-grid {
   flex-shrink: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 12px 16px;
   margin-bottom: 16px;
   align-items: end;
@@ -405,6 +405,7 @@ const formatJson = (data) => {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 200px;
 }
 
 .search-label {
@@ -419,7 +420,7 @@ const formatJson = (data) => {
 }
 
 .search-item-daterange {
-  min-width: 340px;
+  min-width: 320px;
 }
 
 .search-item-daterange :deep(.el-date-editor) {
@@ -430,6 +431,7 @@ const formatJson = (data) => {
   display: flex;
   gap: 8px;
   align-items: flex-end;
+  min-width: 320px;
 }
 
 .table-wrapper {
