@@ -356,6 +356,10 @@ public class UserDto
     public DateTime? LastLoginTime { get; set; }
     public DateTime CreatedTime { get; set; }
     public List<RoleDto> Roles { get; set; }
+    /// <summary>
+    /// 是否有操作日志记录（有记录的用户只能停用不能删除）
+    /// </summary>
+    public bool HasOperationLogs { get; set; }
 }
 
 /// <summary>

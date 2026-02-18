@@ -67,6 +67,19 @@ public class UserService : IUserService
             })
             .ToListAsync();
 
+        // 检查每个用户是否有操作日志记录
+        var userIds = users.Select(u => u.UserId).ToList();
+        var usersWithLogs = await _context.OperationLogs
+            .Where(log => log.UserId.HasValue && userIds.Contains(log.UserId.Value))
+            .Select(log => log.UserId.Value)
+            .Distinct()
+            .ToListAsync();
+
+        foreach (var user in users)
+        {
+            user.HasOperationLogs = usersWithLogs.Contains(user.UserId);
+        }
+
         var pagedResponse = new PagedResponse<UserDto>(users, totalCount, request.PageIndex, request.PageSize);
         return ApiResponse<PagedResponse<UserDto>>.Ok(pagedResponse);
     }

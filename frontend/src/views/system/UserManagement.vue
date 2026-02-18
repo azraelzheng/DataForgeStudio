@@ -45,7 +45,6 @@
             </template>
           </el-table-column>
           <el-table-column prop="realName" label="真实姓名" width="150" />
-          <el-table-column prop="email" label="邮箱" min-width="200" />
           <el-table-column prop="phone" label="手机号" width="150" />
           <el-table-column label="角色" width="200">
             <template #default="{ row }">
@@ -70,8 +69,11 @@
               />
             </template>
           </el-table-column>
-          <el-table-column prop="lastLoginTime" label="最后登录" width="180" />
-          <el-table-column prop="createdTime" label="创建时间" width="180" />
+          <el-table-column label="创建时间" width="180">
+            <template #default="{ row }">
+              {{ formatDateTime(row.createdTime) }}
+            </template>
+          </el-table-column>
           <el-table-column label="操作" width="280" fixed="right">
             <template #default="{ row }">
               <el-button
@@ -92,7 +94,7 @@
                 :disabled="row.username === 'root'"
               >
                 <el-icon><UserFilled /></el-icon>
-                分配角色
+                权限
               </el-button>
               <el-button
                 type="warning"
@@ -105,11 +107,11 @@
                 重置密码
               </el-button>
               <el-button
+                v-if="!row.hasOperationLogs"
                 type="danger"
                 link
                 size="small"
                 @click="handleDelete(row)"
-                :disabled="row.username === 'root'"
               >
                 <el-icon><Delete /></el-icon>
                 删除
@@ -187,8 +189,8 @@
       </template>
     </el-dialog>
 
-    <!-- 分配角色对话框 -->
-    <el-dialog v-model="roleDialogVisible" title="分配角色" width="500px">
+    <!-- 权限对话框 -->
+    <el-dialog v-model="roleDialogVisible" title="权限" width="500px">
       <el-checkbox-group v-model="selectedRoles">
         <el-checkbox
           v-for="role in allRoles"
@@ -478,6 +480,19 @@ const handleDelete = async (row) => {
       console.error('删除失败:', error)
     }
   }
+}
+
+// 格式化日期时间
+const formatDateTime = (date) => {
+  if (!date) return '-'
+  const d = new Date(date)
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  const hours = String(d.getHours()).padStart(2, '0')
+  const minutes = String(d.getMinutes()).padStart(2, '0')
+  const seconds = String(d.getSeconds()).padStart(2, '0')
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
 }
 </script>
 
