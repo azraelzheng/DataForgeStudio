@@ -14,12 +14,29 @@ namespace DataForgeStudio.Api.Controllers;
 public class ReportsController : ControllerBase
 {
     private readonly IReportService _reportService;
+    private readonly ILicenseService _licenseService;
     private readonly ILogger<ReportsController> _logger;
 
-    public ReportsController(IReportService reportService, ILogger<ReportsController> logger)
+    public ReportsController(IReportService reportService, ILicenseService licenseService, ILogger<ReportsController> logger)
     {
         _reportService = reportService;
+        _licenseService = licenseService;
         _logger = logger;
+    }
+
+    /// <summary>
+    /// 验证许可证是否有效
+    /// </summary>
+    private async Task<ApiResponse?> ValidateLicenseAsync()
+    {
+        var validation = await _licenseService.ValidateLicenseAsync();
+        if (!validation.Success || validation.Data == null || !validation.Data.Valid)
+        {
+            return ApiResponse.Fail(
+                validation.Data?.Message ?? "许可证无效或已过期，请续费后继续使用",
+                "LICENSE_INVALID");
+        }
+        return null;
     }
 
     /// <summary>
@@ -32,6 +49,13 @@ public class ReportsController : ControllerBase
         [FromQuery] string? reportName = null,
         [FromQuery] string? category = null)
     {
+        // 验证许可证
+        var licenseError = await ValidateLicenseAsync();
+        if (licenseError != null)
+        {
+            return ApiResponse<PagedResponse<ReportDto>>.Fail(licenseError.Message, licenseError.ErrorCode);
+        }
+
         var request = new PagedRequest { PageIndex = page, PageSize = pageSize };
         return await _reportService.GetReportsAsync(request, reportName, category);
     }
@@ -42,6 +66,13 @@ public class ReportsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ApiResponse<ReportDetailDto>> GetReport(int id)
     {
+        // 验证许可证
+        var licenseError = await ValidateLicenseAsync();
+        if (licenseError != null)
+        {
+            return ApiResponse<ReportDetailDto>.Fail(licenseError.Message, licenseError.ErrorCode);
+        }
+
         return await _reportService.GetReportByIdAsync(id);
     }
 
@@ -51,6 +82,13 @@ public class ReportsController : ControllerBase
     [HttpPost]
     public async Task<ApiResponse<ReportDto>> CreateReport([FromBody] CreateReportRequest request)
     {
+        // 验证许可证
+        var licenseError = await ValidateLicenseAsync();
+        if (licenseError != null)
+        {
+            return ApiResponse<ReportDto>.Fail(licenseError.Message, licenseError.ErrorCode);
+        }
+
         var userIdClaim = User.FindFirst("UserId")?.Value;
         if (!int.TryParse(userIdClaim, out var userId))
         {
@@ -66,6 +104,13 @@ public class ReportsController : ControllerBase
     [HttpPut("{id}")]
     public async Task<ApiResponse> UpdateReport(int id, [FromBody] CreateReportRequest request)
     {
+        // 验证许可证
+        var licenseError = await ValidateLicenseAsync();
+        if (licenseError != null)
+        {
+            return licenseError;
+        }
+
         return await _reportService.UpdateReportAsync(id, request);
     }
 
@@ -75,6 +120,13 @@ public class ReportsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<ApiResponse> DeleteReport(int id)
     {
+        // 验证许可证
+        var licenseError = await ValidateLicenseAsync();
+        if (licenseError != null)
+        {
+            return licenseError;
+        }
+
         return await _reportService.DeleteReportAsync(id);
     }
 
@@ -84,6 +136,13 @@ public class ReportsController : ControllerBase
     [HttpPost("{id}/execute")]
     public async Task<ApiResponse<List<Dictionary<string, object>>>> ExecuteReport(int id, [FromBody] ExecuteReportRequest request)
     {
+        // 验证许可证
+        var licenseError = await ValidateLicenseAsync();
+        if (licenseError != null)
+        {
+            return ApiResponse<List<Dictionary<string, object>>>.Fail(licenseError.Message, licenseError.ErrorCode);
+        }
+
         return await _reportService.ExecuteReportAsync(id, request);
     }
 
@@ -103,6 +162,13 @@ public class ReportsController : ControllerBase
     [HttpPost("test-query")]
     public async Task<ApiResponse<List<Dictionary<string, object>>>> TestQuery([FromBody] TestQueryRequest request)
     {
+        // 验证许可证
+        var licenseError = await ValidateLicenseAsync();
+        if (licenseError != null)
+        {
+            return ApiResponse<List<Dictionary<string, object>>>.Fail(licenseError.Message, licenseError.ErrorCode);
+        }
+
         return await _reportService.TestQueryAsync(request.DataSourceId, request.Sql, request.Parameters);
     }
 

@@ -22,6 +22,7 @@ public class ReportService : IReportService
     private readonly IDataSourceService _dataSourceService;
     private readonly IDatabaseService _databaseService;
     private readonly ISqlValidationService _sqlValidationService;
+    private readonly ILicenseService _licenseService;
     private readonly ILogger<ReportService> _logger;
 
     public ReportService(
@@ -29,12 +30,14 @@ public class ReportService : IReportService
         IDataSourceService dataSourceService,
         IDatabaseService databaseService,
         ISqlValidationService sqlValidationService,
+        ILicenseService licenseService,
         ILogger<ReportService> logger)
     {
         _context = context;
         _dataSourceService = dataSourceService;
         _databaseService = databaseService;
         _sqlValidationService = sqlValidationService;
+        _licenseService = licenseService;
         _logger = logger;
     }
 
@@ -157,6 +160,13 @@ public class ReportService : IReportService
 
     public async Task<ApiResponse<ReportDto>> CreateReportAsync(CreateReportRequest request, int createdBy)
     {
+        // 检查许可证报表数量限制
+        var limitCheck = await _licenseService.CheckReportLimitAsync();
+        if (!limitCheck.Success)
+        {
+            return ApiResponse<ReportDto>.Fail(limitCheck.Message, limitCheck.ErrorCode);
+        }
+
         // SQL 验证
         var validationResult = _sqlValidationService.ValidateQuery(request.SqlQuery);
         if (!validationResult.IsValid)

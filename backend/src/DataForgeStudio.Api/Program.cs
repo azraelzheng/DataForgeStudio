@@ -210,9 +210,9 @@ builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title = "DataForgeStudio V4 API",
+        Title = "DataForgeStudio API",
         Version = "v1",
-        Description = "DataForgeStudio V4 报表管理系统 API",
+        Description = "DataForgeStudio V1.0 报表管理系统 API",
         Contact = new OpenApiContact
         {
             Name = "DataForgeStudio"
@@ -283,7 +283,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI(options =>
     {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "DataForgeStudio V4 API v1");
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "DataForgeStudio API v1");
         options.RoutePrefix = "swagger";
     });
 }
@@ -328,7 +328,7 @@ app.MapGet("/health", () => new
 // API 信息端点 (允许匿名访问)
 app.MapGet("/api", () => new
 {
-    Name = "DataForgeStudio V4 API",
+    Name = "DataForgeStudio API",
     Version = "1.0.0",
     Description = "报表管理系统 API",
     Documentation = "/swagger"

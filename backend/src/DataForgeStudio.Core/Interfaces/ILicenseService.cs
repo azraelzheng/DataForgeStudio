@@ -27,4 +27,22 @@ public interface ILicenseService
     /// 获取许可证使用统计（用户数、报表数、数据源数）
     /// </summary>
     Task<ApiResponse<LicenseUsageStatsDto>> GetUsageStatsAsync();
+
+    /// <summary>
+    /// 检查是否可以创建新的用户
+    /// </summary>
+    /// <returns>如果可以创建返回成功响应，否则返回失败响应并包含限制信息</returns>
+    Task<ApiResponse> CheckUserLimitAsync();
+
+    /// <summary>
+    /// 检查是否可以创建新的报表
+    /// </summary>
+    /// <returns>如果可以创建返回成功响应，否则返回失败响应并包含限制信息</returns>
+    Task<ApiResponse> CheckReportLimitAsync();
+
+    /// <summary>
+    /// 检查是否可以创建新的数据源
+    /// </summary>
+    /// <returns>如果可以创建返回成功响应，否则返回失败响应并包含限制信息</returns>
+    Task<ApiResponse> CheckDataSourceLimitAsync();
 }

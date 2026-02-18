@@ -17,11 +17,13 @@ public class UserService : IUserService
 {
     private readonly DataForgeStudioDbContext _context;
     private readonly ILogger<UserService> _logger;
+    private readonly ILicenseService _licenseService;
 
-    public UserService(DataForgeStudioDbContext context, ILogger<UserService> logger)
+    public UserService(DataForgeStudioDbContext context, ILogger<UserService> logger, ILicenseService licenseService)
     {
         _context = context;
         _logger = logger;
+        _licenseService = licenseService;
     }
 
     public async Task<ApiResponse<PagedResponse<UserDto>>> GetUsersAsync(PagedRequest request, string? username = null, bool? isActive = null)
@@ -120,6 +122,13 @@ public class UserService : IUserService
 
     public async Task<ApiResponse<UserDto>> CreateUserAsync(CreateUserRequest request, int createdBy)
     {
+        // 检查许可证用户数量限制
+        var limitCheck = await _licenseService.CheckUserLimitAsync();
+        if (!limitCheck.Success)
+        {
+            return ApiResponse<UserDto>.Fail(limitCheck.Message, limitCheck.ErrorCode);
+        }
+
         // 验证密码强度
         var passwordValidation = PasswordValidator.ValidatePassword(request.Password);
         if (!passwordValidation.IsValid)

@@ -18,17 +18,20 @@ public class DataSourceService : IDataSourceService
     private readonly IDatabaseService _databaseService;
     private readonly ILogger<DataSourceService> _logger;
     private readonly IConfiguration _configuration;
+    private readonly ILicenseService _licenseService;
 
     public DataSourceService(
         DataForgeStudioDbContext context,
         IDatabaseService databaseService,
         ILogger<DataSourceService> logger,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        ILicenseService licenseService)
     {
         _context = context;
         _databaseService = databaseService;
         _logger = logger;
         _configuration = configuration;
+        _licenseService = licenseService;
     }
 
     /// <summary>
@@ -117,6 +120,13 @@ public class DataSourceService : IDataSourceService
 
     public async Task<ApiResponse<DataSourceDto>> CreateDataSourceAsync(CreateDataSourceRequest request, int createdBy)
     {
+        // 检查许可证数据源数量限制
+        var limitCheck = await _licenseService.CheckDataSourceLimitAsync();
+        if (!limitCheck.Success)
+        {
+            return ApiResponse<DataSourceDto>.Fail(limitCheck.Message, limitCheck.ErrorCode);
+        }
+
         // 生成数据源编码
         var code = $"DS_{DateTime.UtcNow:yyyyMMddHHmmss}";
 

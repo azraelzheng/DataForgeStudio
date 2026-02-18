@@ -2,8 +2,8 @@
   <div class="login-container">
     <div class="login-card">
       <div class="login-header">
-        <h1>DataForgeStudio V4</h1>
-        <p>报表管理系统</p>
+        <h1>DataForgeStudio</h1>
+        <p>报表管理系统 V1.0</p>
       </div>
 
       <el-form ref="formRef" :model="loginForm" :rules="rules" @submit.prevent="handleLogin" class="login-form">
@@ -46,7 +46,7 @@
       </el-form>
 
       <div class="login-footer">
-        <p>默认用户: root / admin123</p>
+        <p>DataForgeStudio V1.0</p>
       </div>
     </div>
   </div>

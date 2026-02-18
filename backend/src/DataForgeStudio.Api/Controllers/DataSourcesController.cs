@@ -14,12 +14,29 @@ namespace DataForgeStudio.Api.Controllers;
 public class DataSourcesController : ControllerBase
 {
     private readonly IDataSourceService _dataSourceService;
+    private readonly ILicenseService _licenseService;
     private readonly ILogger<DataSourcesController> _logger;
 
-    public DataSourcesController(IDataSourceService dataSourceService, ILogger<DataSourcesController> logger)
+    public DataSourcesController(IDataSourceService dataSourceService, ILicenseService licenseService, ILogger<DataSourcesController> logger)
     {
         _dataSourceService = dataSourceService;
+        _licenseService = licenseService;
         _logger = logger;
+    }
+
+    /// <summary>
+    /// 验证许可证是否有效
+    /// </summary>
+    private async Task<ApiResponse?> ValidateLicenseAsync()
+    {
+        var validation = await _licenseService.ValidateLicenseAsync();
+        if (!validation.Success || validation.Data == null || !validation.Data.Valid)
+        {
+            return ApiResponse.Fail(
+                validation.Data?.Message ?? "许可证无效或已过期，请续费后继续使用",
+                "LICENSE_INVALID");
+        }
+        return null;
     }
 
     /// <summary>
@@ -32,6 +49,13 @@ public class DataSourcesController : ControllerBase
         [FromQuery] string? dataSourceName = null,
         [FromQuery] string? dbType = null)
     {
+        // 验证许可证
+        var licenseError = await ValidateLicenseAsync();
+        if (licenseError != null)
+        {
+            return ApiResponse<PagedResponse<DataSourceDto>>.Fail(licenseError.Message, licenseError.ErrorCode);
+        }
+
         var request = new PagedRequest { PageIndex = page, PageSize = pageSize };
         return await _dataSourceService.GetDataSourcesAsync(request, dataSourceName, dbType, includeInactive: true);
     }
@@ -42,6 +66,13 @@ public class DataSourcesController : ControllerBase
     [HttpGet("active")]
     public async Task<ApiResponse<List<DataSourceDto>>> GetActiveDataSources()
     {
+        // 验证许可证
+        var licenseError = await ValidateLicenseAsync();
+        if (licenseError != null)
+        {
+            return ApiResponse<List<DataSourceDto>>.Fail(licenseError.Message, licenseError.ErrorCode);
+        }
+
         var result = await _dataSourceService.GetDataSourcesAsync(new PagedRequest { PageIndex = 1, PageSize = 1000 }, includeInactive: false);
         if (!result.Success)
         {
@@ -56,6 +87,13 @@ public class DataSourcesController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ApiResponse<DataSourceDto>> GetDataSource(int id)
     {
+        // 验证许可证
+        var licenseError = await ValidateLicenseAsync();
+        if (licenseError != null)
+        {
+            return ApiResponse<DataSourceDto>.Fail(licenseError.Message, licenseError.ErrorCode);
+        }
+
         return await _dataSourceService.GetDataSourceByIdAsync(id);
     }
 
@@ -65,6 +103,13 @@ public class DataSourcesController : ControllerBase
     [HttpPost]
     public async Task<ApiResponse<DataSourceDto>> CreateDataSource([FromBody] CreateDataSourceRequest request)
     {
+        // 验证许可证
+        var licenseError = await ValidateLicenseAsync();
+        if (licenseError != null)
+        {
+            return ApiResponse<DataSourceDto>.Fail(licenseError.Message, licenseError.ErrorCode);
+        }
+
         var userIdClaim = User.FindFirst("UserId")?.Value;
         if (!int.TryParse(userIdClaim, out var userId))
         {
@@ -80,6 +125,13 @@ public class DataSourcesController : ControllerBase
     [HttpPut("{id}")]
     public async Task<ApiResponse> UpdateDataSource(int id, [FromBody] CreateDataSourceRequest request)
     {
+        // 验证许可证
+        var licenseError = await ValidateLicenseAsync();
+        if (licenseError != null)
+        {
+            return licenseError;
+        }
+
         return await _dataSourceService.UpdateDataSourceAsync(id, request);
     }
 
@@ -89,6 +141,13 @@ public class DataSourcesController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<ApiResponse> DeleteDataSource(int id)
     {
+        // 验证许可证
+        var licenseError = await ValidateLicenseAsync();
+        if (licenseError != null)
+        {
+            return licenseError;
+        }
+
         return await _dataSourceService.DeleteDataSourceAsync(id);
     }
 

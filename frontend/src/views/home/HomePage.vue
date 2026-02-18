@@ -107,6 +107,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../../stores/user'
+import { licenseApi, reportApi } from '../../api/request'
+import { ElMessage } from 'element-plus'
 import {
   Document,
   User,
@@ -128,7 +130,7 @@ const stats = ref({
   reportCount: 0,
   userCount: 0,
   dataSourceCount: 0,
-  systemDays: 365
+  systemDays: 0
 })
 
 // 所有快捷操作
@@ -152,6 +154,18 @@ const quickActions = computed(() => {
 // 最近报表
 const recentReports = ref([])
 
+// 系统启动时间（从本地存储获取或使用当前时间）
+const getSystemStartDate = () => {
+  const stored = localStorage.getItem('systemStartDate')
+  if (stored) {
+    return new Date(stored)
+  }
+  // 首次访问，记录当前时间
+  const now = new Date()
+  localStorage.setItem('systemStartDate', now.toISOString())
+  return now
+}
+
 onMounted(async () => {
   // 加载统计数据
   await loadStats()
@@ -159,22 +173,43 @@ onMounted(async () => {
 })
 
 const loadStats = async () => {
-  // TODO: 调用 API 获取统计数据
-  stats.value = {
-    reportCount: 12,
-    userCount: 5,
-    dataSourceCount: 3,
-    systemDays: 365
+  try {
+    // 调用 API 获取许可证使用统计
+    const response = await licenseApi.getLicenseStats()
+    if (response.success && response.data) {
+      stats.value.reportCount = response.data.currentReports || 0
+      stats.value.userCount = response.data.currentUsers || 0
+      stats.value.dataSourceCount = response.data.currentDataSources || 0
+    }
+  } catch (error) {
+    console.error('加载统计数据失败:', error)
   }
+
+  // 计算系统运行天数
+  const startDate = getSystemStartDate()
+  const now = new Date()
+  const days = Math.floor((now - startDate) / (1000 * 60 * 60 * 24))
+  stats.value.systemDays = days
 }
 
 const loadRecentReports = async () => {
-  // TODO: 调用 API 获取最近报表
-  recentReports.value = [
-    { reportId: 1, reportName: '销售报表', reportCategory: '销售', viewCount: 128, lastViewTime: '2025-02-03 15:30' },
-    { reportId: 2, reportName: '库存报表', reportCategory: '库存', viewCount: 86, lastViewTime: '2025-02-03 14:20' },
-    { reportId: 3, reportName: '财务报表', reportCategory: '财务', viewCount: 64, lastViewTime: '2025-02-03 12:10' }
-  ]
+  try {
+    // 调用 API 获取最近报表（取前5条）
+    const response = await reportApi.getReports({ page: 1, pageSize: 5 })
+    if (response.success && response.data) {
+      recentReports.value = (response.data.items || []).map(report => ({
+        reportId: report.reportId,
+        reportName: report.reportName,
+        reportCategory: report.reportCategory || '未分类',
+        viewCount: report.viewCount || 0,
+        lastViewTime: report.updatedTime || report.createdTime
+      }))
+    }
+  } catch (error) {
+    console.error('加载最近报表失败:', error)
+    // 如果许可证过期，API 会返回错误，此时清空列表
+    recentReports.value = []
+  }
 }
 
 const viewReport = (row) => {

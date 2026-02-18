@@ -518,4 +518,141 @@ public class LicenseService : ILicenseService
             return ApiResponse<LicenseUsageStatsDto>.Fail($"获取统计数据失败: {ex.Message}", "GET_STATS_FAILED");
         }
     }
+
+    /// <summary>
+    /// 检查是否可以创建新的用户
+    /// </summary>
+    public async Task<ApiResponse> CheckUserLimitAsync()
+    {
+        try
+        {
+            // 验证许可证是否有效
+            var validationResult = await ValidateLicenseAsync();
+            if (!validationResult.Success || validationResult.Data == null || !validationResult.Data.Valid)
+            {
+                return ApiResponse.Fail(validationResult.Data?.Message ?? "许可证无效", "LICENSE_INVALID");
+            }
+
+            var licenseInfo = validationResult.Data.LicenseInfo;
+            if (licenseInfo == null)
+            {
+                return ApiResponse.Fail("无法获取许可证信息", "LICENSE_INFO_MISSING");
+            }
+
+            // 如果 MaxUsers 为 0，表示无限制
+            if (licenseInfo.MaxUsers == 0)
+            {
+                return ApiResponse.Ok();
+            }
+
+            // 统计当前用户数量
+            var currentUsers = await _context.Users
+                .Where(u => !u.IsSystem)
+                .CountAsync();
+
+            if (currentUsers >= licenseInfo.MaxUsers)
+            {
+                return ApiResponse.Fail(
+                    $"已达到许可证用户数量限制（当前: {currentUsers}，最大: {licenseInfo.MaxUsers}），无法创建新用户",
+                    "USER_LIMIT_EXCEEDED");
+            }
+
+            return ApiResponse.Ok();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "检查用户数量限制失败");
+            return ApiResponse.Fail($"检查用户限制失败: {ex.Message}", "CHECK_LIMIT_FAILED");
+        }
+    }
+
+    /// <summary>
+    /// 检查是否可以创建新的报表
+    /// </summary>
+    public async Task<ApiResponse> CheckReportLimitAsync()
+    {
+        try
+        {
+            // 验证许可证是否有效
+            var validationResult = await ValidateLicenseAsync();
+            if (!validationResult.Success || validationResult.Data == null || !validationResult.Data.Valid)
+            {
+                return ApiResponse.Fail(validationResult.Data?.Message ?? "许可证无效", "LICENSE_INVALID");
+            }
+
+            var licenseInfo = validationResult.Data.LicenseInfo;
+            if (licenseInfo == null)
+            {
+                return ApiResponse.Fail("无法获取许可证信息", "LICENSE_INFO_MISSING");
+            }
+
+            // 如果 MaxReports 为 0，表示无限制
+            if (licenseInfo.MaxReports == 0)
+            {
+                return ApiResponse.Ok();
+            }
+
+            // 统计当前报表数量
+            var currentReports = await _context.Reports.CountAsync();
+
+            if (currentReports >= licenseInfo.MaxReports)
+            {
+                return ApiResponse.Fail(
+                    $"已达到许可证报表数量限制（当前: {currentReports}，最大: {licenseInfo.MaxReports}），无法创建新报表",
+                    "REPORT_LIMIT_EXCEEDED");
+            }
+
+            return ApiResponse.Ok();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "检查报表数量限制失败");
+            return ApiResponse.Fail($"检查报表限制失败: {ex.Message}", "CHECK_LIMIT_FAILED");
+        }
+    }
+
+    /// <summary>
+    /// 检查是否可以创建新的数据源
+    /// </summary>
+    public async Task<ApiResponse> CheckDataSourceLimitAsync()
+    {
+        try
+        {
+            // 验证许可证是否有效
+            var validationResult = await ValidateLicenseAsync();
+            if (!validationResult.Success || validationResult.Data == null || !validationResult.Data.Valid)
+            {
+                return ApiResponse.Fail(validationResult.Data?.Message ?? "许可证无效", "LICENSE_INVALID");
+            }
+
+            var licenseInfo = validationResult.Data.LicenseInfo;
+            if (licenseInfo == null)
+            {
+                return ApiResponse.Fail("无法获取许可证信息", "LICENSE_INFO_MISSING");
+            }
+
+            // 如果 MaxDataSources 为 0，表示无限制
+            if (licenseInfo.MaxDataSources == 0)
+            {
+                return ApiResponse.Ok();
+            }
+
+            // 统计当前数据源数量
+            var currentDataSources = await _context.DataSources.CountAsync();
+
+            if (currentDataSources >= licenseInfo.MaxDataSources)
+            {
+                return ApiResponse.Fail(
+                    $"已达到许可证数据源数量限制（当前: {currentDataSources}，最大: {licenseInfo.MaxDataSources}），无法创建新数据源",
+                    "DATASOURCE_LIMIT_EXCEEDED");
+            }
+
+            return ApiResponse.Ok();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "检查数据源数量限制失败");
+            return ApiResponse.Fail($"检查数据源限制失败: {ex.Message}", "CHECK_LIMIT_FAILED");
+        }
+    }
 }
