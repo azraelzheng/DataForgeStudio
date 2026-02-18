@@ -390,7 +390,7 @@ const formatJson = (data) => {
   display: flex;
   gap: 8px;
   align-items: flex-end;
-  flex-wrap: wrap;
+  height: 32px;
 }
 
 pre {
