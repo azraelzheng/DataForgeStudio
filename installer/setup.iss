@@ -34,14 +34,13 @@ UninstallDisplayIcon={app}\DeployManager.exe
 UninstallDisplayName={#AppName}
 
 [Languages]
-Name: "chinesesimplified"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
+Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Files]
 Source: "{#BuildDir}\installer\DataForgeStudioInstaller.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall nocompression
 Source: "{#BuildDir}\api\*"; DestDir: "{app}\api"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#BuildDir}\frontend\*"; DestDir: "{app}\WebSite"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#BuildDir}\nginx\*"; DestDir: "{app}\nginx"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "{#BuildDir}\manager\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Dirs]
 Name: "{app}\config"; Permissions: users-modify
