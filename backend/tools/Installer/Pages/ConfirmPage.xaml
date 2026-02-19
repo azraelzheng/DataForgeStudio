@@ -1,0 +1,78 @@
+<UserControl x:Class="Installer.Pages.ConfirmPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="40">
+        <StackPanel>
+            <TextBlock Text="确认安装" Style="{StaticResource PageTitle}"/>
+            <TextBlock Style="{StaticResource PageSubtitle}">
+                请确认以下安装配置，点击「安装」开始安装。
+            </TextBlock>
+
+            <Border Background="#F8F8F8" Padding="20" CornerRadius="8" Margin="0,10,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="140"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="安装路径:" Foreground="#666" Margin="0,8"/>
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Config.InstallPath}" FontWeight="Medium" Margin="0,8"/>
+
+                    <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Margin="0,5"/>
+
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="数据库服务器:" Foreground="#666" Margin="0,8"/>
+                    <TextBlock Grid.Row="2" Grid.Column="1" FontWeight="Medium" Margin="0,8">
+                        <Run Text="{Binding Config.Database.Server}"/>
+                        <Run Text=":"/>
+                        <Run Text="{Binding Config.Database.Port}"/>
+                    </TextBlock>
+
+                    <TextBlock Grid.Row="3" Grid.Column="0" Text="数据库名:" Foreground="#666" Margin="0,8"/>
+                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Config.Database.Database}" FontWeight="Medium" Margin="0,8"/>
+
+                    <TextBlock Grid.Row="4" Grid.Column="0" Text="认证方式:" Foreground="#666" Margin="0,8"/>
+                    <TextBlock Grid.Row="4" Grid.Column="1" FontWeight="Medium" Margin="0,8">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Config.Database.UseWindowsAuth}" Value="True">
+                                        <Setter Property="Text" Value="Windows 身份验证"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Config.Database.UseWindowsAuth}" Value="False">
+                                        <Setter Property="Text" Value="SQL Server 身份验证"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <Border Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Margin="0,5"/>
+
+                    <TextBlock Grid.Row="6" Grid.Column="0" Text="端口配置:" Foreground="#666" Margin="0,8"/>
+                    <TextBlock Grid.Row="6" Grid.Column="1" FontWeight="Medium" Margin="0,8">
+                        <Run Text="前端 "/>
+                        <Run Text="{Binding Config.Frontend.Port}"/>
+                        <Run Text=" | 后端 "/>
+                        <Run Text="{Binding Config.Backend.Port}"/>
+                    </TextBlock>
+                </Grid>
+            </Border>
+
+            <Border Background="#E8F5E9" Padding="15" CornerRadius="4" Margin="0,20,0,0">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="[OK]" FontWeight="Bold" Foreground="#2E7D32" FontSize="16" Margin="0,0,10,0"/>
+                    <TextBlock Text="安装程序不会修改或删除数据库中的任何数据" Foreground="#2E7D32"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </Grid>
+</UserControl>

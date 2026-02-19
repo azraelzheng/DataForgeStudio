@@ -1,0 +1,33 @@
+<UserControl x:Class="Installer.Pages.CompletePage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid VerticalAlignment="Center" HorizontalAlignment="Center">
+        <StackPanel Width="500">
+            <Border Width="80" Height="80" Background="#4CAF50" CornerRadius="40" HorizontalAlignment="Center" Margin="0,0,0,20">
+                <TextBlock Text="[OK]" FontSize="24" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+
+            <TextBlock Text="安装完成！" Style="{StaticResource PageTitle}" TextAlignment="Center"/>
+            <TextBlock Style="{StaticResource PageSubtitle}" TextAlignment="Center">
+                DataForgeStudio 已成功安装到您的计算机。
+            </TextBlock>
+
+            <Border Background="#E3F2FD" Padding="20" CornerRadius="8" Margin="0,10,0,0">
+                <StackPanel>
+                    <TextBlock Text="后续步骤：" FontWeight="Medium" Foreground="#1976D2" Margin="0,0,0,10"/>
+                    <TextBlock TextWrapping="Wrap" Foreground="#666">
+                        <Run Text="1. 使用管理工具启动 API 服务和 Nginx"/>
+                        <LineBreak/>
+                        <Run Text="2. 首次启动时，系统将自动创建数据库"/>
+                        <LineBreak/>
+                        <Run Text="3. 通过浏览器访问 http://localhost"/>
+                        <LineBreak/>
+                        <Run Text="4. 使用 root 账户登录（临时密码见控制台输出）"/>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
+            <CheckBox Content="启动管理工具" IsChecked="{Binding LaunchManager}" Margin="0,20,0,0" HorizontalAlignment="Center" FontSize="14"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

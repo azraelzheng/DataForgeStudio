@@ -1,0 +1,27 @@
+<UserControl x:Class="Installer.Pages.WelcomePage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid VerticalAlignment="Center" HorizontalAlignment="Center">
+        <StackPanel Width="500">
+            <TextBlock Text="欢迎使用 DataForgeStudio" Style="{StaticResource PageTitle}" TextAlignment="Center"/>
+            <TextBlock Style="{StaticResource PageSubtitle}" TextAlignment="Center">
+                本程序将引导您完成 DataForgeStudio 的安装。
+            </TextBlock>
+
+            <Border Background="#F8F8F8" Padding="20" CornerRadius="8" Margin="0,20,0,0">
+                <StackPanel>
+                    <TextBlock Text="安装程序将执行以下操作：" FontWeight="Medium" Margin="0,0,0,10"/>
+                    <StackPanel Margin="10,0,0,0">
+                        <TextBlock Text="* 复制应用程序文件到指定目录" Margin="0,5"/>
+                        <TextBlock Text="* 配置数据库连接" Margin="0,5"/>
+                        <TextBlock Text="* 配置 Nginx 反向代理" Margin="0,5"/>
+                        <TextBlock Text="* 注册 Windows 服务" Margin="0,5"/>
+                        <TextBlock Text="* 创建桌面快捷方式" Margin="0,5"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <TextBlock Text="点击「下一步」继续安装。" Foreground="#666" TextAlignment="Center" Margin="0,20,0,0"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

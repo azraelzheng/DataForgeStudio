@@ -1,0 +1,33 @@
+<UserControl x:Class="Installer.Pages.InstallPathPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="40">
+        <StackPanel>
+            <TextBlock Text="选择安装路径" Style="{StaticResource PageTitle}"/>
+            <TextBlock Style="{StaticResource PageSubtitle}">
+                选择 DataForgeStudio 的安装位置。建议使用默认路径。
+            </TextBlock>
+
+            <Grid Margin="0,20,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBox Grid.Column="0" Text="{Binding Config.InstallPath, UpdateSourceTrigger=PropertyChanged}" Padding="10" FontSize="14" VerticalContentAlignment="Center"/>
+                <Button Grid.Column="1" Content="浏览..." Style="{StaticResource SecondaryButton}" Margin="10,0,0,0" Click="Browse_Click"/>
+            </Grid>
+
+            <Border Background="#FFF8E1" Padding="15" CornerRadius="4" Margin="0,20,0,0">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="!" FontWeight="Bold" Foreground="#F57C00" Margin="0,0,10,0"/>
+                    <TextBlock TextWrapping="Wrap" Foreground="#666">
+                        <Run Text="所需磁盘空间: 约 200 MB"/>
+                        <LineBreak/>
+                        <Run Text="安装程序不会修改或删除数据库中的任何现有数据。"/>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </Grid>
+</UserControl>
