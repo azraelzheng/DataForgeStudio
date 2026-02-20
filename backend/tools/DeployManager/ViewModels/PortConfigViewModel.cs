@@ -56,6 +56,12 @@ public partial class PortConfigViewModel : ObservableObject
     private bool _saveSuccess;
 
     /// <summary>
+    /// 是否显示保存结果
+    /// </summary>
+    [ObservableProperty]
+    private bool _showSaveResult;
+
+    /// <summary>
     /// 是否正在保存
     /// </summary>
     [ObservableProperty]
@@ -100,6 +106,7 @@ public partial class PortConfigViewModel : ObservableObject
 
             SaveResult = "";
             SaveSuccess = false;
+            ShowSaveResult = false;
         }
         catch (Exception ex)
         {
@@ -186,11 +193,13 @@ public partial class PortConfigViewModel : ObservableObject
             // 设置结果
             SaveResult = string.Join("\n", messages);
             SaveSuccess = messages.All(m => !m.Contains("失败"));
+            ShowSaveResult = true;
         }
         catch (Exception ex)
         {
             SaveResult = $"保存失败: {ex.Message}";
             SaveSuccess = false;
+            ShowSaveResult = true;
         }
         finally
         {

@@ -63,14 +63,17 @@
         </Border>
 
         <!-- 保存结果 -->
-        <Border Grid.Row="2" Margin="0,0,0,15" CornerRadius="8" Padding="15"
-               Visibility="{Binding SaveResult, Converter={StaticResource BoolToVisibility}}">
+        <Border Grid.Row="2" Margin="0,0,0,15" CornerRadius="8" Padding="15">
             <Border.Style>
                 <Style TargetType="Border">
+                    <Setter Property="Visibility" Value="Collapsed"/>
                     <Setter Property="Background" Value="White"/>
                     <Setter Property="BorderBrush" Value="#FFE0E0E0"/>
                     <Setter Property="BorderThickness" Value="1"/>
                     <Style.Triggers>
+                        <DataTrigger Binding="{Binding ShowSaveResult}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
                         <DataTrigger Binding="{Binding SaveSuccess}" Value="True">
                             <Setter Property="Background" Value="#FFE8F5E9"/>
                             <Setter Property="BorderBrush" Value="#FF4CAF50"/>

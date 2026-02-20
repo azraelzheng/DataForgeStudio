@@ -6,7 +6,7 @@
         xmlns:vm="clr-namespace:DeployManager.ViewModels"
         xmlns:views="clr-namespace:DeployManager.Views"
         mc:Ignorable="d"
-        Title="DataForgeStudio 部署管理器" Height="650" Width="950"
+        Title="DataForgeStudio 系统管理" Height="580" Width="900"
         WindowStartupLocation="CenterScreen"
         Background="#FFF5F5F5"
         ResizeMode="CanMinimize">
@@ -16,36 +16,13 @@
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- 标题栏 -->
-        <Border Grid.Row="0" Background="#FF1976D2" Padding="20,15">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <!-- Logo 和标题 -->
-                <StackPanel Grid.Column="0" Orientation="Horizontal">
-                    <TextBlock Text="&#xE13E;" FontFamily="Segoe MDL2 Assets" FontSize="24"
-                              Foreground="White" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                    <TextBlock Text="DataForgeStudio 部署管理器" FontSize="20"
-                              Foreground="White" VerticalAlignment="Center" FontWeight="Medium"/>
-                </StackPanel>
-
-                <!-- 版本信息 -->
-                <TextBlock Grid.Column="1" Text="V4.0" FontSize="12"
-                          Foreground="#CCFFFFFF" VerticalAlignment="Center"
-                          HorizontalAlignment="Right"/>
-            </Grid>
-        </Border>
 
         <!-- 主内容区域 -->
-        <Grid Grid.Row="1" Margin="20">
+        <Grid Grid.Row="0" Margin="15">
             <!-- 选项卡导航 -->
             <Border Style="{StaticResource CardBorderStyle}" Padding="0">
                 <Grid>
@@ -162,7 +139,7 @@
         </Grid>
 
         <!-- 底部状态栏 -->
-        <Border Grid.Row="2" Background="#FF37474F" Padding="20,10">
+        <Border Grid.Row="1" Background="#FF37474F" Padding="15,8">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
