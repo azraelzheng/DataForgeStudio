@@ -14,12 +14,16 @@ public class WindowsServiceManager : IWindowsServiceManager
     private ServiceController? _controller;
 
     /// <summary>
-    /// 初始化 Windows 服务管理器
+    /// 初始化 Windows 服务管理器（从配置服务读取服务名）
     /// </summary>
-    /// <param name="serviceName">服务名称</param>
-    public WindowsServiceManager(string serviceName)
+    /// <param name="configService">配置服务</param>
+    public WindowsServiceManager(IConfigService configService)
     {
-        _serviceName = serviceName ?? throw new ArgumentNullException(nameof(serviceName));
+        if (configService == null)
+            throw new ArgumentNullException(nameof(configService));
+
+        var config = configService.Load();
+        _serviceName = config.Backend.ServiceName ?? "DataForgeStudio API";
     }
 
     /// <summary>

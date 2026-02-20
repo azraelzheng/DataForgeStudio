@@ -109,6 +109,9 @@ public partial class MainViewModel : ObservableObject
         // 默认显示服务控制视图
         _currentView = _serviceControlViewModel;
 
+        // 启动服务状态刷新定时器
+        _serviceControlViewModel.StartRefresh();
+
         // 订阅服务状态变更
         _serviceControlViewModel.PropertyChanged += (s, e) =>
         {
