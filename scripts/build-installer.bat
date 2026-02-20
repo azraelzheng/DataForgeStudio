@@ -48,9 +48,13 @@ cd /d "%PROJECT_ROOT%"
 echo 前端构建完成
 echo.
 
-echo [3/6] 跳过管理工具构建（待实现）...
-REM TODO: 构建 DeployManager 项目
-echo 跳过管理工具构建
+echo [3/6] 构建系统管理工具...
+dotnet publish "%PROJECT_ROOT%\backend\tools\DeployManager\DeployManager.csproj" -c Release -o "%BUILD_DIR%\manager" --self-contained true -r win-x64 /p:WarningLevel=0 /p:TreatWarningsAsErrors=false
+if errorlevel 1 (
+    echo 系统管理工具构建失败!
+    exit /b 1
+)
+echo 系统管理工具构建完成
 echo.
 
 echo [4/6] 复制 Nginx...
