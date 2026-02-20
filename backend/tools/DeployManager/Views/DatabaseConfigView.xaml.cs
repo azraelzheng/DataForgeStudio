@@ -1,3 +1,4 @@
+using System.Windows;
 using System.Windows.Controls;
 
 namespace DeployManager.Views
@@ -28,6 +29,17 @@ namespace DeployManager.Views
                     PasswordBox.Password = vm.Password;
                 }
             };
+        }
+
+        /// <summary>
+        /// SQL 认证单选按钮点击事件
+        /// </summary>
+        private void OnSqlAuthRadioClick(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is ViewModels.DatabaseConfigViewModel vm)
+            {
+                vm.UseWindowsAuth = false;
+            }
         }
     }
 }

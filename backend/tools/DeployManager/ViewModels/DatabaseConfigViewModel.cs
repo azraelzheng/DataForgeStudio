@@ -7,6 +7,10 @@ namespace DeployManager.ViewModels;
 
 /// <summary>
 /// 数据库配置视图模型
+///
+/// 保存数据库配置时会：
+/// 1. 保存数据库连接字符串到 appsettings.json
+/// 2. 保存元信息到 config.json
 /// </summary>
 public partial class DatabaseConfigViewModel : ObservableObject
 {
@@ -29,7 +33,7 @@ public partial class DatabaseConfigViewModel : ObservableObject
     /// 数据库名称
     /// </summary>
     [ObservableProperty]
-    private string _database = "DataForgeStudio_V4";
+    private string _database = "DataForgeStudio";
 
     /// <summary>
     /// 用户名
@@ -59,7 +63,13 @@ public partial class DatabaseConfigViewModel : ObservableObject
     /// 测试连接结果消息
     /// </summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasTestResult))]
     private string _testResult = "";
+
+    /// <summary>
+    /// 是否有测试结果
+    /// </summary>
+    public bool HasTestResult => !string.IsNullOrEmpty(TestResult);
 
     /// <summary>
     /// 测试连接是否成功
@@ -97,13 +107,14 @@ public partial class DatabaseConfigViewModel : ObservableObject
 
     /// <summary>
     /// 加载配置
+    /// 从 appsettings.json 读取实际数据库配置
     /// </summary>
     public void LoadConfig()
     {
         try
         {
-            var config = _configService.Load();
-            var dbConfig = config.Database;
+            // 从 appsettings.json 读取数据库配置
+            var dbConfig = _configService.GetDatabaseConfig();
 
             Server = dbConfig.Server;
             Port = dbConfig.Port.ToString();
@@ -141,7 +152,7 @@ public partial class DatabaseConfigViewModel : ObservableObject
     /// <summary>
     /// 测试连接命令
     /// </summary>
-    [RelayCommand(CanExecute = nameof(CanTest))]
+    [RelayCommand]
     private async Task TestConnectionAsync()
     {
         if (IsTesting) return;
@@ -170,8 +181,9 @@ public partial class DatabaseConfigViewModel : ObservableObject
 
     /// <summary>
     /// 保存配置命令
+    /// 同时更新 appsettings.json 和 config.json
     /// </summary>
-    [RelayCommand(CanExecute = nameof(CanSave))]
+    [RelayCommand]
     private void Save()
     {
         if (IsSaving) return;
@@ -180,11 +192,17 @@ public partial class DatabaseConfigViewModel : ObservableObject
 
         try
         {
+            var dbConfig = GetCurrentConfig();
+
+            // 1. 更新数据库配置到 appsettings.json
+            _configService.UpdateDatabaseConfig(dbConfig);
+
+            // 2. 保存元信息到 config.json
             var config = _configService.Load();
-            config.Database = GetCurrentConfig();
+            config.Database = dbConfig;
             _configService.Save(config);
 
-            TestResult = "配置已保存";
+            TestResult = "数据库配置已保存到 appsettings.json，重启服务后生效";
             TestSuccess = true;
         }
         catch (Exception ex)
