@@ -205,15 +205,60 @@ public class ConfigService : IConfigService
     /// </summary>
     public string GetAppSettingsPath()
     {
+        Debug.WriteLine($"[ConfigService] === GetAppSettingsPath 开始 ===");
+        Debug.WriteLine($"[ConfigService] 安装路径: {_installPath}");
+
         // 检查安装路径是否已经包含 appsettings.json（开发环境）
         var directPath = Path.Combine(_installPath, "appsettings.json");
+        Debug.WriteLine($"[ConfigService] 检查直接路径: {directPath}, 存在: {File.Exists(directPath)}");
         if (File.Exists(directPath))
         {
+            Debug.WriteLine($"[ConfigService] 使用开发环境路径: {directPath}");
             return directPath;
         }
 
-        // 否则查找 api 子目录（生产环境）
-        return Path.Combine(_installPath, "api", "appsettings.json");
+        // 检查 api 子目录（生产环境）
+        var apiPath = Path.Combine(_installPath, "api", "appsettings.json");
+        Debug.WriteLine($"[ConfigService] 检查生产环境路径: {apiPath}, 存在: {File.Exists(apiPath)}");
+        if (File.Exists(apiPath))
+        {
+            Debug.WriteLine($"[ConfigService] 使用生产环境路径: {apiPath}");
+            return apiPath;
+        }
+
+        // 额外检查：当前工作目录
+        var cwd = Directory.GetCurrentDirectory();
+        var cwdPath = Path.Combine(cwd, "appsettings.json");
+        Debug.WriteLine($"[ConfigService] 检查当前工作目录: {cwdPath}, 存在: {File.Exists(cwdPath)}");
+        if (File.Exists(cwdPath))
+        {
+            Debug.WriteLine($"[ConfigService] 使用当前工作目录路径: {cwdPath}");
+            return cwdPath;
+        }
+
+        // 额外检查：程序目录
+        var appDir = AppDomain.CurrentDomain.BaseDirectory;
+        var appDirPath = Path.Combine(appDir, "appsettings.json");
+        Debug.WriteLine($"[ConfigService] 检查程序目录: {appDirPath}, 存在: {File.Exists(appDirPath)}");
+        if (File.Exists(appDirPath))
+        {
+            Debug.WriteLine($"[ConfigService] 使用程序目录路径: {appDirPath}");
+            return appDirPath;
+        }
+
+        // 额外检查：程序目录的 api 子目录
+        var appDirApiPath = Path.Combine(appDir, "api", "appsettings.json");
+        Debug.WriteLine($"[ConfigService] 检查程序目录 api 子目录: {appDirApiPath}, 存在: {File.Exists(appDirApiPath)}");
+        if (File.Exists(appDirApiPath))
+        {
+            Debug.WriteLine($"[ConfigService] 使用程序目录 api 子目录路径: {appDirApiPath}");
+            return appDirApiPath;
+        }
+
+        // 默认返回生产环境路径（即使文件不存在，用于后续创建或错误提示）
+        Debug.WriteLine($"[ConfigService] 未找到 appsettings.json，返回默认路径: {apiPath}");
+        Debug.WriteLine($"[ConfigService] === GetAppSettingsPath 结束 ===");
+        return apiPath;
     }
 
     /// <summary>
@@ -427,19 +472,34 @@ public class ConfigService : IConfigService
             throw new ArgumentNullException(nameof(config));
         }
 
+        Debug.WriteLine($"[ConfigService] === 开始保存配置 ===");
+
         try
         {
             // 保存到 appsettings.json
-            UpdateAppSettings(config);
+            var appSettingsPath = GetAppSettingsPath();
+            Debug.WriteLine($"[ConfigService] appsettings.json 路径: {appSettingsPath}");
+
+            if (!File.Exists(appSettingsPath))
+            {
+                Debug.WriteLine($"[ConfigService] 警告: appsettings.json 不存在，跳过更新");
+                // 不抛出异常，只保存本地配置
+            }
+            else
+            {
+                UpdateAppSettings(config);
+            }
 
             // 保存到 config.json（元信息）
             SaveLocalConfig(config);
 
             Debug.WriteLine($"[ConfigService] 配置已保存");
+            Debug.WriteLine($"[ConfigService] === 保存配置完成 ===");
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"[ConfigService] 保存配置文件失败: {ex.Message}");
+            Debug.WriteLine($"[ConfigService] 堆栈跟踪: {ex.StackTrace}");
             throw new InvalidOperationException($"保存配置文件失败: {ex.Message}", ex);
         }
     }
@@ -450,6 +510,9 @@ public class ConfigService : IConfigService
     private void UpdateAppSettings(DeployConfig config)
     {
         var appSettingsPath = GetAppSettingsPath();
+        Debug.WriteLine($"[ConfigService] === UpdateAppSettings 开始 ===");
+        Debug.WriteLine($"[ConfigService] 目标文件: {appSettingsPath}");
+
         if (!File.Exists(appSettingsPath))
         {
             Debug.WriteLine($"[ConfigService] appsettings.json 不存在，跳过更新: {appSettingsPath}");
@@ -458,16 +521,25 @@ public class ConfigService : IConfigService
 
         try
         {
+            Debug.WriteLine($"[ConfigService] 读取文件内容...");
             var json = File.ReadAllText(appSettingsPath);
+            Debug.WriteLine($"[ConfigService] 文件内容长度: {json.Length} 字符");
+
             var rootNode = JsonNode.Parse(json);
-            if (rootNode == null) return;
+            if (rootNode == null)
+            {
+                Debug.WriteLine($"[ConfigService] 警告: 无法解析 JSON");
+                return;
+            }
 
             // 更新后端端口（Kestrel 配置）
+            Debug.WriteLine($"[ConfigService] 更新后端端口: {config.Backend.Port}");
             var kestrelNode = rootNode["Kestrel"];
             if (kestrelNode == null)
             {
                 kestrelNode = new JsonObject();
                 rootNode["Kestrel"] = kestrelNode;
+                Debug.WriteLine($"[ConfigService] 创建 Kestrel 节点");
             }
 
             var endpointsNode = kestrelNode["Endpoints"];
@@ -475,6 +547,7 @@ public class ConfigService : IConfigService
             {
                 endpointsNode = new JsonObject();
                 kestrelNode["Endpoints"] = endpointsNode;
+                Debug.WriteLine($"[ConfigService] 创建 Endpoints 节点");
             }
 
             var httpNode = endpointsNode["Http"];
@@ -482,36 +555,41 @@ public class ConfigService : IConfigService
             {
                 httpNode = new JsonObject();
                 endpointsNode["Http"] = httpNode;
+                Debug.WriteLine($"[ConfigService] 创建 Http 节点");
             }
 
             httpNode["Url"] = $"http://0.0.0.0:{config.Backend.Port}";
-            Debug.WriteLine($"[ConfigService] 更新后端端口: {config.Backend.Port}");
 
             // 更新数据库连接字符串
+            Debug.WriteLine($"[ConfigService] 更新数据库连接字符串");
             var connectionStringsNode = rootNode["ConnectionStrings"];
             if (connectionStringsNode == null)
             {
                 connectionStringsNode = new JsonObject();
                 rootNode["ConnectionStrings"] = connectionStringsNode;
+                Debug.WriteLine($"[ConfigService] 创建 ConnectionStrings 节点");
             }
 
             var connectionString = config.Database.GetConnectionString();
             connectionStringsNode["DefaultConnection"] = connectionString;
+            Debug.WriteLine($"[ConfigService] 连接字符串: {connectionString}");
 
             // 同时更新 MasterConnection
             var masterConnectionString = BuildMasterConnectionString(config.Database);
             connectionStringsNode["MasterConnection"] = masterConnectionString;
 
-            Debug.WriteLine($"[ConfigService] 更新数据库连接字符串");
-
             // 保存修改后的 JSON
+            Debug.WriteLine($"[ConfigService] 保存修改后的 JSON...");
             var serializerOptions = new JsonSerializerOptions { WriteIndented = true };
             var updatedJson = rootNode.ToJsonString(serializerOptions);
             File.WriteAllText(appSettingsPath, updatedJson, Encoding.UTF8);
+
+            Debug.WriteLine($"[ConfigService] === UpdateAppSettings 完成 ===");
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"[ConfigService] 更新 appsettings.json 失败: {ex.Message}");
+            Debug.WriteLine($"[ConfigService] 堆栈跟踪: {ex.StackTrace}");
             throw;
         }
     }

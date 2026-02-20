@@ -32,6 +32,7 @@ public partial class App : Application
         // 注册服务
         services.AddSingleton<Services.IConfigService, Services.ConfigService>();
         services.AddSingleton<Services.IWindowsServiceManager, Services.WindowsServiceManager>();
+        services.AddSingleton<Services.IWebServiceManager, Services.WebServiceManager>();
         services.AddSingleton<Services.IIisManager, Services.IisManager>();
         services.AddSingleton<Services.INginxManager, Services.NginxManager>();
         services.AddSingleton<Services.IDatabaseConnectionService, Services.DatabaseConnectionService>();

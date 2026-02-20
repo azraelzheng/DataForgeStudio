@@ -4,264 +4,402 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d"
-             d:DesignHeight="450" d:DesignWidth="800">
+             d:DesignHeight="600" d:DesignWidth="800">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
     </UserControl.Resources>
 
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="0,0,0,20">
+            <!-- 后端服务 (AppService) -->
+            <TextBlock Text="DataForgeStudio 服务" FontSize="16" FontWeight="Bold" Foreground="#FF333333" Margin="0,0,0,10"/>
 
-        <!-- 服务状态 -->
-        <Border Grid.Row="0" Style="{StaticResource CardBorderStyle}" Margin="0,0,0,15">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
+            <!-- AppService 状态卡片 -->
+            <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,15">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
 
-                <!-- 状态指示器 -->
-                <StackPanel Grid.Column="0" Orientation="Horizontal">
-                    <Grid Margin="0,0,15,0">
-                        <Ellipse Width="60" Height="60">
-                            <Ellipse.Style>
-                                <Style TargetType="Ellipse">
-                                    <Setter Property="Fill" Value="#FF4CAF50"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsRunning}" Value="False">
-                                            <Setter Property="Fill" Value="#FF9E9E9E"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Ellipse.Style>
-                        </Ellipse>
-                        <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="24"
-                                  Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsRunning}" Value="False">
-                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                        <TextBlock Text="&#xE71A;" FontFamily="Segoe MDL2 Assets" FontSize="24"
-                                  Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsRunning}" Value="False">
-                                            <Setter Property="Visibility" Value="Visible"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                    </Grid>
+                    <!-- 状态指示器 -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                        <Grid Margin="0,0,15,0">
+                            <Ellipse Width="50" Height="50">
+                                <Ellipse.Style>
+                                    <Style TargetType="Ellipse">
+                                        <Setter Property="Fill" Value="#FF4CAF50"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsAppRunning}" Value="False">
+                                                <Setter Property="Fill" Value="#FF9E9E9E"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Ellipse.Style>
+                            </Ellipse>
+                            <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="20"
+                                      Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsAppRunning}" Value="False">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBlock Text="&#xE71A;" FontFamily="Segoe MDL2 Assets" FontSize="20"
+                                      Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsAppRunning}" Value="False">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
 
-                    <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="{Binding StatusText}" FontSize="22" FontWeight="Bold">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Foreground" Value="#FF4CAF50"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsRunning}" Value="False">
-                                            <Setter Property="Foreground" Value="#FF9E9E9E"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                        <TextBlock Text="后端 API 服务" FontSize="14" Foreground="#FF666666" Margin="0,4,0,0"/>
-                    </StackPanel>
-                </StackPanel>
-
-                <!-- 控制按钮 -->
-                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                    <!-- 启动按钮 -->
-                    <Button Command="{Binding StartCommand}"
-                           Width="90" Height="40" Margin="0,0,10,0">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE768;" FontFamily="Segoe MDL2 Assets" FontSize="16"
-                                      Foreground="White" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                            <TextBlock Text="启动" FontSize="14" Foreground="White" VerticalAlignment="Center"/>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="{Binding AppStatusText}" FontSize="18" FontWeight="Bold">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#FF4CAF50"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsAppRunning}" Value="False">
+                                                <Setter Property="Foreground" Value="#FF9E9E9E"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBlock Text="后端 API 服务" FontSize="12" Foreground="#FF666666" Margin="0,2,0,0"/>
                         </StackPanel>
-                        <Button.Style>
-                            <Style TargetType="Button" BasedOn="{StaticResource SuccessButton}">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsRunning}" Value="True">
-                                        <Setter Property="IsEnabled" Value="False"/>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding IsOperating}" Value="True">
-                                        <Setter Property="IsEnabled" Value="False"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                    </Button>
+                    </StackPanel>
 
-                    <!-- 停止按钮 -->
-                    <Button Command="{Binding StopCommand}"
-                           Width="90" Height="40" Margin="0,0,10,0">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE71A;" FontFamily="Segoe MDL2 Assets" FontSize="16"
-                                      Foreground="White" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                            <TextBlock Text="停止" FontSize="14" Foreground="White" VerticalAlignment="Center"/>
+                    <!-- 控制按钮 -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                        <!-- 启动按钮 -->
+                        <Button Command="{Binding StartAppCommand}"
+                               Width="70" Height="32" Margin="0,0,8,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE768;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                          Foreground="White" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                <TextBlock Text="启动" FontSize="12" Foreground="White" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource SuccessButton}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsAppRunning}" Value="True">
+                                            <Setter Property="IsEnabled" Value="False"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsAppOperating}" Value="True">
+                                            <Setter Property="IsEnabled" Value="False"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+
+                        <!-- 停止按钮 -->
+                        <Button Command="{Binding StopAppCommand}"
+                               Width="70" Height="32" Margin="0,0,8,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE71A;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                          Foreground="White" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                <TextBlock Text="停止" FontSize="12" Foreground="White" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource DangerButton}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsAppRunning}" Value="False">
+                                            <Setter Property="IsEnabled" Value="False"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsAppOperating}" Value="True">
+                                            <Setter Property="IsEnabled" Value="False"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+
+                        <!-- 重启按钮 -->
+                        <Button Command="{Binding RestartAppCommand}"
+                               Width="70" Height="32">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE777;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                          Foreground="White" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                <TextBlock Text="重启" FontSize="12" Foreground="White" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource WarningButton}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsAppOperating}" Value="True">
+                                            <Setter Property="IsEnabled" Value="False"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- AppService 运行信息 -->
+            <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,20">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- 启动时间 -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                        <Border Background="#FFE3F2FD" CornerRadius="6" Padding="10" Margin="0,0,12,0">
+                            <TextBlock Text="&#xE823;" FontFamily="Segoe MDL2 Assets" FontSize="20"
+                                      Foreground="#FF1976D2" VerticalAlignment="Center"/>
+                        </Border>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="启动时间" FontSize="11" Foreground="#FF666666"/>
+                            <TextBlock Text="{Binding AppStartTimeText}" FontSize="14" FontWeight="Medium"
+                                      Foreground="#FF333333" Margin="0,2,0,0"/>
                         </StackPanel>
-                        <Button.Style>
-                            <Style TargetType="Button" BasedOn="{StaticResource DangerButton}">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsRunning}" Value="False">
-                                        <Setter Property="IsEnabled" Value="False"/>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding IsOperating}" Value="True">
-                                        <Setter Property="IsEnabled" Value="False"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                    </Button>
+                    </StackPanel>
 
-                    <!-- 重启按钮 -->
-                    <Button Command="{Binding RestartCommand}"
-                           Width="90" Height="40">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE777;" FontFamily="Segoe MDL2 Assets" FontSize="16"
-                                      Foreground="White" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                            <TextBlock Text="重启" FontSize="14" Foreground="White" VerticalAlignment="Center"/>
+                    <!-- 内存占用 -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <Border Background="#FFF3E5F5" CornerRadius="6" Padding="10" Margin="0,0,12,0">
+                            <TextBlock Text="&#xE909;" FontFamily="Segoe MDL2 Assets" FontSize="20"
+                                      Foreground="#FF9C27B0" VerticalAlignment="Center"/>
+                        </Border>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="内存占用" FontSize="11" Foreground="#FF666666"/>
+                            <TextBlock Text="{Binding AppMemoryUsage}" FontSize="14" FontWeight="Medium"
+                                      Foreground="#FF333333" Margin="0,2,0,0"/>
                         </StackPanel>
-                        <Button.Style>
-                            <Style TargetType="Button" BasedOn="{StaticResource WarningButton}">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsOperating}" Value="True">
-                                        <Setter Property="IsEnabled" Value="False"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- 前端服务 (WebService) -->
+            <TextBlock Text="前端服务" FontSize="16" FontWeight="Bold" Foreground="#FF333333" Margin="0,0,0,10"/>
+
+            <!-- WebService 状态卡片 -->
+            <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,15">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- 状态指示器 -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                        <Grid Margin="0,0,15,0">
+                            <Ellipse Width="50" Height="50">
+                                <Ellipse.Style>
+                                    <Style TargetType="Ellipse">
+                                        <Setter Property="Fill" Value="#FF4CAF50"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsWebRunning}" Value="False">
+                                                <Setter Property="Fill" Value="#FF9E9E9E"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Ellipse.Style>
+                            </Ellipse>
+                            <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="20"
+                                      Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsWebRunning}" Value="False">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBlock Text="&#xE71A;" FontFamily="Segoe MDL2 Assets" FontSize="20"
+                                      Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsWebRunning}" Value="False">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
+
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="{Binding WebStatusText}" FontSize="18" FontWeight="Bold">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#FF4CAF50"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsWebRunning}" Value="False">
+                                                <Setter Property="Foreground" Value="#FF9E9E9E"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBlock Text="{Binding WebServiceType, StringFormat='{}{0} 服务'}" FontSize="12" Foreground="#FF666666" Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- 控制按钮 -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                        <!-- 启动按钮 -->
+                        <Button Command="{Binding StartWebCommand}"
+                               Width="70" Height="32" Margin="0,0,8,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE768;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                          Foreground="White" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                <TextBlock Text="启动" FontSize="12" Foreground="White" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource SuccessButton}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsWebRunning}" Value="True">
+                                            <Setter Property="IsEnabled" Value="False"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsWebOperating}" Value="True">
+                                            <Setter Property="IsEnabled" Value="False"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+
+                        <!-- 停止按钮 -->
+                        <Button Command="{Binding StopWebCommand}"
+                               Width="70" Height="32" Margin="0,0,8,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE71A;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                          Foreground="White" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                <TextBlock Text="停止" FontSize="12" Foreground="White" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource DangerButton}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsWebRunning}" Value="False">
+                                            <Setter Property="IsEnabled" Value="False"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsWebOperating}" Value="True">
+                                            <Setter Property="IsEnabled" Value="False"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+
+                        <!-- 重启按钮 -->
+                        <Button Command="{Binding RestartWebCommand}"
+                               Width="70" Height="32">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE777;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                          Foreground="White" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                <TextBlock Text="重启" FontSize="12" Foreground="White" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource WarningButton}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsWebOperating}" Value="True">
+                                            <Setter Property="IsEnabled" Value="False"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- 开机自启设置 -->
+            <Border Style="{StaticResource CardBorderStyle}" Margin="0,10,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Background="#FFBBDEFB" CornerRadius="8" Padding="12" Margin="0,0,15,0">
+                            <TextBlock Text="&#xE9EA;" FontFamily="Segoe MDL2 Assets" FontSize="24"
+                                      Foreground="#FF1976D2" VerticalAlignment="Center"/>
+                        </Border>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="开机自启动" FontSize="16" FontWeight="Medium" Foreground="#FF333333"/>
+                            <TextBlock Text="系统启动时自动运行 DataForgeStudio 服务" FontSize="12" Foreground="#FF666666" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <CheckBox Grid.Column="1" IsChecked="{Binding AutoStart}"
+                             HorizontalAlignment="Right" VerticalAlignment="Center"
+                             Width="50" Height="26">
+                        <CheckBox.Style>
+                            <Style TargetType="CheckBox">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="CheckBox">
+                                            <Border x:Name="SwitchBorder"
+                                                    Background="#FFBDBDBD"
+                                                    CornerRadius="13"
+                                                    Width="50" Height="26">
+                                                <Ellipse x:Name="SwitchThumb"
+                                                        Fill="White"
+                                                        Width="22" Height="22"
+                                                        Margin="2"
+                                                        HorizontalAlignment="Left"
+                                                        RenderTransformOrigin="0.5,0.5">
+                                                    <Ellipse.RenderTransform>
+                                                        <TranslateTransform X="0"/>
+                                                    </Ellipse.RenderTransform>
+                                                </Ellipse>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsChecked" Value="True">
+                                                    <Setter TargetName="SwitchBorder" Property="Background" Value="#FF4CAF50"/>
+                                                    <Trigger.EnterActions>
+                                                        <BeginStoryboard>
+                                                            <Storyboard>
+                                                                <DoubleAnimation Storyboard.TargetName="SwitchThumb"
+                                                                                Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+                                                                                To="22" Duration="0:0:0.15"/>
+                                                            </Storyboard>
+                                                        </BeginStoryboard>
+                                                    </Trigger.EnterActions>
+                                                    <Trigger.ExitActions>
+                                                        <BeginStoryboard>
+                                                            <Storyboard>
+                                                                <DoubleAnimation Storyboard.TargetName="SwitchThumb"
+                                                                                Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+                                                                                To="0" Duration="0:0:0.15"/>
+                                                            </Storyboard>
+                                                        </BeginStoryboard>
+                                                    </Trigger.ExitActions>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
                             </Style>
-                        </Button.Style>
-                    </Button>
-                </StackPanel>
-            </Grid>
-        </Border>
-
-        <!-- 运行信息 -->
-        <Border Grid.Row="1" Style="{StaticResource CardBorderStyle}" Margin="0,0,0,15">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <!-- 启动时间 -->
-                <StackPanel Grid.Column="0" Orientation="Horizontal">
-                    <Border Background="#FFE3F2FD" CornerRadius="8" Padding="12" Margin="0,0,15,0">
-                        <TextBlock Text="&#xE823;" FontFamily="Segoe MDL2 Assets" FontSize="24"
-                                  Foreground="#FF1976D2" VerticalAlignment="Center"/>
-                    </Border>
-                    <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="启动时间" FontSize="12" Foreground="#FF666666"/>
-                        <TextBlock Text="{Binding StartTimeText}" FontSize="16" FontWeight="Medium"
-                                  Foreground="#FF333333" Margin="0,4,0,0"/>
-                    </StackPanel>
-                </StackPanel>
-
-                <!-- 内存占用 -->
-                <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <Border Background="#FFF3E5F5" CornerRadius="8" Padding="12" Margin="0,0,15,0">
-                        <TextBlock Text="&#xE909;" FontFamily="Segoe MDL2 Assets" FontSize="24"
-                                  Foreground="#FF9C27B0" VerticalAlignment="Center"/>
-                    </Border>
-                    <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="内存占用" FontSize="12" Foreground="#FF666666"/>
-                        <TextBlock Text="{Binding MemoryUsage}" FontSize="16" FontWeight="Medium"
-                                  Foreground="#FF333333" Margin="0,4,0,0"/>
-                    </StackPanel>
-                </StackPanel>
-            </Grid>
-        </Border>
-
-        <!-- 开机自启设置 -->
-        <Border Grid.Row="2" Style="{StaticResource CardBorderStyle}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Border Background="#FFBBDEFB" CornerRadius="8" Padding="12" Margin="0,0,15,0">
-                        <TextBlock Text="&#xE9EA;" FontFamily="Segoe MDL2 Assets" FontSize="24"
-                                  Foreground="#FF1976D2" VerticalAlignment="Center"/>
-                    </Border>
-                    <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="开机自启动" FontSize="16" FontWeight="Medium" Foreground="#FF333333"/>
-                        <TextBlock Text="系统启动时自动运行后端服务" FontSize="12" Foreground="#FF666666" Margin="0,4,0,0"/>
-                    </StackPanel>
-                </StackPanel>
-
-                <CheckBox Grid.Column="1" IsChecked="{Binding AutoStart}"
-                         HorizontalAlignment="Right" VerticalAlignment="Center"
-                         Width="50" Height="26">
-                    <CheckBox.Style>
-                        <Style TargetType="CheckBox">
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="CheckBox">
-                                        <Border x:Name="SwitchBorder"
-                                                Background="#FFBDBDBD"
-                                                CornerRadius="13"
-                                                Width="50" Height="26">
-                                            <Ellipse x:Name="SwitchThumb"
-                                                    Fill="White"
-                                                    Width="22" Height="22"
-                                                    Margin="2"
-                                                    HorizontalAlignment="Left"
-                                                    RenderTransformOrigin="0.5,0.5">
-                                                <Ellipse.RenderTransform>
-                                                    <TranslateTransform X="0"/>
-                                                </Ellipse.RenderTransform>
-                                            </Ellipse>
-                                        </Border>
-                                        <ControlTemplate.Triggers>
-                                            <Trigger Property="IsChecked" Value="True">
-                                                <Setter TargetName="SwitchBorder" Property="Background" Value="#FF4CAF50"/>
-                                                <Trigger.EnterActions>
-                                                    <BeginStoryboard>
-                                                        <Storyboard>
-                                                            <DoubleAnimation Storyboard.TargetName="SwitchThumb"
-                                                                            Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
-                                                                            To="22" Duration="0:0:0.15"/>
-                                                        </Storyboard>
-                                                    </BeginStoryboard>
-                                                </Trigger.EnterActions>
-                                                <Trigger.ExitActions>
-                                                    <BeginStoryboard>
-                                                        <Storyboard>
-                                                            <DoubleAnimation Storyboard.TargetName="SwitchThumb"
-                                                                            Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
-                                                                            To="0" Duration="0:0:0.15"/>
-                                                        </Storyboard>
-                                                    </BeginStoryboard>
-                                                </Trigger.ExitActions>
-                                            </Trigger>
-                                        </ControlTemplate.Triggers>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                        </Style>
-                    </CheckBox.Style>
-                </CheckBox>
-            </Grid>
-        </Border>
-    </Grid>
+                        </CheckBox.Style>
+                    </CheckBox>
+                </Grid>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
 </UserControl>

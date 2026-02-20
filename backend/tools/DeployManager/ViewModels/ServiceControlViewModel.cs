@@ -8,39 +8,71 @@ namespace DeployManager.ViewModels;
 
 /// <summary>
 /// 服务控制视图模型
+/// 管理两个服务：
+/// - AppService: 后端 API 服务（DataForgeStudio 服务）
+/// - WebService: 前端服务（IIS 或 Nginx）
 /// </summary>
 public partial class ServiceControlViewModel : ObservableObject, IDisposable
 {
-    private readonly IWindowsServiceManager _serviceManager;
+    private readonly IWindowsServiceManager _appServiceManager;
+    private readonly IWebServiceManager _webServiceManager;
     private readonly IConfigService _configService;
     private System.Timers.Timer? _refreshTimer;
-    private DateTime? _processStartTime;
-    private Process? _serviceProcess;
+    private DateTime? _appProcessStartTime;
+    private Process? _appServiceProcess;
     private bool _disposed = false;
 
-    /// <summary>
-    /// 服务是否正在运行
-    /// </summary>
-    [ObservableProperty]
-    private bool _isRunning;
+    #region AppService 属性（后端服务）
 
     /// <summary>
-    /// 状态文本
+    /// AppService 是否正在运行
     /// </summary>
     [ObservableProperty]
-    private string _statusText = "未运行";
+    private bool _isAppRunning;
 
     /// <summary>
-    /// 启动时间
+    /// AppService 状态文本
     /// </summary>
     [ObservableProperty]
-    private string _startTimeText = "-";
+    private string _appStatusText = "未运行";
 
     /// <summary>
-    /// 内存使用量
+    /// AppService 启动时间
     /// </summary>
     [ObservableProperty]
-    private string _memoryUsage = "-";
+    private string _appStartTimeText = "-";
+
+    /// <summary>
+    /// AppService 内存使用量
+    /// </summary>
+    [ObservableProperty]
+    private string _appMemoryUsage = "-";
+
+    #endregion
+
+    #region WebService 属性（前端服务）
+
+    /// <summary>
+    /// WebService 是否正在运行
+    /// </summary>
+    [ObservableProperty]
+    private bool _isWebRunning;
+
+    /// <summary>
+    /// WebService 状态文本
+    /// </summary>
+    [ObservableProperty]
+    private string _webStatusText = "未运行";
+
+    /// <summary>
+    /// WebService 描述文本（IIS/Nginx）
+    /// </summary>
+    [ObservableProperty]
+    private string _webServiceType = "IIS";
+
+    #endregion
+
+    #region 通用属性
 
     /// <summary>
     /// 是否开机自启
@@ -49,22 +81,38 @@ public partial class ServiceControlViewModel : ObservableObject, IDisposable
     private bool _autoStart;
 
     /// <summary>
-    /// 操作是否正在进行中
+    /// AppService 操作是否正在进行中
     /// </summary>
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(StartCommand))]
-    [NotifyCanExecuteChangedFor(nameof(StopCommand))]
-    [NotifyCanExecuteChangedFor(nameof(RestartCommand))]
-    private bool _isOperating;
+    [NotifyCanExecuteChangedFor(nameof(StartAppCommand))]
+    [NotifyCanExecuteChangedFor(nameof(StopAppCommand))]
+    [NotifyCanExecuteChangedFor(nameof(RestartAppCommand))]
+    private bool _isAppOperating;
+
+    /// <summary>
+    /// WebService 操作是否正在进行中
+    /// </summary>
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(StartWebCommand))]
+    [NotifyCanExecuteChangedFor(nameof(StopWebCommand))]
+    [NotifyCanExecuteChangedFor(nameof(RestartWebCommand))]
+    private bool _isWebOperating;
+
+    #endregion
 
     /// <summary>
     /// 初始化服务控制视图模型
     /// </summary>
-    /// <param name="serviceManager">Windows 服务管理器</param>
+    /// <param name="appServiceManager">后端服务管理器</param>
+    /// <param name="webServiceManager">前端服务管理器</param>
     /// <param name="configService">配置服务</param>
-    public ServiceControlViewModel(IWindowsServiceManager serviceManager, IConfigService configService)
+    public ServiceControlViewModel(
+        IWindowsServiceManager appServiceManager,
+        IWebServiceManager webServiceManager,
+        IConfigService configService)
     {
-        _serviceManager = serviceManager;
+        _appServiceManager = appServiceManager;
+        _webServiceManager = webServiceManager;
         _configService = configService;
 
         // 初始化定时器，每 5 秒刷新状态
@@ -103,8 +151,17 @@ public partial class ServiceControlViewModel : ObservableObject, IDisposable
     /// </summary>
     private void LoadConfig()
     {
-        // TODO: 从配置中加载自启动设置
-        AutoStart = false;
+        try
+        {
+            var config = _configService.Load();
+            WebServiceType = config.Frontend.Mode?.ToUpper() == "NGINX" ? "Nginx" : "IIS";
+            AutoStart = false; // TODO: 从配置加载
+        }
+        catch (Exception)
+        {
+            WebServiceType = "IIS";
+            AutoStart = false;
+        }
     }
 
     /// <summary>
@@ -116,143 +173,275 @@ public partial class ServiceControlViewModel : ObservableObject, IDisposable
         {
             await Task.Run(() =>
             {
-                var status = _serviceManager.GetStatus();
-                IsRunning = status == ServiceStatus.Running;
-                StatusText = status switch
-                {
-                    ServiceStatus.Running => "运行中",
-                    ServiceStatus.Stopped => "已停止",
-                    _ => "未知"
-                };
+                // 刷新 AppService 状态
+                RefreshAppServiceStatus();
 
-                // 更新进程信息
-                UpdateProcessInfo();
+                // 刷新 WebService 状态
+                RefreshWebServiceStatus();
             });
         }
         catch (Exception)
         {
-            IsRunning = false;
-            StatusText = "无法获取状态";
+            // 忽略刷新错误
         }
     }
 
     /// <summary>
-    /// 更新进程信息
+    /// 刷新后端服务状态
     /// </summary>
-    private void UpdateProcessInfo()
+    private void RefreshAppServiceStatus()
     {
         try
         {
-            var config = _configService.Load();
+            var status = _appServiceManager.GetStatus();
+            IsAppRunning = status == ServiceStatus.Running;
+            AppStatusText = status switch
+            {
+                ServiceStatus.Running => "运行中",
+                ServiceStatus.Stopped => "已停止",
+                _ => "未知"
+            };
+
+            // 更新进程信息
+            UpdateAppProcessInfo();
+        }
+        catch (Exception)
+        {
+            IsAppRunning = false;
+            AppStatusText = "无法获取状态";
+        }
+    }
+
+    /// <summary>
+    /// 刷新前端服务状态
+    /// </summary>
+    private void RefreshWebServiceStatus()
+    {
+        try
+        {
+            var status = _webServiceManager.GetStatus();
+            IsWebRunning = status == ServiceStatus.Running;
+            WebStatusText = status switch
+            {
+                ServiceStatus.Running => "运行中",
+                ServiceStatus.Stopped => "已停止",
+                _ => "未知"
+            };
+        }
+        catch (Exception)
+        {
+            IsWebRunning = false;
+            WebStatusText = "无法获取状态";
+        }
+    }
+
+    /// <summary>
+    /// 更新后端进程信息
+    /// </summary>
+    private void UpdateAppProcessInfo()
+    {
+        try
+        {
             var processName = "DataForgeStudio.Api";
 
             var processes = Process.GetProcessesByName(processName);
             if (processes.Length > 0)
             {
-                _serviceProcess = processes[0];
-                _processStartTime = _serviceProcess.StartTime;
-                StartTimeText = _processStartTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "-";
+                _appServiceProcess = processes[0];
+                _appProcessStartTime = _appServiceProcess.StartTime;
+                AppStartTimeText = _appProcessStartTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "-";
 
-                var memoryMB = _serviceProcess.WorkingSet64 / 1024.0 / 1024.0;
-                MemoryUsage = $"{memoryMB:F2} MB";
+                var memoryMB = _appServiceProcess.WorkingSet64 / 1024.0 / 1024.0;
+                AppMemoryUsage = $"{memoryMB:F2} MB";
             }
             else
             {
-                _serviceProcess = null;
-                _processStartTime = null;
-                StartTimeText = "-";
-                MemoryUsage = "-";
+                _appServiceProcess = null;
+                _appProcessStartTime = null;
+                AppStartTimeText = "-";
+                AppMemoryUsage = "-";
             }
         }
         catch (Exception)
         {
-            StartTimeText = "-";
-            MemoryUsage = "-";
+            AppStartTimeText = "-";
+            AppMemoryUsage = "-";
         }
     }
 
-    /// <summary>
-    /// 启动服务命令
-    /// </summary>
-    [RelayCommand(CanExecute = nameof(CanOperate))]
-    private async Task StartAsync()
-    {
-        if (IsOperating) return;
+    #region AppService 命令
 
-        IsOperating = true;
-        StatusText = "正在启动...";
+    /// <summary>
+    /// 启动后端服务命令
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanOperateApp))]
+    private async Task StartAppAsync()
+    {
+        if (IsAppOperating) return;
+
+        IsAppOperating = true;
+        AppStatusText = "正在启动...";
 
         try
         {
-            await _serviceManager.StartAsync();
-            await RefreshStatusAsync();
+            await _appServiceManager.StartAsync();
+            RefreshAppServiceStatus();
         }
         catch (Exception ex)
         {
-            StatusText = $"启动失败: {ex.Message}";
+            AppStatusText = $"启动失败: {ex.Message}";
         }
         finally
         {
-            IsOperating = false;
+            IsAppOperating = false;
         }
     }
 
     /// <summary>
-    /// 停止服务命令
+    /// 停止后端服务命令
     /// </summary>
-    [RelayCommand(CanExecute = nameof(CanOperate))]
-    private async Task StopAsync()
+    [RelayCommand(CanExecute = nameof(CanOperateApp))]
+    private async Task StopAppAsync()
     {
-        if (IsOperating) return;
+        if (IsAppOperating) return;
 
-        IsOperating = true;
-        StatusText = "正在停止...";
+        IsAppOperating = true;
+        AppStatusText = "正在停止...";
 
         try
         {
-            await _serviceManager.StopAsync();
-            await RefreshStatusAsync();
+            await _appServiceManager.StopAsync();
+            RefreshAppServiceStatus();
         }
         catch (Exception ex)
         {
-            StatusText = $"停止失败: {ex.Message}";
+            AppStatusText = $"停止失败: {ex.Message}";
         }
         finally
         {
-            IsOperating = false;
+            IsAppOperating = false;
         }
     }
 
     /// <summary>
-    /// 重启服务命令
+    /// 重启后端服务命令
     /// </summary>
-    [RelayCommand(CanExecute = nameof(CanOperate))]
-    private async Task RestartAsync()
+    [RelayCommand(CanExecute = nameof(CanOperateApp))]
+    private async Task RestartAppAsync()
     {
-        if (IsOperating) return;
+        if (IsAppOperating) return;
 
-        IsOperating = true;
-        StatusText = "正在重启...";
+        IsAppOperating = true;
+        AppStatusText = "正在重启...";
 
         try
         {
-            await _serviceManager.RestartAsync();
-            await RefreshStatusAsync();
+            await _appServiceManager.RestartAsync();
+            RefreshAppServiceStatus();
         }
         catch (Exception ex)
         {
-            StatusText = $"重启失败: {ex.Message}";
+            AppStatusText = $"重启失败: {ex.Message}";
         }
         finally
         {
-            IsOperating = false;
+            IsAppOperating = false;
         }
     }
 
     /// <summary>
-    /// 是否可以执行操作
+    /// 是否可以执行 AppService 操作
     /// </summary>
-    private bool CanOperate() => !IsOperating;
+    private bool CanOperateApp() => !IsAppOperating;
+
+    #endregion
+
+    #region WebService 命令
+
+    /// <summary>
+    /// 启动前端服务命令
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanOperateWeb))]
+    private async Task StartWebAsync()
+    {
+        if (IsWebOperating) return;
+
+        IsWebOperating = true;
+        WebStatusText = "正在启动...";
+
+        try
+        {
+            await _webServiceManager.StartAsync();
+            RefreshWebServiceStatus();
+        }
+        catch (Exception ex)
+        {
+            WebStatusText = $"启动失败: {ex.Message}";
+        }
+        finally
+        {
+            IsWebOperating = false;
+        }
+    }
+
+    /// <summary>
+    /// 停止前端服务命令
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanOperateWeb))]
+    private async Task StopWebAsync()
+    {
+        if (IsWebOperating) return;
+
+        IsWebOperating = true;
+        WebStatusText = "正在停止...";
+
+        try
+        {
+            await _webServiceManager.StopAsync();
+            RefreshWebServiceStatus();
+        }
+        catch (Exception ex)
+        {
+            WebStatusText = $"停止失败: {ex.Message}";
+        }
+        finally
+        {
+            IsWebOperating = false;
+        }
+    }
+
+    /// <summary>
+    /// 重启前端服务命令
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanOperateWeb))]
+    private async Task RestartWebAsync()
+    {
+        if (IsWebOperating) return;
+
+        IsWebOperating = true;
+        WebStatusText = "正在重启...";
+
+        try
+        {
+            await _webServiceManager.RestartAsync();
+            RefreshWebServiceStatus();
+        }
+        catch (Exception ex)
+        {
+            WebStatusText = $"重启失败: {ex.Message}";
+        }
+        finally
+        {
+            IsWebOperating = false;
+        }
+    }
+
+    /// <summary>
+    /// 是否可以执行 WebService 操作
+    /// </summary>
+    private bool CanOperateWeb() => !IsWebOperating;
+
+    #endregion
 
     /// <summary>
     /// AutoStart 属性变更时的处理
@@ -302,10 +491,11 @@ public partial class ServiceControlViewModel : ObservableObject, IDisposable
                 // 停止并释放 Timer
                 StopRefresh();
                 // 释放 Process 资源
-                _serviceProcess?.Dispose();
-                _serviceProcess = null;
+                _appServiceProcess?.Dispose();
+                _appServiceProcess = null;
                 // 释放服务管理器资源
-                _serviceManager?.Dispose();
+                _appServiceManager?.Dispose();
+                _webServiceManager?.Dispose();
             }
             _disposed = true;
         }

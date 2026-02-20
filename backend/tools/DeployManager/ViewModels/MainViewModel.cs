@@ -118,7 +118,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
         // 存储处理程序引用以便后续取消订阅
         _serviceControlHandler = (s, e) =>
         {
-            if (e.PropertyName == nameof(ServiceControlViewModel.IsRunning))
+            if (e.PropertyName == nameof(ServiceControlViewModel.IsAppRunning))
             {
                 UpdateStatusBar();
             }
@@ -146,8 +146,8 @@ public partial class MainViewModel : ObservableObject, IDisposable
     /// </summary>
     private void UpdateStatusBar()
     {
-        // 更新状态颜色和文本
-        if (_serviceControlViewModel.IsRunning)
+        // 更新状态颜色和文本（以后端服务状态为准）
+        if (_serviceControlViewModel.IsAppRunning)
         {
             StatusColor = "#FF4CAF50"; // 绿色
             StatusText = "服务运行中";
