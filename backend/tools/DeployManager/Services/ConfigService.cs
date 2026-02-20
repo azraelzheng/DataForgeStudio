@@ -62,19 +62,63 @@ public class ConfigService : IConfigService
 
     /// <summary>
     /// 获取安装路径
-    /// 优先级：注册表 -> config.json -> 程序目录
+    /// 自动检测：开发环境（查找.sln） -> 生产环境（查找api目录） -> 注册表 -> config.json -> 默认路径
     /// </summary>
     private string GetInstallPath()
     {
-        // 尝试从注册表读取
+        var appDir = AppDomain.CurrentDomain.BaseDirectory;
+        Debug.WriteLine($"[ConfigService] 程序目录: {appDir}");
+
+        // 1. 尝试自动检测开发环境（向上查找 DataForgeStudio.sln）
+        var slnPath = FindFileUpwards(appDir, "DataForgeStudio.sln");
+        if (slnPath != null)
+        {
+            var slnDir = Path.GetDirectoryName(slnPath);
+            if (slnDir != null)
+            {
+                // 开发环境：sln 目录下的 backend\src\DataForgeStudio.Api
+                var devApiPath = Path.Combine(slnDir, "backend", "src", "DataForgeStudio.Api");
+                var devAppSettings = Path.Combine(devApiPath, "appsettings.json");
+                if (File.Exists(devAppSettings))
+                {
+                    Debug.WriteLine($"[ConfigService] 检测到开发环境，API路径: {devApiPath}");
+                    return devApiPath;
+                }
+            }
+        }
+
+        // 2. 尝试检测生产环境（当前目录或上级目录有 api/appsettings.json）
+        var prodApiPath = Path.Combine(appDir, "api", "appsettings.json");
+        if (File.Exists(prodApiPath))
+        {
+            Debug.WriteLine($"[ConfigService] 检测到生产环境（当前目录）: {appDir}");
+            return appDir.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        }
+
+        var parentDir = Directory.GetParent(appDir);
+        if (parentDir != null)
+        {
+            prodApiPath = Path.Combine(parentDir.FullName, "api", "appsettings.json");
+            if (File.Exists(prodApiPath))
+            {
+                Debug.WriteLine($"[ConfigService] 检测到生产环境（上级目录）: {parentDir.FullName}");
+                return parentDir.FullName;
+            }
+        }
+
+        // 3. 尝试从注册表读取
         try
         {
             using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SOFTWARE\DataForgeStudio");
             var regPath = key?.GetValue("InstallPath") as string;
             if (!string.IsNullOrEmpty(regPath) && Directory.Exists(regPath))
             {
-                Debug.WriteLine($"[ConfigService] 从注册表读取安装路径: {regPath}");
-                return regPath;
+                var regAppSettings = Path.Combine(regPath, "api", "appsettings.json");
+                if (File.Exists(regAppSettings))
+                {
+                    Debug.WriteLine($"[ConfigService] 从注册表读取安装路径: {regPath}");
+                    return regPath;
+                }
             }
         }
         catch (Exception ex)
@@ -82,7 +126,7 @@ public class ConfigService : IConfigService
             Debug.WriteLine($"[ConfigService] 读取注册表失败: {ex.Message}");
         }
 
-        // 尝试从 config.json 读取
+        // 4. 尝试从 config.json 读取
         try
         {
             if (File.Exists(_configPath))
@@ -91,8 +135,12 @@ public class ConfigService : IConfigService
                 var config = JsonSerializer.Deserialize<DeployConfig>(json, JsonOptions);
                 if (!string.IsNullOrEmpty(config?.InstallPath) && Directory.Exists(config.InstallPath))
                 {
-                    Debug.WriteLine($"[ConfigService] 从 config.json 读取安装路径: {config.InstallPath}");
-                    return config.InstallPath;
+                    var configAppSettings = Path.Combine(config.InstallPath, "api", "appsettings.json");
+                    if (File.Exists(configAppSettings))
+                    {
+                        Debug.WriteLine($"[ConfigService] 从 config.json 读取安装路径: {config.InstallPath}");
+                        return config.InstallPath;
+                    }
                 }
             }
         }
@@ -101,11 +149,38 @@ public class ConfigService : IConfigService
             Debug.WriteLine($"[ConfigService] 读取 config.json 失败: {ex.Message}");
         }
 
-        // 使用默认路径：程序所在目录的上级
-        var appDir = AppDomain.CurrentDomain.BaseDirectory;
-        var defaultPath = Path.GetDirectoryName(Path.GetDirectoryName(appDir)) ?? @"C:\Program Files\DataForgeStudio";
+        // 5. 使用默认路径
+        const string defaultPath = @"C:\Program Files\DataForgeStudio";
         Debug.WriteLine($"[ConfigService] 使用默认安装路径: {defaultPath}");
         return defaultPath;
+    }
+
+    /// <summary>
+    /// 向上查找文件
+    /// </summary>
+    /// <param name="startDir">起始目录</param>
+    /// <param name="fileName">文件名</param>
+    /// <param name="maxLevels">最大向上查找层数</param>
+    /// <returns>文件完整路径，未找到返回 null</returns>
+    private static string? FindFileUpwards(string startDir, string fileName, int maxLevels = 10)
+    {
+        var currentDir = startDir;
+        for (int i = 0; i < maxLevels; i++)
+        {
+            var filePath = Path.Combine(currentDir, fileName);
+            if (File.Exists(filePath))
+            {
+                return filePath;
+            }
+
+            var parent = Directory.GetParent(currentDir);
+            if (parent == null)
+            {
+                break;
+            }
+            currentDir = parent.FullName;
+        }
+        return null;
     }
 
     /// <summary>
@@ -113,6 +188,14 @@ public class ConfigService : IConfigService
     /// </summary>
     public string GetAppSettingsPath()
     {
+        // 检查安装路径是否已经包含 appsettings.json（开发环境）
+        var directPath = Path.Combine(_installPath, "appsettings.json");
+        if (File.Exists(directPath))
+        {
+            return directPath;
+        }
+
+        // 否则查找 api 子目录（生产环境）
         return Path.Combine(_installPath, "api", "appsettings.json");
     }
 
