@@ -9,13 +9,14 @@ namespace DeployManager.ViewModels;
 /// <summary>
 /// 服务控制视图模型
 /// </summary>
-public partial class ServiceControlViewModel : ObservableObject
+public partial class ServiceControlViewModel : ObservableObject, IDisposable
 {
     private readonly IWindowsServiceManager _serviceManager;
     private readonly IConfigService _configService;
-    private readonly System.Timers.Timer _refreshTimer;
+    private System.Timers.Timer? _refreshTimer;
     private DateTime? _processStartTime;
     private Process? _serviceProcess;
+    private bool _disposed = false;
 
     /// <summary>
     /// 服务是否正在运行
@@ -80,7 +81,7 @@ public partial class ServiceControlViewModel : ObservableObject
     public void StartRefresh()
     {
         RefreshStatusAsync().ConfigureAwait(false);
-        _refreshTimer.Start();
+        _refreshTimer?.Start();
     }
 
     /// <summary>
@@ -88,7 +89,13 @@ public partial class ServiceControlViewModel : ObservableObject
     /// </summary>
     public void StopRefresh()
     {
-        _refreshTimer.Stop();
+        if (_refreshTimer != null)
+        {
+            _refreshTimer.Stop();
+            _refreshTimer.Elapsed -= async (s, e) => await RefreshStatusAsync();
+            _refreshTimer.Dispose();
+            _refreshTimer = null;
+        }
     }
 
     /// <summary>
@@ -270,6 +277,37 @@ public partial class ServiceControlViewModel : ObservableObject
         catch (Exception)
         {
             // 忽略保存错误
+        }
+    }
+
+    /// <summary>
+    /// 释放资源
+    /// </summary>
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// 释放资源的核心方法
+    /// </summary>
+    /// <param name="disposing">是否释放托管资源</param>
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+            {
+                // 停止并释放 Timer
+                StopRefresh();
+                // 释放 Process 资源
+                _serviceProcess?.Dispose();
+                _serviceProcess = null;
+                // 释放服务管理器资源
+                _serviceManager?.Dispose();
+            }
+            _disposed = true;
         }
     }
 }

@@ -12,6 +12,7 @@ public class WindowsServiceManager : IWindowsServiceManager
 {
     private readonly string _serviceName;
     private ServiceController? _controller;
+    private bool _disposed = false;
 
     /// <summary>
     /// 初始化 Windows 服务管理器（从配置服务读取服务名）
@@ -215,6 +216,33 @@ public class WindowsServiceManager : IWindowsServiceManager
         {
             Debug.WriteLine($"[WindowsServiceManager] 检查服务安装状态时发生异常: {ex.Message}");
             return false;
+        }
+    }
+
+    /// <summary>
+    /// 释放资源
+    /// </summary>
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// 释放资源的核心方法
+    /// </summary>
+    /// <param name="disposing">是否释放托管资源</param>
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+            {
+                // 释放托管资源
+                _controller?.Dispose();
+                _controller = null;
+            }
+            _disposed = true;
         }
     }
 }

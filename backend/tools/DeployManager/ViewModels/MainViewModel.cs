@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DeployManager.Services;
@@ -7,12 +8,14 @@ namespace DeployManager.ViewModels;
 /// <summary>
 /// 主视图模型
 /// </summary>
-public partial class MainViewModel : ObservableObject
+public partial class MainViewModel : ObservableObject, IDisposable
 {
     private readonly ServiceControlViewModel _serviceControlViewModel;
     private readonly DatabaseConfigViewModel _databaseConfigViewModel;
     private readonly PortConfigViewModel _portConfigViewModel;
     private readonly FrontendModeViewModel _frontendModeViewModel;
+    private readonly PropertyChangedEventHandler _serviceControlHandler;
+    private bool _disposed = false;
 
     /// <summary>
     /// 当前显示的视图
@@ -112,14 +115,15 @@ public partial class MainViewModel : ObservableObject
         // 启动服务状态刷新定时器
         _serviceControlViewModel.StartRefresh();
 
-        // 订阅服务状态变更
-        _serviceControlViewModel.PropertyChanged += (s, e) =>
+        // 存储处理程序引用以便后续取消订阅
+        _serviceControlHandler = (s, e) =>
         {
             if (e.PropertyName == nameof(ServiceControlViewModel.IsRunning))
             {
                 UpdateStatusBar();
             }
         };
+        _serviceControlViewModel.PropertyChanged += _serviceControlHandler;
 
         // 初始化状态栏
         UpdateStatusBar();
@@ -211,5 +215,36 @@ public partial class MainViewModel : ObservableObject
         IsDatabaseTabSelected = false;
         IsPortTabSelected = false;
         IsFrontendTabSelected = true;
+    }
+
+    /// <summary>
+    /// 释放资源
+    /// </summary>
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// 释放资源的核心方法
+    /// </summary>
+    /// <param name="disposing">是否释放托管资源</param>
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+            {
+                // 取消事件订阅
+                if (_serviceControlHandler != null)
+                {
+                    _serviceControlViewModel.PropertyChanged -= _serviceControlHandler;
+                }
+                // 释放服务控制视图模型资源
+                _serviceControlViewModel?.Dispose();
+            }
+            _disposed = true;
+        }
     }
 }

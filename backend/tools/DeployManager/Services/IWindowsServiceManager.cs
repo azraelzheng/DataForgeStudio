@@ -5,7 +5,7 @@ namespace DeployManager.Services;
 /// <summary>
 /// Windows 服务管理接口
 /// </summary>
-public interface IWindowsServiceManager
+public interface IWindowsServiceManager : IDisposable
 {
     /// <summary>
     /// 获取服务状态
