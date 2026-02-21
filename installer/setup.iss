@@ -37,7 +37,7 @@ UninstallDisplayName={#AppName}
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Files]
-Source: "{#BuildDir}\configurator\Configurator.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall nocompression
+Source: "{#BuildDir}\configurator\*"; DestDir: "{tmp}\configurator"; Flags: deleteafterinstall ignoreversion recursesubdirs createallsubdirs
 Source: "{#BuildDir}\api\*"; DestDir: "{app}\api"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#BuildDir}\frontend\*"; DestDir: "{app}\WebSite"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#BuildDir}\nginx\*"; DestDir: "{app}\nginx"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -56,7 +56,7 @@ Root: HKLM; Subkey: "Software\{#AppName}"; ValueType: string; ValueName: "Versio
 
 [Run]
 ; 安装完成后运行配置器（显示输出以便用户看到进度和错误）
-Filename: "{tmp}\Configurator.exe"; Parameters: "--install-path ""{app}"" --db-server ""{code:GetDbServer}"" --db-port {code:GetDbPort} --db-name ""{code:GetDbName}"" --db-auth ""{code:GetDbAuth}"" --db-user ""{code:GetDbUser}"" --db-password ""{code:GetDbPassword}"" --backend-port {code:GetBackendPort} --frontend-port {code:GetFrontendPort}"; Flags: waituntilterminated
+Filename: "{tmp}\configurator\Configurator.exe"; Parameters: "--install-path ""{app}"" --db-server ""{code:GetDbServer}"" --db-port {code:GetDbPort} --db-name ""{code:GetDbName}"" --db-auth ""{code:GetDbAuth}"" --db-user ""{code:GetDbUser}"" --db-password ""{code:GetDbPassword}"" --backend-port {code:GetBackendPort} --frontend-port {code:GetFrontendPort}"; Flags: waituntilterminated
 
 [UninstallRun]
 Filename: "sc.exe"; Parameters: "stop ""DFAppService"""; RunOnceId: "StopAppService"; Flags: runhidden
