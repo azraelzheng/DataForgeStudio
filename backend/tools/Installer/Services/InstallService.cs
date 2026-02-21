@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using Installer.Models;
 using Microsoft.Data.SqlClient;
 
@@ -23,8 +24,6 @@ public class InstallProgress
 
 public class InstallService : IInstallService
 {
-    private const string ResourcePath = "embedded";
-
     public async Task<(bool Success, string Message)> TestDatabaseConnectionAsync(DatabaseConfig config)
     {
         try
@@ -41,14 +40,13 @@ public class InstallService : IInstallService
 
     public async Task InstallAsync(InstallConfig config, IProgress<InstallProgress> progress, CancellationToken cancellationToken = default)
     {
+        // 注意: Inno Setup 已经解压了文件到安装目录，这里只需要配置和初始化
         var steps = new List<(string Name, Func<Task> Action)>
         {
             ("验证安装路径", () => ValidatePath(config.InstallPath)),
-            ("创建目录结构", () => CreateDirectories(config.InstallPath)),
-            ("复制 API 文件", () => CopyApiFiles(config.InstallPath, progress)),
-            ("复制前端文件", () => CopyFrontendFiles(config.InstallPath, progress)),
-            ("复制 Nginx 文件", () => CopyNginxFiles(config.InstallPath, progress)),
-            ("复制管理工具", () => CopyDeployManager(config.InstallPath, progress)),
+            ("创建必要目录", () => CreateDirectories(config.InstallPath)),
+            ("验证安装文件", () => VerifyInstalledFiles(config.InstallPath)),
+            ("初始化数据库", () => InitializeDatabase(config, progress)),
             ("生成配置文件", () => GenerateConfigFiles(config)),
             ("注册 Windows 服务", () => RegisterWindowsService(config)),
             ("创建桌面快捷方式", () => CreateDesktopShortcut(config))
@@ -135,17 +133,14 @@ public class InstallService : IInstallService
 
     private Task CreateDirectories(string installPath)
     {
+        // 创建必要的目录（Inno Setup 可能没有创建的）
         var directories = new[]
         {
-            installPath,
-            Path.Combine(installPath, "api"),
-            Path.Combine(installPath, "WebSite"),
-            Path.Combine(installPath, "nginx"),
-            Path.Combine(installPath, "nginx", "conf"),
-            Path.Combine(installPath, "nginx", "logs"),
-            Path.Combine(installPath, "nginx", "temp"),
             Path.Combine(installPath, "config"),
-            Path.Combine(installPath, "keys")
+            Path.Combine(installPath, "keys"),
+            Path.Combine(installPath, "logs"),
+            Path.Combine(installPath, "nginx", "logs"),
+            Path.Combine(installPath, "nginx", "temp")
         };
 
         foreach (var dir in directories)
@@ -154,40 +149,328 @@ public class InstallService : IInstallService
         return Task.CompletedTask;
     }
 
-    private Task CopyApiFiles(string installPath, IProgress<InstallProgress> progress)
+    private Task VerifyInstalledFiles(string installPath)
     {
-        var sourcePath = Path.Combine(ResourcePath, "api");
-        var targetPath = Path.Combine(installPath, "api");
-        if (Directory.Exists(sourcePath))
-            CopyDirectory(sourcePath, targetPath, progress);
+        // 验证 Inno Setup 解压的文件是否存在
+        var requiredFiles = new[]
+        {
+            Path.Combine(installPath, "api", "DataForgeStudio.Api.exe"),
+            Path.Combine(installPath, "WebSite", "index.html"),
+            Path.Combine(installPath, "nginx", "nginx.exe"),
+            Path.Combine(installPath, "DeployManager.exe")
+        };
+
+        var missingFiles = new List<string>();
+        foreach (var file in requiredFiles)
+        {
+            if (!File.Exists(file))
+                missingFiles.Add(file);
+        }
+
+        if (missingFiles.Count > 0)
+            throw new InvalidOperationException($"安装文件不完整，缺少: {string.Join(", ", missingFiles)}");
+
         return Task.CompletedTask;
     }
 
-    private Task CopyFrontendFiles(string installPath, IProgress<InstallProgress> progress)
+    private async Task InitializeDatabase(InstallConfig config, IProgress<InstallProgress> progress)
     {
-        var sourcePath = Path.Combine(ResourcePath, "frontend");
-        var targetPath = Path.Combine(installPath, "WebSite");
-        if (Directory.Exists(sourcePath))
-            CopyDirectory(sourcePath, targetPath, progress);
-        return Task.CompletedTask;
+        var databaseName = config.Database.Database;
+
+        using var masterConnection = new SqlConnection(config.Database.GetMasterConnectionString());
+        await masterConnection.OpenAsync();
+
+        // 检查数据库是否存在
+        var checkDbCmd = new SqlCommand(
+            $"SELECT COUNT(*) FROM sys.databases WHERE name = @dbName",
+            masterConnection);
+        checkDbCmd.Parameters.AddWithValue("@dbName", databaseName);
+        var dbExists = Convert.ToInt32(await checkDbCmd.ExecuteScalarAsync()) > 0;
+
+        if (dbExists)
+        {
+            progress.Report(new InstallProgress { LogMessage = "  数据库已存在，跳过创建" });
+            return;
+        }
+
+        // 创建数据库
+        progress.Report(new InstallProgress { LogMessage = $"  创建数据库 {databaseName}..." });
+        var createDbCmd = new SqlCommand($"CREATE DATABASE [{databaseName}]", masterConnection);
+        await createDbCmd.ExecuteNonQueryAsync();
+
+        // 切换到新数据库并创建表结构
+        masterConnection.ChangeDatabase(databaseName);
+
+        // 创建表结构
+        await ExecuteSqlScriptAsync(masterConnection, GetCreateTablesSql(), progress);
+
+        // 插入初始数据
+        await ExecuteSqlScriptAsync(masterConnection, GetSeedDataSql(), progress);
+
+        progress.Report(new InstallProgress { LogMessage = "  数据库初始化完成" });
     }
 
-    private Task CopyNginxFiles(string installPath, IProgress<InstallProgress> progress)
+    private async Task ExecuteSqlScriptAsync(SqlConnection connection, string script, IProgress<InstallProgress> progress)
     {
-        var sourcePath = Path.Combine(ResourcePath, "nginx");
-        var targetPath = Path.Combine(installPath, "nginx");
-        if (Directory.Exists(sourcePath))
-            CopyDirectory(sourcePath, targetPath, progress);
-        return Task.CompletedTask;
+        // 分割 SQL 语句（按 GO 分隔）
+        var batches = script.Split(new[] { "\nGO", "\ngo", "\r\nGO", "\r\ngo" }, StringSplitOptions.RemoveEmptyEntries);
+
+        foreach (var batch in batches)
+        {
+            var sql = batch.Trim();
+            if (string.IsNullOrWhiteSpace(sql)) continue;
+
+            try
+            {
+                using var cmd = new SqlCommand(sql, connection);
+                await cmd.ExecuteNonQueryAsync();
+            }
+            catch (Exception ex)
+            {
+                progress.Report(new InstallProgress { LogMessage = $"  SQL 执行警告: {ex.Message}" });
+            }
+        }
     }
 
-    private Task CopyDeployManager(string installPath, IProgress<InstallProgress> progress)
+    private string GetCreateTablesSql()
     {
-        var sourcePath = Path.Combine(ResourcePath, "manager");
-        var targetPath = installPath;
-        if (Directory.Exists(sourcePath))
-            CopyDirectory(sourcePath, targetPath, progress);
-        return Task.CompletedTask;
+        // 返回创建表结构的 SQL
+        return @"
+-- Users Table
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Users]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE [dbo].[Users](
+        [UserId] [int] IDENTITY(1,1) NOT NULL,
+        [Username] [nvarchar](50) NOT NULL,
+        [PasswordHash] [nvarchar](256) NOT NULL,
+        [RealName] [nvarchar](50) NULL,
+        [Email] [nvarchar](100) NULL,
+        [Phone] [nvarchar](20) NULL,
+        [Department] [nvarchar](100) NULL,
+        [Position] [nvarchar](50) NULL,
+        [IsActive] [bit] NOT NULL DEFAULT 1,
+        [IsSystem] [bit] NOT NULL DEFAULT 0,
+        [IsLocked] [bit] NOT NULL DEFAULT 0,
+        [LastLoginTime] [datetime] NULL,
+        [LastLoginIP] [nvarchar](50) NULL,
+        [PasswordFailCount] [int] NOT NULL DEFAULT 0,
+        [MustChangePassword] [bit] NOT NULL DEFAULT 0,
+        [Remark] [nvarchar](500) NULL,
+        [CreatedBy] [int] NULL,
+        [CreatedTime] [datetime] NOT NULL DEFAULT GETUTCDATE(),
+        [UpdatedBy] [int] NULL,
+        [UpdatedTime] [datetime] NULL,
+        CONSTRAINT [PK_Users] PRIMARY KEY CLUSTERED ([UserId] ASC),
+        CONSTRAINT [UQ_Users_Username] UNIQUE NONCLUSTERED ([Username] ASC),
+        CONSTRAINT [CK_Users_IsSystem] CHECK ([IsSystem] = 0 OR [Username] = 'root')
+    );
+END
+
+-- Roles Table
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Roles]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE [dbo].[Roles](
+        [RoleId] [int] IDENTITY(1,1) NOT NULL,
+        [RoleName] [nvarchar](50) NOT NULL,
+        [RoleCode] [nvarchar](50) NOT NULL,
+        [Description] [nvarchar](200) NULL,
+        [Permissions] [nvarchar](max) NULL,
+        [IsSystem] [bit] NOT NULL DEFAULT 0,
+        [SortOrder] [int] NOT NULL DEFAULT 0,
+        [IsActive] [bit] NOT NULL DEFAULT 1,
+        [CreatedBy] [int] NULL,
+        [CreatedTime] [datetime] NOT NULL DEFAULT GETUTCDATE(),
+        [UpdatedBy] [int] NULL,
+        [UpdatedTime] [datetime] NULL,
+        CONSTRAINT [PK_Roles] PRIMARY KEY CLUSTERED ([RoleId] ASC),
+        CONSTRAINT [UQ_Roles_RoleCode] UNIQUE NONCLUSTERED ([RoleCode] ASC)
+    );
+END
+
+-- UserRoles Table
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[UserRoles]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE [dbo].[UserRoles](
+        [UserRoleId] [int] IDENTITY(1,1) NOT NULL,
+        [UserId] [int] NOT NULL,
+        [RoleId] [int] NOT NULL,
+        [CreatedBy] [int] NULL,
+        [CreatedTime] [datetime] NOT NULL DEFAULT GETUTCDATE(),
+        CONSTRAINT [PK_UserRoles] PRIMARY KEY CLUSTERED ([UserRoleId] ASC),
+        CONSTRAINT [UQ_UserRoles_User_Role] UNIQUE NONCLUSTERED ([UserId] ASC, [RoleId] ASC)
+    );
+END
+
+-- RolePermissions Table
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[RolePermissions]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE [dbo].[RolePermissions](
+        [PermissionId] [int] IDENTITY(1,1) NOT NULL,
+        [RoleId] [int] NOT NULL,
+        [PermissionCode] [nvarchar](100) NOT NULL,
+        [CreatedBy] [int] NULL,
+        [CreatedTime] [datetime] NOT NULL DEFAULT GETUTCDATE(),
+        CONSTRAINT [PK_RolePermissions] PRIMARY KEY CLUSTERED ([PermissionId] ASC),
+        CONSTRAINT [UQ_RolePermissions_Role_Code] UNIQUE NONCLUSTERED ([RoleId] ASC, [PermissionCode] ASC)
+    );
+END
+
+-- Permissions Table
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Permissions]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE [dbo].[Permissions](
+        [PermissionId] [int] IDENTITY(1,1) NOT NULL,
+        [PermissionName] [nvarchar](50) NOT NULL,
+        [PermissionCode] [nvarchar](100) NOT NULL,
+        [Category] [nvarchar](50) NOT NULL,
+        [Description] [nvarchar](200) NULL,
+        [SortOrder] [int] NOT NULL DEFAULT 0,
+        CONSTRAINT [PK_Permissions] PRIMARY KEY CLUSTERED ([PermissionId] ASC),
+        CONSTRAINT [UQ_Permissions_Code] UNIQUE NONCLUSTERED ([PermissionCode] ASC)
+    );
+END
+
+-- DataSources Table
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[DataSources]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE [dbo].[DataSources](
+        [DataSourceId] [int] IDENTITY(1,1) NOT NULL,
+        [DataSourceName] [nvarchar](100) NOT NULL,
+        [DatabaseType] [nvarchar](50) NOT NULL,
+        [ConnectionString] [nvarchar](500) NOT NULL,
+        [Description] [nvarchar](500) NULL,
+        [IsDefault] [bit] NOT NULL DEFAULT 0,
+        [IsActive] [bit] NOT NULL DEFAULT 1,
+        [CreatedBy] [int] NULL,
+        [CreatedTime] [datetime] NOT NULL DEFAULT GETUTCDATE(),
+        [UpdatedBy] [int] NULL,
+        [UpdatedTime] [datetime] NULL,
+        CONSTRAINT [PK_DataSources] PRIMARY KEY CLUSTERED ([DataSourceId] ASC)
+    );
+END
+
+-- Reports Table
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Reports]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE [dbo].[Reports](
+        [ReportId] [int] IDENTITY(1,1) NOT NULL,
+        [ReportName] [nvarchar](100) NOT NULL,
+        [ReportCode] [nvarchar](50) NOT NULL,
+        [DataSourceId] [int] NULL,
+        [SqlText] [nvarchar](max) NOT NULL,
+        [Description] [nvarchar](500) NULL,
+        [Category] [nvarchar](50) NULL,
+        [FieldConfig] [nvarchar](max) NULL,
+        [ParamConfig] [nvarchar](max) NULL,
+        [CacheDuration] [int] NOT NULL DEFAULT 0,
+        [IsActive] [bit] NOT NULL DEFAULT 1,
+        [SortOrder] [int] NOT NULL DEFAULT 0,
+        [CreatedBy] [int] NULL,
+        [CreatedTime] [datetime] NOT NULL DEFAULT GETUTCDATE(),
+        [UpdatedBy] [int] NULL,
+        [UpdatedTime] [datetime] NULL,
+        CONSTRAINT [PK_Reports] PRIMARY KEY CLUSTERED ([ReportId] ASC),
+        CONSTRAINT [UQ_Reports_Code] UNIQUE NONCLUSTERED ([ReportCode] ASC)
+    );
+END
+
+-- Licenses Table
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Licenses]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE [dbo].[Licenses](
+        [LicenseId] [int] IDENTITY(1,1) NOT NULL,
+        [LicenseKey] [nvarchar](max) NOT NULL,
+        [MachineCode] [nvarchar](100) NULL,
+        [LicenseType] [nvarchar](50) NOT NULL,
+        [ProductName] [nvarchar](100) NOT NULL,
+        [LicensedTo] [nvarchar](200) NULL,
+        [MaxUsers] [int] NOT NULL DEFAULT 0,
+        [Features] [nvarchar](max) NULL,
+        [IssuedAt] [datetime] NOT NULL,
+        [ExpiresAt] [datetime] NULL,
+        [IsActive] [bit] NOT NULL DEFAULT 1,
+        [ActivatedAt] [datetime] NULL,
+        [CreatedAt] [datetime] NOT NULL DEFAULT GETUTCDATE(),
+        [UpdatedAt] [datetime] NULL,
+        CONSTRAINT [PK_Licenses] PRIMARY KEY CLUSTERED ([LicenseId] ASC)
+    );
+END
+
+-- OperationLogs Table
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[OperationLogs]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE [dbo].[OperationLogs](
+        [LogId] [bigint] IDENTITY(1,1) NOT NULL,
+        [UserId] [int] NULL,
+        [Username] [nvarchar](50) NULL,
+        [Operation] [nvarchar](100) NOT NULL,
+        [Module] [nvarchar](50) NULL,
+        [Target] [nvarchar](200) NULL,
+        [RequestMethod] [nvarchar](10) NULL,
+        [RequestPath] [nvarchar](500) NULL,
+        [RequestParams] [nvarchar](max) NULL,
+        [ResponseStatus] [int] NULL,
+        [IpAddress] [nvarchar](50) NULL,
+        [UserAgent] [nvarchar](500) NULL,
+        [Duration] [int] NULL,
+        [ErrorMessage] [nvarchar](max) NULL,
+        [CreatedTime] [datetime] NOT NULL DEFAULT GETUTCDATE(),
+        CONSTRAINT [PK_OperationLogs] PRIMARY KEY CLUSTERED ([LogId] ASC)
+    );
+END
+
+-- TrialRecords Table (防重置)
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[TrialRecords]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE [dbo].[TrialRecords](
+        [TrialRecordId] [int] IDENTITY(1,1) NOT NULL,
+        [MachineCode] [nvarchar](100) NOT NULL,
+        [FirstRunTime] [datetime] NOT NULL,
+        [CreatedAt] [datetime] NOT NULL DEFAULT GETUTCDATE(),
+        CONSTRAINT [PK_TrialRecords] PRIMARY KEY CLUSTERED ([TrialRecordId] ASC),
+        CONSTRAINT [UQ_TrialRecords_MachineCode] UNIQUE NONCLUSTERED ([MachineCode] ASC)
+    );
+END
+";
+    }
+
+    private string GetSeedDataSql()
+    {
+        // 返回初始数据 SQL - 创建 root 用户和基础角色
+        // 密码是临时密码，用户首次登录时需要修改
+        return @"
+-- 插入默认权限
+INSERT INTO [Permissions] (PermissionName, PermissionCode, Category, Description, SortOrder) VALUES
+(N'用户管理', 'user:manage', N'用户权限', N'管理用户账户', 1),
+(N'角色管理', 'role:manage', N'用户权限', N'管理角色', 2),
+(N'报表管理', 'report:manage', N'报表权限', N'管理报表', 3),
+(N'报表查询', 'report:view', N'报表权限', N'查询报表', 4),
+(N'数据源管理', 'datasource:manage', N'系统设置', N'管理数据源', 5),
+(N'系统设置', 'system:settings', N'系统设置', N'系统设置', 6),
+(N'操作日志', 'log:view', N'系统设置', N'查看操作日志', 7),
+(N'许可证管理', 'license:manage', N'系统设置', N'管理许可证', 8);
+
+-- 插入超级管理员角色
+INSERT INTO [Roles] (RoleName, RoleCode, Description, IsSystem, SortOrder, IsActive) VALUES
+(N'超级管理员', 'admin', N'拥有所有权限', 1, 1, 1);
+
+-- 为超级管理员分配所有权限
+INSERT INTO [RolePermissions] (RoleId, PermissionCode)
+SELECT r.RoleId, p.PermissionCode
+FROM [Roles] r, [Permissions] p
+WHERE r.RoleCode = 'admin';
+
+-- 插入 root 用户 (默认密码: Admin@123，首次登录必须修改)
+-- BCrypt hash for 'Admin@123'
+INSERT INTO [Users] (Username, PasswordHash, RealName, IsActive, IsSystem, MustChangePassword) VALUES
+('root', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.VTtYA/7.J6LlZy', N'系统管理员', 1, 1, 1);
+
+-- 为 root 用户分配超级管理员角色
+INSERT INTO [UserRoles] (UserId, RoleId)
+SELECT u.UserId, r.RoleId
+FROM [Users] u, [Roles] r
+WHERE u.Username = 'root' AND r.RoleCode = 'admin';
+";
     }
 
     private Task GenerateConfigFiles(InstallConfig config)
@@ -257,18 +540,19 @@ http {{
     private void GenerateDeployConfig(InstallConfig config)
     {
         var deployConfigPath = Path.Combine(config.InstallPath, "config", "deploy-config.json");
+        var nginxPath = Path.Combine(config.InstallPath, "nginx").Replace("\\", "\\\\");
         var deployConfig = $@"{{
   ""version"": ""1.0.0"",
   ""installPath"": ""{config.InstallPath.Replace("\\", "\\\\")}"",
   ""backend"": {{
     ""port"": {config.Backend.Port},
-    ""serviceName"": ""{config.Backend.ServiceName}"",
-    ""executablePath"": ""{Path.Combine(config.InstallPath, "api", "DataForgeStudio.Api.exe").Replace("\\", "\\\\")}""
+    ""serviceName"": ""{config.Backend.ServiceName}""
   }},
   ""frontend"": {{
     ""port"": {config.Frontend.Port},
     ""mode"": ""nginx"",
-    ""frontendPath"": ""{Path.Combine(config.InstallPath, "WebSite").Replace("\\", "\\\\")}""
+    ""iisSiteName"": ""DataForgeStudio"",
+    ""nginxPath"": ""{nginxPath}""
   }},
   ""database"": {{
     ""server"": ""{config.Database.Server}"",
@@ -344,25 +628,5 @@ $Shortcut.Save()
         process?.WaitForExit();
 
         return Task.CompletedTask;
-    }
-
-    private void CopyDirectory(string sourceDir, string targetDir, IProgress<InstallProgress>? progress = null)
-    {
-        Directory.CreateDirectory(targetDir);
-
-        foreach (var file in Directory.GetFiles(sourceDir))
-        {
-            var fileName = Path.GetFileName(file);
-            var targetFile = Path.Combine(targetDir, fileName);
-            File.Copy(file, targetFile, true);
-            progress?.Report(new InstallProgress { LogMessage = $"  复制: {fileName}" });
-        }
-
-        foreach (var dir in Directory.GetDirectories(sourceDir))
-        {
-            var dirName = Path.GetFileName(dir);
-            var targetSubDir = Path.Combine(targetDir, dirName);
-            CopyDirectory(dir, targetSubDir, progress);
-        }
     }
 }
