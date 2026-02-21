@@ -277,11 +277,10 @@ http {
 
     static void GenerateDeployConfig(Configuration config)
     {
-        var deployConfigPath = Path.Combine(config.InstallPath, "config", "deploy-config.json");
         var nginxPath = Path.Combine(config.InstallPath, "nginx").Replace("\\", "\\\\");
         var installPathEscaped = config.InstallPath.Replace("\\", "\\\\");
 
-        var deployConfig = $$"""
+        var configContent = $$"""
 {
   "version": "1.0.0",
   "installPath": "{{installPathEscaped}}",
@@ -305,7 +304,16 @@ http {
   }
 }
 """;
-        File.WriteAllText(deployConfigPath, deployConfig);
+
+        // 生成 config.json 到安装根目录（DeployManager 使用）
+        var configJsonPath = Path.Combine(config.InstallPath, "config.json");
+        File.WriteAllText(configJsonPath, configContent);
+        Log($"  生成: {configJsonPath}");
+
+        // 生成 deploy-config.json 到 config 子目录（备份）
+        var deployConfigPath = Path.Combine(config.InstallPath, "config", "deploy-config.json");
+        File.WriteAllText(deployConfigPath, configContent);
+        Log($"  生成: {deployConfigPath}");
     }
 
     static async Task InitializeDatabase(Configuration config)
