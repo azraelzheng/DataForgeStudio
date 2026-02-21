@@ -81,6 +81,35 @@ var
   DbConfigPage: TWizardPage;
   PortConfigPage: TWizardPage;
 
+// 更新用户名密码输入框的启用状态
+procedure UpdateAuthFields;
+begin
+  DbUserEdit.Enabled := DbAuthRadioSql.Checked;
+  DbPasswordEdit.Enabled := DbAuthRadioSql.Checked;
+  if DbAuthRadioSql.Checked then
+  begin
+    DbUserEdit.Color := clWindow;
+    DbPasswordEdit.Color := clWindow;
+  end
+  else
+  begin
+    DbUserEdit.Color := clBtnFace;
+    DbPasswordEdit.Color := clBtnFace;
+  end;
+end;
+
+// Windows 认证单选按钮点击事件
+procedure DbAuthRadioWindowsClick(Sender: TObject);
+begin
+  UpdateAuthFields;
+end;
+
+// SQL Server 认证单选按钮点击事件
+procedure DbAuthRadioSqlClick(Sender: TObject);
+begin
+  UpdateAuthFields;
+end;
+
 procedure InitializeWizard;
 begin
   // 创建数据库配置页面
@@ -159,6 +188,7 @@ begin
     Width := 150;
     Caption := 'Windows 身份验证';
     Checked := True;
+    OnClick := @DbAuthRadioWindowsClick;
   end;
   DbAuthRadioSql := TRadioButton.Create(WizardForm);
   with DbAuthRadioSql do
@@ -168,6 +198,7 @@ begin
     Top := 88;
     Width := 150;
     Caption := 'SQL Server 身份验证';
+    OnClick := @DbAuthRadioSqlClick;
   end;
 
   // 用户名
@@ -263,21 +294,10 @@ end;
 
 procedure CurPageChanged(CurPageID: Integer);
 begin
-  // 根据认证方式启用/禁用用户名密码输入
+  // 进入数据库配置页面时更新认证字段状态
   if CurPageID = DbConfigPage.ID then
   begin
-    DbUserEdit.Enabled := DbAuthRadioSql.Checked;
-    DbPasswordEdit.Enabled := DbAuthRadioSql.Checked;
-    if DbAuthRadioSql.Checked then
-    begin
-      DbUserEdit.Color := clWindow;
-      DbPasswordEdit.Color := clWindow;
-    end
-    else
-    begin
-      DbUserEdit.Color := clBtnFace;
-      DbPasswordEdit.Color := clBtnFace;
-    end;
+    UpdateAuthFields;
   end;
 end;
 
