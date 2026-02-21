@@ -92,13 +92,40 @@ public partial class FrontendModeViewModel : ObservableObject
         try
         {
             var config = _configService.Load();
-            IsIisMode = config.Frontend.Mode.Equals("iis", StringComparison.OrdinalIgnoreCase);
+
+            // 根据配置和安装状态设置模式
+            var configMode = config.Frontend.Mode?.ToLowerInvariant() ?? "nginx";
+
+            // 如果配置的是 IIS 模式但 IIS 未安装，自动切换到 Nginx
+            if (configMode == "iis" && !IisInstalled && NginxInstalled)
+            {
+                IsIisMode = false;
+                System.Diagnostics.Debug.WriteLine("[FrontendModeViewModel] IIS 未安装，使用 Nginx 模式");
+            }
+            // 如果配置的是 Nginx 模式但 Nginx 未安装，自动切换到 IIS
+            else if (configMode == "nginx" && !NginxInstalled && IisInstalled)
+            {
+                IsIisMode = true;
+                System.Diagnostics.Debug.WriteLine("[FrontendModeViewModel] Nginx 未安装，使用 IIS 模式");
+            }
+            // 如果都未安装，默认使用 Nginx（捆绑的）
+            else if (!IisInstalled && !NginxInstalled)
+            {
+                IsIisMode = false;
+                System.Diagnostics.Debug.WriteLine("[FrontendModeViewModel] 两者都未安装，默认使用 Nginx 模式");
+            }
+            else
+            {
+                IsIisMode = configMode == "iis";
+            }
 
             OperationResult = "";
             OperationSuccess = false;
         }
         catch (Exception ex)
         {
+            // 配置加载失败时，根据安装状态设置默认模式
+            IsIisMode = IisInstalled && !NginxInstalled;
             OperationResult = $"加载配置失败: {ex.Message}";
             OperationSuccess = false;
         }
@@ -130,20 +157,47 @@ public partial class FrontendModeViewModel : ObservableObject
             return;
         }
 
+        // 如果已经是目标模式，不需要切换
+        if ((targetMode == "iis" && IsIisMode) || (targetMode == "nginx" && IsNginxMode))
+        {
+            OperationResult = $"已经是 {(IsIisMode ? "IIS" : "Nginx")} 模式";
+            OperationSuccess = true;
+            return;
+        }
+
         IsSwitching = true;
         OperationResult = "正在切换模式...";
 
         try
         {
-            // 停止当前服务
-            if (IsIisMode)
+            // 停止当前服务（仅在已安装时）
+            if (IsIisMode && IisInstalled)
             {
-                var config = _configService.Load();
-                _iisManager.StopSite(config.Frontend.IisSiteName);
+                try
+                {
+                    var config = _configService.Load();
+                    if (_iisManager.IsSiteExists(config.Frontend.IisSiteName))
+                    {
+                        _iisManager.StopSite(config.Frontend.IisSiteName);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // 忽略停止失败，继续切换
+                    System.Diagnostics.Debug.WriteLine($"[FrontendModeViewModel] 停止 IIS 站点失败: {ex.Message}");
+                }
             }
-            else
+            else if (IsNginxMode)
             {
-                await _nginxManager.StopAsync();
+                try
+                {
+                    await _nginxManager.StopAsync();
+                }
+                catch (Exception ex)
+                {
+                    // 忽略停止失败，继续切换
+                    System.Diagnostics.Debug.WriteLine($"[FrontendModeViewModel] 停止 Nginx 失败: {ex.Message}");
+                }
             }
 
             // 更新配置

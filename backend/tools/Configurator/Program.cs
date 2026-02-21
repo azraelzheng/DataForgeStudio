@@ -5,6 +5,8 @@ namespace Configurator;
 
 class Program
 {
+    private static string? _logPath;
+
     static async Task<int> Main(string[] args)
     {
         // 定义命令行参数
@@ -52,60 +54,90 @@ class Program
         return await rootCommand.InvokeAsync(args);
     }
 
+    static void Log(string message)
+    {
+        Console.WriteLine(message);
+        try
+        {
+            if (_logPath != null)
+            {
+                File.AppendAllText(_logPath, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {message}\n");
+            }
+        }
+        catch { }
+    }
+
     static async Task<int> RunConfiguration(Configuration config)
     {
-        Console.WriteLine("========================================");
-        Console.WriteLine("DataForgeStudio 配置器");
-        Console.WriteLine("========================================");
-        Console.WriteLine();
+        // 设置日志文件路径
+        _logPath = Path.Combine(config.InstallPath, "logs", "configurator.log");
+
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(_logPath)!);
+        }
+        catch { }
+
+        Log("========================================");
+        Log("DataForgeStudio 配置器");
+        Log("========================================");
+        Log("");
+        Log($"安装路径: {config.InstallPath}");
+        Log($"数据库服务器: {config.DbServer}:{config.DbPort}");
+        Log($"数据库名: {config.DbName}");
+        Log($"认证方式: {config.DbAuth}");
+        Log($"后端端口: {config.BackendPort}");
+        Log($"前端端口: {config.FrontendPort}");
+        Log("");
 
         try
         {
             // 步骤1: 验证安装路径
-            Console.WriteLine("[1/5] 验证安装路径...");
+            Log("[1/5] 验证安装路径...");
             if (!Directory.Exists(config.InstallPath))
             {
-                Console.WriteLine($"错误: 安装路径不存在: {config.InstallPath}");
+                Log($"错误: 安装路径不存在: {config.InstallPath}");
                 return 1;
             }
-            Console.WriteLine("✓ 安装路径验证通过");
+            Log("✓ 安装路径验证通过");
 
             // 步骤2: 生成配置文件
-            Console.WriteLine("[2/5] 生成配置文件...");
+            Log("[2/5] 生成配置文件...");
             GenerateAppSettings(config);
             GenerateNginxConfig(config);
             GenerateDeployConfig(config);
-            Console.WriteLine("✓ 配置文件生成完成");
+            Log("✓ 配置文件生成完成");
 
             // 步骤3: 初始化数据库
-            Console.WriteLine("[3/5] 初始化数据库...");
+            Log("[3/5] 初始化数据库...");
             await InitializeDatabase(config);
-            Console.WriteLine("✓ 数据库初始化完成");
+            Log("✓ 数据库初始化完成");
 
             // 步骤4: 注册 Windows 服务
-            Console.WriteLine("[4/5] 注册 Windows 服务...");
+            Log("[4/5] 注册 Windows 服务...");
             RegisterWindowsService(config);
-            Console.WriteLine("✓ Windows 服务注册完成");
+            Log("✓ Windows 服务注册完成");
 
             // 步骤5: 创建桌面快捷方式
-            Console.WriteLine("[5/5] 创建桌面快捷方式...");
+            Log("[5/5] 创建桌面快捷方式...");
             CreateDesktopShortcut(config);
-            Console.WriteLine("✓ 桌面快捷方式创建完成");
+            Log("✓ 桌面快捷方式创建完成");
 
-            Console.WriteLine();
-            Console.WriteLine("========================================");
-            Console.WriteLine("配置完成!");
-            Console.WriteLine($"安装路径: {config.InstallPath}");
-            Console.WriteLine($"默认用户名: root");
-            Console.WriteLine($"默认密码: Admin@123");
-            Console.WriteLine("请登录后立即修改密码!");
-            Console.WriteLine("========================================");
+            Log("");
+            Log("========================================");
+            Log("配置完成!");
+            Log($"安装路径: {config.InstallPath}");
+            Log($"默认用户名: root");
+            Log($"默认密码: Admin@123");
+            Log("请登录后立即修改密码!");
+            Log("========================================");
 
             return 0;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"错误: {ex.Message}");
+            Log($"错误: {ex.Message}");
+            Log($"堆栈跟踪: {ex.StackTrace}");
             return 1;
         }
     }
