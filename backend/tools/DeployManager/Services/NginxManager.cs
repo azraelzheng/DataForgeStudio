@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using DeployManager.Models;
 
 namespace DeployManager.Services;
 
@@ -10,8 +11,18 @@ namespace DeployManager.Services;
 /// </summary>
 public class NginxManager : INginxManager
 {
+    private readonly IConfigService _configService;
     private string? _nginxExePath;
     private string? _nginxDirectory;
+
+    /// <summary>
+    /// 初始化 Nginx 管理器
+    /// </summary>
+    /// <param name="configService">配置服务</param>
+    public NginxManager(IConfigService configService)
+    {
+        _configService = configService ?? throw new ArgumentNullException(nameof(configService));
+    }
 
     /// <summary>
     /// 检查 Nginx 是否已安装
@@ -20,7 +31,30 @@ public class NginxManager : INginxManager
     /// <returns>如果 Nginx 已安装返回 true，否则返回 false</returns>
     public bool IsNginxInstalled()
     {
-        // 常见的 Nginx 安装路径
+        // 1. 首先检查捆绑的 Nginx（在安装目录下）
+        try
+        {
+            var config = _configService.Load();
+            var installPath = config.InstallPath;
+            if (!string.IsNullOrEmpty(installPath))
+            {
+                var bundledNginxPath = Path.Combine(installPath, "nginx", "nginx.exe");
+                Debug.WriteLine($"[NginxManager] 检查捆绑的 Nginx: {bundledNginxPath}");
+                if (File.Exists(bundledNginxPath))
+                {
+                    _nginxExePath = bundledNginxPath;
+                    _nginxDirectory = Path.GetDirectoryName(bundledNginxPath);
+                    Debug.WriteLine($"[NginxManager] 找到捆绑的 Nginx: {bundledNginxPath}");
+                    return true;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[NginxManager] 检查捆绑 Nginx 时发生异常: {ex.Message}");
+        }
+
+        // 2. 检查常见的独立 Nginx 安装路径
         var commonPaths = new[]
         {
             @"C:\nginx\nginx.exe",
@@ -39,7 +73,7 @@ public class NginxManager : INginxManager
             }
         }
 
-        // 尝试从 PATH 环境变量中查找
+        // 3. 尝试从 PATH 环境变量中查找
         try
         {
             var pathEnv = Environment.GetEnvironmentVariable("PATH");
