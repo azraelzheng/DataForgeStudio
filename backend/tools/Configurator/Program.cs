@@ -6,6 +6,8 @@ namespace Configurator;
 class Program
 {
     private static string? _logPath;
+    private static string? _fallbackLogPath;
+    private static bool _logEnabled = false;
 
     static async Task<int> Main(string[] args)
     {
@@ -54,29 +56,72 @@ class Program
         return await rootCommand.InvokeAsync(args);
     }
 
+    static void InitLogging(string installPath)
+    {
+        // 主日志路径
+        _logPath = Path.Combine(installPath, "logs", "configurator.log");
+
+        // 备用日志路径（桌面）
+        var desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+        _fallbackLogPath = Path.Combine(desktopPath, "DataForgeStudio_configurator.log");
+
+        // 尝试创建主日志目录
+        try
+        {
+            var logDir = Path.GetDirectoryName(_logPath);
+            if (!string.IsNullOrEmpty(logDir) && !Directory.Exists(logDir))
+            {
+                Directory.CreateDirectory(logDir);
+            }
+            // 测试写入
+            File.AppendAllText(_logPath, "");
+            _logEnabled = true;
+            Console.WriteLine($"[日志] 日志文件: {_logPath}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[警告] 无法创建日志文件: {_logPath}");
+            Console.WriteLine($"[警告] 错误: {ex.Message}");
+            _logEnabled = false;
+        }
+    }
+
     static void Log(string message)
     {
+        // 始终输出到控制台
         Console.WriteLine(message);
+
+        if (!_logEnabled) return;
+
+        var timestamp = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] ";
+        var logLine = timestamp + message;
+
+        // 尝试写入主日志
         try
         {
             if (_logPath != null)
             {
-                File.AppendAllText(_logPath, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {message}\n");
+                File.AppendAllText(_logPath, logLine + "\n");
             }
         }
-        catch { }
+        catch
+        {
+            // 主日志失败，尝试备用日志
+            try
+            {
+                if (_fallbackLogPath != null)
+                {
+                    File.AppendAllText(_fallbackLogPath, logLine + " [备用日志]\n");
+                }
+            }
+            catch { }
+        }
     }
 
     static async Task<int> RunConfiguration(Configuration config)
     {
-        // 设置日志文件路径
-        _logPath = Path.Combine(config.InstallPath, "logs", "configurator.log");
-
-        try
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(_logPath)!);
-        }
-        catch { }
+        // 初始化日志
+        InitLogging(config.InstallPath);
 
         Log("========================================");
         Log("DataForgeStudio 配置器");
