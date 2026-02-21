@@ -19,6 +19,8 @@ backend/**/*.user
 backend/!.vscode/tasks.json
 backend/**/*.csproj.user
 backend/**/*.csproj.user
+build/
+dist/
 
 # ------------- Frontend -------------
 frontend/node_modules/
