@@ -22,11 +22,11 @@ mkdir "%BUILD_DIR%\api"
 mkdir "%BUILD_DIR%\frontend"
 mkdir "%BUILD_DIR%\nginx"
 mkdir "%BUILD_DIR%\manager"
-mkdir "%BUILD_DIR%\installer"
+mkdir "%BUILD_DIR%\configurator"
 echo 目录创建完成
 echo.
 
-echo [1/6] 构建后端 API...
+echo [1/7] 构建后端 API...
 dotnet publish "%PROJECT_ROOT%\backend\src\DataForgeStudio.Api\DataForgeStudio.Api.csproj" -c Release -o "%BUILD_DIR%\api" --self-contained true -r win-x64 /p:WarningLevel=0 /p:TreatWarningsAsErrors=false
 if errorlevel 1 (
     echo 后端 API 构建失败!
@@ -35,7 +35,7 @@ if errorlevel 1 (
 echo API 构建完成
 echo.
 
-echo [2/6] 构建前端...
+echo [2/7] 构建前端...
 cd /d "%PROJECT_ROOT%\frontend"
 call npm install
 call npm run build
@@ -48,7 +48,7 @@ cd /d "%PROJECT_ROOT%"
 echo 前端构建完成
 echo.
 
-echo [3/6] 构建系统管理工具...
+echo [3/7] 构建系统管理工具...
 dotnet publish "%PROJECT_ROOT%\backend\tools\DeployManager\DeployManager.csproj" -c Release -o "%BUILD_DIR%\manager" --self-contained true -r win-x64 /p:WarningLevel=0 /p:TreatWarningsAsErrors=false
 if errorlevel 1 (
     echo 系统管理工具构建失败!
@@ -57,7 +57,7 @@ if errorlevel 1 (
 echo 系统管理工具构建完成
 echo.
 
-echo [4/6] 复制 Nginx...
+echo [4/7] 复制 Nginx...
 xcopy /s /e /y "%PROJECT_ROOT%\resources\nginx\*" "%BUILD_DIR%\nginx\"
 if exist "%BUILD_DIR%\nginx\html" rd /s /q "%BUILD_DIR%\nginx\html"
 if exist "%BUILD_DIR%\nginx\docs" rd /s /q "%BUILD_DIR%\nginx\docs"
@@ -65,16 +65,16 @@ if exist "%BUILD_DIR%\nginx\contrib" rd /s /q "%BUILD_DIR%\nginx\contrib"
 echo Nginx 复制完成
 echo.
 
-echo [5/6] 构建安装程序...
-dotnet publish "%PROJECT_ROOT%\backend\tools\Installer\Installer.csproj" -c Release -o "%BUILD_DIR%\installer" --self-contained true -r win-x64 /p:WarningLevel=0 /p:TreatWarningsAsErrors=false
+echo [5/7] 构建配置器...
+dotnet publish "%PROJECT_ROOT%\backend\tools\Configurator\Configurator.csproj" -c Release -o "%BUILD_DIR%\configurator" --self-contained true -r win-x64 /p:WarningLevel=0 /p:TreatWarningsAsErrors=false
 if errorlevel 1 (
-    echo 安装程序构建失败!
+    echo 配置器构建失败!
     exit /b 1
 )
-echo 安装程序构建完成
+echo 配置器构建完成
 echo.
 
-echo [6/6] 使用 Inno Setup 打包...
+echo [6/7] 使用 Inno Setup 打包...
 set ISCC_PATH=%LOCALAPPDATA%\Programs\Inno Setup 6\ISCC.exe
 if not exist "%ISCC_PATH%" set ISCC_PATH=C:\Program Files (x86)\Inno Setup 6\ISCC.exe
 if not exist "%ISCC_PATH%" set ISCC_PATH=C:\Program Files\Inno Setup 6\ISCC.exe
