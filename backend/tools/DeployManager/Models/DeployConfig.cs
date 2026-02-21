@@ -32,7 +32,7 @@ public class BackendConfig
     public int Port { get; set; } = 5000;
 
     [JsonPropertyName("serviceName")]
-    public string ServiceName { get; set; } = "DataForgeStudio 服务";
+    public string ServiceName { get; set; } = "DFAppService";
 }
 
 /// <summary>

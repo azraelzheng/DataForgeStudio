@@ -12,7 +12,7 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="0,0,0,20">
             <!-- 后端服务 (AppService) -->
-            <TextBlock Text="DataForgeStudio 服务" FontSize="16" FontWeight="Bold" Foreground="#FF333333" Margin="0,0,0,10"/>
+            <TextBlock Text="DFAppService - 后端服务" FontSize="16" FontWeight="Bold" Foreground="#FF333333" Margin="0,0,0,10"/>
 
             <!-- AppService 状态卡片 -->
             <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,15">
@@ -188,7 +188,7 @@
             </Border>
 
             <!-- 前端服务 (WebService) -->
-            <TextBlock Text="前端服务" FontSize="16" FontWeight="Bold" Foreground="#FF333333" Margin="0,0,0,10"/>
+            <TextBlock Text="DFWebService - 前端服务" FontSize="16" FontWeight="Bold" Foreground="#FF333333" Margin="0,0,0,10"/>
 
             <!-- WebService 状态卡片 -->
             <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,15">
@@ -342,7 +342,7 @@
                         </Border>
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock Text="开机自启动" FontSize="16" FontWeight="Medium" Foreground="#FF333333"/>
-                            <TextBlock Text="系统启动时自动运行 DataForgeStudio 服务" FontSize="12" Foreground="#FF666666" Margin="0,4,0,0"/>
+                            <TextBlock Text="系统启动时自动运行 DFAppService 和 DFWebService 服务" FontSize="12" Foreground="#FF666666" Margin="0,4,0,0"/>
                         </StackPanel>
                     </StackPanel>
 

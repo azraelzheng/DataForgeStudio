@@ -6,7 +6,7 @@
         xmlns:vm="clr-namespace:DeployManager.ViewModels"
         xmlns:views="clr-namespace:DeployManager.Views"
         mc:Ignorable="d"
-        Title="DataForgeStudio 系统管理" Height="580" Width="900"
+        Title="DataForgeStudio 系统管理" Height="620" Width="900"
         WindowStartupLocation="CenterScreen"
         Background="#FFF5F5F5"
         ResizeMode="CanMinimize">

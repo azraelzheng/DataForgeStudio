@@ -9,8 +9,8 @@ namespace DeployManager.ViewModels;
 /// <summary>
 /// 服务控制视图模型
 /// 管理两个服务：
-/// - AppService: 后端 API 服务（DataForgeStudio 服务）
-/// - WebService: 前端服务（IIS 或 Nginx）
+/// - AppService: 后端 API 服务（DFAppService）
+/// - WebService: 前端服务（DFWebService，支持 IIS 或 Nginx）
 /// </summary>
 public partial class ServiceControlViewModel : ObservableObject, IDisposable
 {

@@ -179,24 +179,30 @@ public class ConfigService : IConfigService
     /// <param name="fileName">文件名</param>
     /// <param name="maxLevels">最大向上查找层数</param>
     /// <returns>文件完整路径，未找到返回 null</returns>
-    private static string? FindFileUpwards(string startDir, string fileName, int maxLevels = 10)
+    private static string? FindFileUpwards(string startDir, string fileName, int maxLevels = 15)
     {
         var currentDir = startDir;
+        Debug.WriteLine($"[ConfigService] FindFileUpwards: 开始查找 '{fileName}'，起始目录: {startDir}，最大层数: {maxLevels}");
+
         for (int i = 0; i < maxLevels; i++)
         {
             var filePath = Path.Combine(currentDir, fileName);
+            Debug.WriteLine($"[ConfigService] FindFileUpwards: 第 {i + 1} 层，检查路径: {filePath}");
             if (File.Exists(filePath))
             {
+                Debug.WriteLine($"[ConfigService] FindFileUpwards: 找到文件! 路径: {filePath}");
                 return filePath;
             }
 
             var parent = Directory.GetParent(currentDir);
             if (parent == null)
             {
+                Debug.WriteLine($"[ConfigService] FindFileUpwards: 已到达根目录，未找到文件");
                 break;
             }
             currentDir = parent.FullName;
         }
+        Debug.WriteLine($"[ConfigService] FindFileUpwards: 遍历 {maxLevels} 层后未找到文件");
         return null;
     }
 
@@ -272,13 +278,22 @@ public class ConfigService : IConfigService
 
         try
         {
+            Debug.WriteLine($"[ConfigService] === Load() 开始 ===");
+            Debug.WriteLine($"[ConfigService] 配置文件路径(config.json): {_configPath}");
+            Debug.WriteLine($"[ConfigService] 安装路径: {_installPath}");
+
+            // 获取并输出 appsettings.json 路径
+            var appSettingsPath = GetAppSettingsPath();
+            Debug.WriteLine($"[ConfigService] appsettings.json 路径: {appSettingsPath}");
+            Debug.WriteLine($"[ConfigService] appsettings.json 存在: {File.Exists(appSettingsPath)}");
+
             // 从 appsettings.json 读取后端端口和数据库配置
             LoadFromAppSettings(config);
 
             // 从 config.json 读取元信息（安装路径、前端模式等）
             LoadFromLocalConfig(config);
 
-            Debug.WriteLine($"[ConfigService] 成功加载配置");
+            Debug.WriteLine($"[ConfigService] === Load() 完成 ===");
             return config;
         }
         catch (Exception ex)
@@ -472,13 +487,16 @@ public class ConfigService : IConfigService
             throw new ArgumentNullException(nameof(config));
         }
 
-        Debug.WriteLine($"[ConfigService] === 开始保存配置 ===");
+        Debug.WriteLine($"[ConfigService] === Save() 开始 ===");
+        Debug.WriteLine($"[ConfigService] 配置文件路径(config.json): {_configPath}");
+        Debug.WriteLine($"[ConfigService] 安装路径: {_installPath}");
 
         try
         {
             // 保存到 appsettings.json
             var appSettingsPath = GetAppSettingsPath();
             Debug.WriteLine($"[ConfigService] appsettings.json 路径: {appSettingsPath}");
+            Debug.WriteLine($"[ConfigService] appsettings.json 存在: {File.Exists(appSettingsPath)}");
 
             if (!File.Exists(appSettingsPath))
             {
@@ -493,8 +511,7 @@ public class ConfigService : IConfigService
             // 保存到 config.json（元信息）
             SaveLocalConfig(config);
 
-            Debug.WriteLine($"[ConfigService] 配置已保存");
-            Debug.WriteLine($"[ConfigService] === 保存配置完成 ===");
+            Debug.WriteLine($"[ConfigService] === Save() 完成 ===");
         }
         catch (Exception ex)
         {
