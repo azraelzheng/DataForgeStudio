@@ -79,15 +79,26 @@ public class ConfigService : IConfigService
             var slnDir = Path.GetDirectoryName(slnPath);
             if (slnDir != null)
             {
-                // 开发环境：sln 目录下的 backend\src\DataForgeStudio.Api
-                var devApiPath = Path.Combine(slnDir, "backend", "src", "DataForgeStudio.Api");
-                var devAppSettings = Path.Combine(devApiPath, "appsettings.json");
-                Debug.WriteLine($"[ConfigService] 检查开发环境 API 路径: {devApiPath}");
-                Debug.WriteLine($"[ConfigService] 检查 appsettings.json: {devAppSettings}, 存在: {File.Exists(devAppSettings)}");
-                if (File.Exists(devAppSettings))
+                // 情况A: sln 在 backend 目录下（直接检查 src\DataForgeStudio.Api）
+                var devApiPathA = Path.Combine(slnDir, "src", "DataForgeStudio.Api");
+                var devAppSettingsA = Path.Combine(devApiPathA, "appsettings.json");
+                Debug.WriteLine($"[ConfigService] 检查开发环境路径A (sln在backend目录): {devApiPathA}");
+                Debug.WriteLine($"[ConfigService] 检查 appsettings.json: {devAppSettingsA}, 存在: {File.Exists(devAppSettingsA)}");
+                if (File.Exists(devAppSettingsA))
                 {
-                    Debug.WriteLine($"[ConfigService] 成功! 检测到开发环境，API路径: {devApiPath}");
-                    return devApiPath;
+                    Debug.WriteLine($"[ConfigService] 成功! 检测到开发环境（sln在backend目录），API路径: {devApiPathA}");
+                    return devApiPathA;
+                }
+
+                // 情况B: sln 在项目根目录下（检查 backend\src\DataForgeStudio.Api）
+                var devApiPathB = Path.Combine(slnDir, "backend", "src", "DataForgeStudio.Api");
+                var devAppSettingsB = Path.Combine(devApiPathB, "appsettings.json");
+                Debug.WriteLine($"[ConfigService] 检查开发环境路径B (sln在根目录): {devApiPathB}");
+                Debug.WriteLine($"[ConfigService] 检查 appsettings.json: {devAppSettingsB}, 存在: {File.Exists(devAppSettingsB)}");
+                if (File.Exists(devAppSettingsB))
+                {
+                    Debug.WriteLine($"[ConfigService] 成功! 检测到开发环境（sln在根目录），API路径: {devApiPathB}");
+                    return devApiPathB;
                 }
             }
         }

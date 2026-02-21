@@ -24,7 +24,7 @@ public class WindowsServiceManager : IWindowsServiceManager
             throw new ArgumentNullException(nameof(configService));
 
         var config = configService.Load();
-        _serviceName = config.Backend.ServiceName ?? "DataForgeStudio API";
+        _serviceName = config.Backend.ServiceName ?? "DFAppService";
     }
 
     /// <summary>

@@ -167,6 +167,9 @@ public partial class DatabaseConfigViewModel : ObservableObject
 
             TestSuccess = success;
             TestResult = message;
+
+            // 测试完成后通知保存按钮更新状态
+            SaveCommand.NotifyCanExecuteChanged();
         }
         catch (Exception ex)
         {
@@ -182,11 +185,19 @@ public partial class DatabaseConfigViewModel : ObservableObject
     /// <summary>
     /// 保存配置命令
     /// 同时更新 appsettings.json 和 config.json
+    /// 只有测试连接成功后才能保存
     /// </summary>
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanSave))]
     private void Save()
     {
         if (IsSaving) return;
+
+        // 再次检查测试是否成功
+        if (!TestSuccess)
+        {
+            TestResult = "请先测试连接成功后再保存配置";
+            return;
+        }
 
         IsSaving = true;
 
@@ -222,17 +233,47 @@ public partial class DatabaseConfigViewModel : ObservableObject
     private bool CanTest() => !IsTesting;
 
     /// <summary>
-    /// 是否可以保存
+    /// 是否可以保存（必须测试成功）
     /// </summary>
-    private bool CanSave() => !IsSaving;
+    private bool CanSave() => !IsSaving && TestSuccess;
+
+    /// <summary>
+    /// 配置变更时清除测试结果
+    /// </summary>
+    private void ClearTestResult()
+    {
+        TestResult = "";
+        TestSuccess = false;
+        SaveCommand.NotifyCanExecuteChanged();
+    }
+
+    /// <summary>
+    /// Server 属性变更时的处理
+    /// </summary>
+    partial void OnServerChanged(string value) => ClearTestResult();
+
+    /// <summary>
+    /// Port 属性变更时的处理
+    /// </summary>
+    partial void OnPortChanged(string value) => ClearTestResult();
+
+    /// <summary>
+    /// Database 属性变更时的处理
+    /// </summary>
+    partial void OnDatabaseChanged(string value) => ClearTestResult();
+
+    /// <summary>
+    /// Username 属性变更时的处理
+    /// </summary>
+    partial void OnUsernameChanged(string value) => ClearTestResult();
+
+    /// <summary>
+    /// Password 属性变更时的处理
+    /// </summary>
+    partial void OnPasswordChanged(string value) => ClearTestResult();
 
     /// <summary>
     /// UseWindowsAuth 属性变更时的处理
     /// </summary>
-    partial void OnUseWindowsAuthChanged(bool value)
-    {
-        // 清除测试结果
-        TestResult = "";
-        TestSuccess = false;
-    }
+    partial void OnUseWindowsAuthChanged(bool value) => ClearTestResult();
 }

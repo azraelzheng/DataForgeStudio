@@ -2,6 +2,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DeployManager.Services;
 using System.IO;
+using System.Net;
+using System.Net.Sockets;
 
 namespace DeployManager.ViewModels;
 
@@ -9,9 +11,10 @@ namespace DeployManager.ViewModels;
 /// 端口配置视图模型
 ///
 /// 保存端口时会：
-/// 1. 保存后端端口到 appsettings.json
-/// 2. 保存前端端口到 IIS（如果是 IIS 模式）
-/// 3. 保存元信息到 config.json
+/// 1. 检测端口是否被占用
+/// 2. 保存后端端口到 appsettings.json
+/// 3. 保存前端端口到 IIS（如果是 IIS 模式）
+/// 4. 保存元信息到 config.json
 /// </summary>
 public partial class PortConfigViewModel : ObservableObject
 {
@@ -23,12 +26,14 @@ public partial class PortConfigViewModel : ObservableObject
     /// 后端端口
     /// </summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanSave))]
     private int _backendPort = 5000;
 
     /// <summary>
     /// 前端端口
     /// </summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanSave))]
     private int _frontendPort = 80;
 
     /// <summary>
@@ -42,6 +47,40 @@ public partial class PortConfigViewModel : ObservableObject
     /// </summary>
     [ObservableProperty]
     private string _iisSiteName = "DataForgeStudio";
+
+    /// <summary>
+    /// 测试结果消息
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasTestResult))]
+    [NotifyCanExecuteChangedFor(nameof(SaveCommand))]
+    private string _testResult = "";
+
+    /// <summary>
+    /// 是否有测试结果
+    /// </summary>
+    public bool HasTestResult => !string.IsNullOrEmpty(TestResult);
+
+    /// <summary>
+    /// 测试是否成功
+    /// </summary>
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(SaveCommand))]
+    private bool _testSuccess;
+
+    /// <summary>
+    /// 是否正在测试
+    /// </summary>
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(TestPortsCommand))]
+    private bool _isTesting;
+
+    /// <summary>
+    /// 是否正在保存
+    /// </summary>
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(SaveCommand))]
+    private bool _isSaving;
 
     /// <summary>
     /// 保存结果消息
@@ -62,11 +101,9 @@ public partial class PortConfigViewModel : ObservableObject
     private bool _showSaveResult;
 
     /// <summary>
-    /// 是否正在保存
+    /// 是否可以保存（测试成功后才能保存）
     /// </summary>
-    [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(SaveCommand))]
-    private bool _isSaving;
+    public bool CanSave => !IsSaving && TestSuccess;
 
     /// <summary>
     /// 初始化端口配置视图模型
@@ -104,14 +141,116 @@ public partial class PortConfigViewModel : ObservableObject
             FrontendMode = config.Frontend.Mode;
             IisSiteName = config.Frontend.IisSiteName;
 
-            SaveResult = "";
-            SaveSuccess = false;
+            ClearTestResult();
             ShowSaveResult = false;
         }
         catch (Exception ex)
         {
-            SaveResult = $"加载配置失败: {ex.Message}";
-            SaveSuccess = false;
+            TestResult = $"加载配置失败: {ex.Message}";
+            TestSuccess = false;
+        }
+    }
+
+    /// <summary>
+    /// 清除测试结果
+    /// </summary>
+    private void ClearTestResult()
+    {
+        TestResult = "";
+        TestSuccess = false;
+        SaveCommand.NotifyCanExecuteChanged();
+    }
+
+    /// <summary>
+    /// 测试端口命令
+    /// </summary>
+    [RelayCommand]
+    private void TestPorts()
+    {
+        if (IsTesting) return;
+
+        IsTesting = true;
+        var messages = new List<string>();
+
+        try
+        {
+            // 验证端口范围
+            if (BackendPort < 1 || BackendPort > 65535)
+            {
+                TestResult = "后端端口必须在 1-65535 范围内";
+                TestSuccess = false;
+                return;
+            }
+
+            if (FrontendPort < 1 || FrontendPort > 65535)
+            {
+                TestResult = "前端端口必须在 1-65535 范围内";
+                TestSuccess = false;
+                return;
+            }
+
+            // 检测后端端口
+            var backendInUse = IsPortInUse(BackendPort);
+            if (backendInUse)
+            {
+                messages.Add($"后端端口 {BackendPort} 已被占用");
+            }
+            else
+            {
+                messages.Add($"后端端口 {BackendPort} 可用");
+            }
+
+            // 检测前端端口
+            var frontendInUse = IsPortInUse(FrontendPort);
+            if (frontendInUse)
+            {
+                messages.Add($"前端端口 {FrontendPort} 已被占用");
+            }
+            else
+            {
+                messages.Add($"前端端口 {FrontendPort} 可用");
+            }
+
+            // 设置结果
+            var hasConflict = backendInUse || frontendInUse;
+            TestResult = string.Join("，", messages);
+            TestSuccess = !hasConflict;
+
+            SaveCommand.NotifyCanExecuteChanged();
+        }
+        catch (Exception ex)
+        {
+            TestResult = $"测试失败: {ex.Message}";
+            TestSuccess = false;
+        }
+        finally
+        {
+            IsTesting = false;
+        }
+    }
+
+    /// <summary>
+    /// 检测端口是否被占用
+    /// </summary>
+    /// <param name="port">端口号</param>
+    /// <returns>如果端口被占用返回 true，否则返回 false</returns>
+    private static bool IsPortInUse(int port)
+    {
+        try
+        {
+            // 尝试监听端口
+            var listener = new TcpListener(IPAddress.Any, port);
+            listener.Start();
+            listener.Stop();
+            return false; // 端口可用
+        }
+        catch (SocketException)
+        {
+            return true; // 端口被占用
+        }
+        catch
+        {
+            return true; // 其他错误也认为端口不可用
         }
     }
 
@@ -124,26 +263,20 @@ public partial class PortConfigViewModel : ObservableObject
     {
         if (IsSaving) return;
 
+        // 再次检查测试是否成功
+        if (!TestSuccess)
+        {
+            SaveResult = "请先测试端口可用后再保存配置";
+            SaveSuccess = false;
+            ShowSaveResult = true;
+            return;
+        }
+
         IsSaving = true;
         var messages = new List<string>();
 
         try
         {
-            // 验证端口范围
-            if (BackendPort < 1 || BackendPort > 65535)
-            {
-                SaveResult = "后端端口必须在 1-65535 范围内";
-                SaveSuccess = false;
-                return;
-            }
-
-            if (FrontendPort < 1 || FrontendPort > 65535)
-            {
-                SaveResult = "前端端口必须在 1-65535 范围内";
-                SaveSuccess = false;
-                return;
-            }
-
             // 1. 更新后端端口到 appsettings.json
             try
             {
@@ -261,7 +394,12 @@ public partial class PortConfigViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 是否可以保存
+    /// BackendPort 属性变更时的处理
     /// </summary>
-    private bool CanSave() => !IsSaving;
+    partial void OnBackendPortChanged(int value) => ClearTestResult();
+
+    /// <summary>
+    /// FrontendPort 属性变更时的处理
+    /// </summary>
+    partial void OnFrontendPortChanged(int value) => ClearTestResult();
 }
