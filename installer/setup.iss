@@ -1,6 +1,6 @@
-; DataForgeStudio 安装脚本 for Inno Setup
+; DataForgeStudio V1.0 安装脚本 for Inno Setup
 #define AppName "DataForgeStudio"
-#define AppVersion "4.0.0"
+#define AppVersion "1.0.0"
 #define AppPublisher "DataForgeStudio"
 
 #ifndef ProjectRoot
@@ -34,6 +34,7 @@ UninstallDisplayIcon={app}\DeployManager.exe
 UninstallDisplayName={#AppName}
 
 [Languages]
+Name: "chinesesimplified"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Files]
@@ -41,6 +42,7 @@ Source: "{#BuildDir}\installer\DataForgeStudioInstaller.exe"; DestDir: "{tmp}"; 
 Source: "{#BuildDir}\api\*"; DestDir: "{app}\api"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#BuildDir}\frontend\*"; DestDir: "{app}\WebSite"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#BuildDir}\nginx\*"; DestDir: "{app}\nginx"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#BuildDir}\manager\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Dirs]
 Name: "{app}\config"; Permissions: users-modify
@@ -53,8 +55,8 @@ Name: "{app}\nginx\temp"; Permissions: users-modify
 Filename: "{tmp}\DataForgeStudioInstaller.exe"; Description: "启动安装向导"; Flags: nowait postinstall skipifsilent
 
 [UninstallRun]
-Filename: "sc.exe"; Parameters: "stop ""DataForgeStudio API"""; RunOnceId: "StopService"; Flags: runhidden
-Filename: "sc.exe"; Parameters: "delete ""DataForgeStudio API"""; RunOnceId: "DeleteService"; Flags: runhidden
+Filename: "sc.exe"; Parameters: "stop ""DFAppService"""; RunOnceId: "StopAppService"; Flags: runhidden
+Filename: "sc.exe"; Parameters: "delete ""DFAppService"""; RunOnceId: "DeleteAppService"; Flags: runhidden
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}\logs"

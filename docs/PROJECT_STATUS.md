@@ -1,16 +1,17 @@
-# DataForgeStudio V4 项目状态
+# DataForgeStudio V1.0 项目状态
 
-**更新日期**: 2026-02-17
+**更新日期**: 2026-02-21
 
 ## 项目概述
 
-**项目名称**: DataForgeStudio V4
+**项目名称**: DataForgeStudio
+**版本**: V1.0
 **项目类型**: Web 报表管理系统
 **技术栈**: ASP.NET Core 8.0 + Vue 3 + SQL Server
 
 ## 当前状态
 
-### 整体进度: 95% 完成
+### 整体进度: 100% 完成
 
 | 模块 | 状态 | 完成度 |
 |------|------|--------|
@@ -21,7 +22,8 @@
 | 许可证系统 | ✅ 完成 | 100% |
 | 安全加固 | ✅ 完成 | 100% |
 | 报表功能 | ✅ 完成 | 100% |
-| 系统管理 | ✅ 完成 | 100% |
+| 系统管理工具 | ✅ 完成 | 100% |
+| 安装程序 | ✅ 完成 | 100% |
 
 ## 已实现的核心功能
 
@@ -55,10 +57,12 @@
 - 连接测试
 - 密码 AES 加密存储
 
-### 6. 系统管理
-- 操作日志
-- 备份管理
-- 系统配置
+### 6. 系统管理工具 (DeployManager)
+- Windows 服务管理 (DFAppService)
+- 前端服务管理 (IIS/Nginx - DFWebService)
+- 数据库配置
+- 端口配置（含占用检测）
+- 开机自启设置
 
 ### 7. 许可证系统
 - RSA 2048 位密钥管理
@@ -67,19 +71,26 @@
 - 机器码绑定
 - 功能模块控制
 - 用户数限制
-- 试用期防重置机制 (2026-02-17 新增)
+- 试用期防重置机制
   - DPAPI 加密存储
   - 多位置冗余（注册表、ProgramData、应用目录）
   - 交叉验证取最早时间
   - 15 天试用期
 
-### 8. 安全加固 (已完成 2026-02-05)
+### 8. 安全加固
 - ✅ 环境变量配置 (SecurityOptions)
 - ✅ 随机临时密码生成
 - ✅ SQL 注入防护 (SqlValidationService)
 - ✅ 速率限制 (RateLimitMiddleware)
 - ✅ CORS 配置
 - ✅ HTTPS 生产环境支持
+
+### 9. 安装程序
+- ✅ Inno Setup 打包
+- ✅ 安装向导 (WPF)
+- ✅ 数据库初始化
+- ✅ 服务注册
+- ✅ IIS/Nginx 配置
 
 ## 技术栈
 
@@ -112,7 +123,7 @@
 ## 项目结构
 
 ```
-DataForgeStudio_V4/
+DataForgeStudio/
 ├── backend/                    # 后端项目
 │   ├── src/
 │   │   ├── DataForgeStudio.Api/         # Web API
@@ -121,7 +132,10 @@ DataForgeStudio_V4/
 │   │   ├── DataForgeStudio.Data/        # 数据访问
 │   │   └── DataForgeStudio.Shared/      # 共享工具
 │   └── tools/
-│       └── LicenseGenerator/            # 许可证生成工具
+│       ├── LicenseGenerator/            # 许可证生成工具
+│       ├── DeployManager/               # 系统管理工具
+│       ├── Installer/                   # 安装向导
+│       └── TestService/                 # 测试服务
 │
 ├── frontend/                   # 前端项目
 │   └── src/
@@ -132,48 +146,51 @@ DataForgeStudio_V4/
 │       ├── stores/             # Pinia 状态管理
 │       └── utils/              # 工具函数
 │
+├── installer/                  # 安装程序
+│   └── setup.iss              # Inno Setup 脚本
+│
+├── scripts/                    # 构建脚本
+│   └── build-installer.bat    # 安装包构建脚本
+│
+├── resources/                  # 资源文件
+│   └── nginx/                 # Nginx 发行版
+│
 ├── database/                   # 数据库脚本
 │   ├── migrations/
 │   └── seeds/
 │
 └── docs/                       # 文档
     ├── database-design.md      # 数据库设计文档
-    └── archive/                # 历史文档存档
+    ├── license-generation-guide.md # 许可证生成指南
+    └── user-manual/            # 用户手册
 ```
 
 ## 运行方式
 
-### 后端
+### 开发环境
+
+**后端:**
 ```bash
 cd backend
 dotnet run --project src/DataForgeStudio.Api
 ```
 
-### 前端
+**前端:**
 ```bash
 cd frontend
 npm run dev
 ```
 
-## API 端点
+### 生产环境
 
-| 功能 | 端点 | 认证 |
+运行安装程序 `DataForgeStudio-Setup.exe` 进行安装。
+
+## 服务名称
+
+| 服务 | 名称 | 说明 |
 |------|------|------|
-| 登录 | POST /api/auth/login | ❌ |
-| 获取当前用户 | GET /api/auth/current-user | ✅ |
-| 修改密码 | POST /api/auth/change-password | ✅ |
-| 用户管理 | /api/users/* | ✅ |
-| 角色管理 | /api/roles/* | ✅ |
-| 数据源管理 | /api/datasources/* | ✅ |
-| 报表管理 | /api/reports/* | ✅ |
-| 许可证管理 | /api/license/* | 部分 |
-| 系统管理 | /api/system/* | ✅ |
-
-## 数据库连接
-
-```
-Server=localhost;Database=DataForgeStudio_V4;User Id=sa;Password=your_password;TrustServerCertificate=True;
-```
+| 后端服务 | DFAppService | ASP.NET Core API 服务 |
+| 前端服务 | DFWebService | IIS 或 Nginx 托管 |
 
 ## 环境变量 (生产环境)
 
@@ -188,64 +205,49 @@ DFS_LICENSE_AES_IV="your-16-character-license-aes-iv"
 ## 部署要求
 
 ### 服务器
-- Windows Server
+- Windows Server 2012 R2+
 - SQL Server 2005+
-- .NET 8.0 Runtime (或 ASP.NET Core Hosting Bundle)
+- .NET 8.0 Runtime
 
-### IIS 配置
+### IIS 配置 (可选)
 - 安装 ASP.NET Core Hosting Bundle
 - 配置应用程序池 (无托管代码)
-- 配置 web.config
+
+### Nginx (可选)
+- 包含在安装包中
+- 自动配置
 
 ## 常用命令
 
-### 数据库操作
-```sql
--- 查看用户列表（不包括 root）
-SELECT * FROM Users WHERE IsSystem = 0
-
--- 查看用户权限
-SELECT u.Username, r.RoleName, p.PermissionName
-FROM Users u
-INNER JOIN UserRoles ur ON u.UserId = ur.UserId
-INNER JOIN Roles r ON ur.RoleId = r.RoleId
-INNER JOIN RolePermissions rp ON r.RoleId = rp.RoleId
-INNER JOIN Permissions p ON rp.PermissionId = p.PermissionId
-WHERE u.Username = 'admin'
-```
-
-### Git 操作
+### 构建安装包
 ```bash
-# 查看状态
-git status
-
-# 提交更改
-git add .
-git commit -m "commit message"
-
-# 推送到远程
-git push origin main
+cd scripts
+build-installer.bat
 ```
 
-## 待办事项
+### 生成许可证
+```bash
+cd backend/tools/LicenseGenerator
+dotnet run
+```
 
-### 短期 (可选)
-- [ ] 单元测试
+### 安装测试服务
+```bash
+cd backend/tools/TestService
+install-service.bat  # 以管理员身份运行
+```
+
+## 后续计划
+
+### 质量保障
+- [ ] 后端单元测试
+- [ ] API 集成测试
+- [ ] 前端组件测试
+
+### 用户体验
+- [ ] 完善用户手册
 - [ ] API 文档完善
-- [ ] 用户手册编写
-
-### 长期 (可选)
-- [ ] Docker 容器化
-- [ ] CI/CD 流水线
-- [ ] 性能优化
 
 ## 已知问题
 
 无关键问题。系统已可投入生产使用。
-
-## 联系方式
-
-- 项目路径: `H:\开发项目\DataForgeStudio_V4`
-- 后端端口: 5000
-- 前端端口: 5173
-- Swagger: https://localhost:5000/swagger

@@ -26,7 +26,7 @@ public class DatabaseConfig
     public int Port { get; set; } = 1433;
 
     [JsonPropertyName("database")]
-    public string Database { get; set; } = "DataForgeStudio_V4";
+    public string Database { get; set; } = "DataForgeStudio";
 
     [JsonPropertyName("username")]
     public string Username { get; set; } = "sa";
@@ -88,5 +88,5 @@ public class BackendConfig
     public int Port { get; set; } = 5000;
 
     [JsonPropertyName("serviceName")]
-    public string ServiceName { get; set; } = "DataForgeStudio API";
+    public string ServiceName { get; set; } = "DFAppService";
 }
