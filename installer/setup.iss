@@ -108,6 +108,11 @@ Type: filesandordirs; Name: "{app}\keys"
 Type: filesandordirs; Name: "{app}\DBServer"
 
 [Code]
+
+// 导入 Windows API 函数
+function GetTickCount: Cardinal;
+  external 'GetTickCount@kernel32.dll stdcall';
+
 var
   DbServerEdit: TEdit;
   DbPortEdit: TEdit;
