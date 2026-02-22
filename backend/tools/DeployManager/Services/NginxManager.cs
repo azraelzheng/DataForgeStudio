@@ -12,15 +12,15 @@ namespace DeployManager.Services;
 /// </summary>
 public class NginxManager : INginxManager
 {
-    private readonly IConfigService _configService;
+    private readonly Lazy<IConfigService> _configService;
     private string? _nginxExePath;
     private string? _nginxDirectory;
 
     /// <summary>
     /// 初始化 Nginx 管理器
     /// </summary>
-    /// <param name="configService">配置服务</param>
-    public NginxManager(IConfigService configService)
+    /// <param name="configService">配置服务（延迟加载，用于打破循环依赖）</param>
+    public NginxManager(Lazy<IConfigService> configService)
     {
         _configService = configService ?? throw new ArgumentNullException(nameof(configService));
         FileLogger.Info("[NginxManager] 初始化完成");
@@ -40,7 +40,7 @@ public class NginxManager : INginxManager
         try
         {
             FileLogger.Info("步骤1: 使用 InstallPath 检查捆绑的 Nginx...");
-            var installPath = _configService.InstallPath;
+            var installPath = _configService.Value.InstallPath;
 
             FileLogger.Info($"安装路径: {installPath ?? "null"}");
             Debug.WriteLine($"[NginxManager] 安装路径: {installPath ?? "null"}");
@@ -88,7 +88,7 @@ public class NginxManager : INginxManager
         try
         {
             FileLogger.Info("步骤2: 使用 GetNginxPath() 检查...");
-            var nginxPath = _configService.GetNginxPath();
+            var nginxPath = _configService.Value.GetNginxPath();
 
             if (!string.IsNullOrEmpty(nginxPath))
             {
