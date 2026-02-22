@@ -39,13 +39,11 @@ public class NginxManager : INginxManager
         // 1. 首先检查捆绑的 Nginx（在安装目录下）
         try
         {
-            FileLogger.Info("步骤1: 加载配置...");
-            var config = _configService.Load();
-            var installPath = config.InstallPath;
+            FileLogger.Info("步骤1: 使用 InstallPath 检查捆绑的 Nginx...");
+            var installPath = _configService.InstallPath;
 
-            FileLogger.Info($"从配置读取的安装路径: {installPath ?? "null"}");
-            FileLogger.Info($"配置中的 NginxPath: {config.Frontend.NginxPath ?? "null"}");
-            Debug.WriteLine($"[NginxManager] 从配置读取的安装路径: {installPath ?? "null"}");
+            FileLogger.Info($"安装路径: {installPath ?? "null"}");
+            Debug.WriteLine($"[NginxManager] 安装路径: {installPath ?? "null"}");
 
             if (!string.IsNullOrEmpty(installPath))
             {
@@ -59,8 +57,8 @@ public class NginxManager : INginxManager
                 {
                     _nginxExePath = bundledNginxPath;
                     _nginxDirectory = Path.GetDirectoryName(bundledNginxPath);
-                    FileLogger.Info($"✓ 找到捆绑的 Nginx: {bundledNginxPath}");
-                    Debug.WriteLine($"[NginxManager] ✓ 找到捆绑的 Nginx: {bundledNginxPath}");
+                    FileLogger.Info($"找到捆绑的 Nginx: {bundledNginxPath}");
+                    Debug.WriteLine($"[NginxManager] 找到捆绑的 Nginx: {bundledNginxPath}");
                     return true;
                 }
 
@@ -86,12 +84,11 @@ public class NginxManager : INginxManager
             Debug.WriteLine($"[NginxManager] 堆栈跟踪: {ex.StackTrace}");
         }
 
-        // 2. 检查 config.Frontend.NginxPath
+        // 2. 使用 GetNginxPath 检查
         try
         {
-            FileLogger.Info("步骤2: 检查 Frontend.NginxPath...");
-            var config = _configService.Load();
-            var nginxPath = config.Frontend.NginxPath;
+            FileLogger.Info("步骤2: 使用 GetNginxPath() 检查...");
+            var nginxPath = _configService.GetNginxPath();
 
             if (!string.IsNullOrEmpty(nginxPath))
             {
@@ -103,14 +100,14 @@ public class NginxManager : INginxManager
                 {
                     _nginxExePath = nginxExePath;
                     _nginxDirectory = nginxPath;
-                    FileLogger.Info($"✓ 从 NginxPath 找到 Nginx: {nginxExePath}");
+                    FileLogger.Info($"从 GetNginxPath() 找到 Nginx: {nginxExePath}");
                     return true;
                 }
             }
         }
         catch (Exception ex)
         {
-            FileLogger.Error("检查 Frontend.NginxPath 时发生异常", ex);
+            FileLogger.Error("检查 GetNginxPath() 时发生异常", ex);
         }
 
         // 3. 检查常见的独立 Nginx 安装路径

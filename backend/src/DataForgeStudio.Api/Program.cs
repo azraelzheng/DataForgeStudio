@@ -19,6 +19,9 @@ var isTestingEnvironment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRO
 
 var builder = WebApplication.CreateBuilder(args);
 
+// 添加 Windows 服务支持
+builder.Services.AddWindowsService();
+
 // 再次检查 builder 中的环境
 if (builder.Environment.IsEnvironment("Testing"))
 {

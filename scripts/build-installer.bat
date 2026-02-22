@@ -18,16 +18,17 @@ echo 清理旧构建...
 if exist "%BUILD_DIR%" rd /s /q "%BUILD_DIR%"
 mkdir "%BUILD_DIR%"
 mkdir "%DIST_DIR%"
-mkdir "%BUILD_DIR%\api"
-mkdir "%BUILD_DIR%\frontend"
-mkdir "%BUILD_DIR%\nginx"
+mkdir "%BUILD_DIR%\Server"
+mkdir "%BUILD_DIR%\WebSite"
+mkdir "%BUILD_DIR%\WebServer"
+mkdir "%BUILD_DIR%\DBServer"
 mkdir "%BUILD_DIR%\manager"
 mkdir "%BUILD_DIR%\configurator"
 echo 目录创建完成
 echo.
 
 echo [1/7] 构建后端 API...
-dotnet publish "%PROJECT_ROOT%\backend\src\DataForgeStudio.Api\DataForgeStudio.Api.csproj" -c Release -o "%BUILD_DIR%\api" --self-contained true -r win-x64 /p:WarningLevel=0 /p:TreatWarningsAsErrors=false
+dotnet publish "%PROJECT_ROOT%\backend\src\DataForgeStudio.Api\DataForgeStudio.Api.csproj" -c Release -o "%BUILD_DIR%\Server" --self-contained true -r win-x64 /p:WarningLevel=0 /p:TreatWarningsAsErrors=false
 if errorlevel 1 (
     echo 后端 API 构建失败!
     exit /b 1
@@ -43,7 +44,7 @@ if errorlevel 1 (
     echo 前端构建失败!
     exit /b 1
 )
-xcopy /s /e /y "%PROJECT_ROOT%\frontend\dist\*" "%BUILD_DIR%\frontend\"
+xcopy /s /e /y "%PROJECT_ROOT%\frontend\dist\*" "%BUILD_DIR%\WebSite\"
 cd /d "%PROJECT_ROOT%"
 echo 前端构建完成
 echo.
@@ -54,14 +55,18 @@ if errorlevel 1 (
     echo 系统管理工具构建失败!
     exit /b 1
 )
+echo 清理多余的语言资源文件...
+for %%d in (cs de es fr it ja ko pl pt-BR ru tr zh-Hant) do (
+    if exist "%BUILD_DIR%\manager\%%d" rd /s /q "%BUILD_DIR%\manager\%%d"
+)
 echo 系统管理工具构建完成
 echo.
 
 echo [4/7] 复制 Nginx...
-xcopy /s /e /y "%PROJECT_ROOT%\resources\nginx\*" "%BUILD_DIR%\nginx\"
-if exist "%BUILD_DIR%\nginx\html" rd /s /q "%BUILD_DIR%\nginx\html"
-if exist "%BUILD_DIR%\nginx\docs" rd /s /q "%BUILD_DIR%\nginx\docs"
-if exist "%BUILD_DIR%\nginx\contrib" rd /s /q "%BUILD_DIR%\nginx\contrib"
+xcopy /s /e /y "%PROJECT_ROOT%\resources\nginx\*" "%BUILD_DIR%\WebServer\"
+if exist "%BUILD_DIR%\WebServer\html" rd /s /q "%BUILD_DIR%\WebServer\html"
+if exist "%BUILD_DIR%\WebServer\docs" rd /s /q "%BUILD_DIR%\WebServer\docs"
+if exist "%BUILD_DIR%\WebServer\contrib" rd /s /q "%BUILD_DIR%\WebServer\contrib"
 echo Nginx 复制完成
 echo.
 

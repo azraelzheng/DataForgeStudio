@@ -135,11 +135,14 @@ public partial class PortConfigViewModel : ObservableObject
             // 从 appsettings.json 读取后端端口
             BackendPort = _configService.GetBackendPort();
 
-            // 从 config.json 读取前端配置
-            var config = _configService.Load();
-            FrontendPort = config.Frontend.Port;
-            FrontendMode = config.Frontend.Mode;
-            IisSiteName = config.Frontend.IisSiteName;
+            // 从 nginx.conf 读取前端端口
+            FrontendPort = _configService.GetFrontendPort();
+
+            // 获取前端模式
+            FrontendMode = _configService.GetFrontendMode();
+
+            // IIS 站点名称硬编码
+            IisSiteName = "DataForgeStudio";
 
             ClearTestResult();
             ShowSaveResult = false;
@@ -280,7 +283,7 @@ public partial class PortConfigViewModel : ObservableObject
             // 1. 更新后端端口到 appsettings.json
             try
             {
-                _configService.UpdateBackendPort(BackendPort);
+                _configService.SaveBackendPort(BackendPort);
                 messages.Add($"后端端口已更新为 {BackendPort}");
             }
             catch (Exception ex)
@@ -314,13 +317,9 @@ public partial class PortConfigViewModel : ObservableObject
                 }
             }
 
-            // 3. 保存元信息到 config.json
-            var config = _configService.Load();
-            config.Backend.Port = BackendPort;
-            config.Frontend.Port = FrontendPort;
-            config.Frontend.Mode = FrontendMode;
-            config.Frontend.IisSiteName = IisSiteName;
-            _configService.Save(config);
+            // 3. 保存端口配置
+            _configService.SaveBackendPort(BackendPort);
+            _configService.SaveFrontendPort(FrontendPort);
             messages.Add("配置已保存");
 
             // 设置结果
@@ -351,8 +350,7 @@ public partial class PortConfigViewModel : ObservableObject
         }
 
         // 获取前端物理路径
-        var config = _configService.Load();
-        var frontendPath = GetFrontendPath(config.InstallPath);
+        var frontendPath = _configService.GetWebSitePath();
 
         // 配置 IIS 站点
         _iisManager.ConfigureSite(IisSiteName, FrontendPort, frontendPath);
@@ -368,8 +366,7 @@ public partial class PortConfigViewModel : ObservableObject
             throw new InvalidOperationException("Nginx 管理器未初始化");
         }
 
-        var config = _configService.Load();
-        var nginxPath = config.Frontend.NginxPath;
+        var nginxPath = _configService.GetNginxPath();
 
         if (string.IsNullOrEmpty(nginxPath))
         {
@@ -383,14 +380,6 @@ public partial class PortConfigViewModel : ObservableObject
         var backendUrl = $"http://localhost:{BackendPort}";
 
         _nginxManager.UpdateConfig(configPath, FrontendPort, backendUrl);
-    }
-
-    /// <summary>
-    /// 获取前端部署路径
-    /// </summary>
-    private static string GetFrontendPath(string installPath)
-    {
-        return Path.Combine(installPath, "wwwroot");
     }
 
     /// <summary>

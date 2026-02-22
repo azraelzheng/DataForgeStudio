@@ -3,57 +3,6 @@ using System.Text.Json.Serialization;
 namespace DeployManager.Models;
 
 /// <summary>
-/// 部署配置根对象
-/// </summary>
-public class DeployConfig
-{
-    [JsonPropertyName("version")]
-    public string Version { get; set; } = "1.0.0";
-
-    [JsonPropertyName("installPath")]
-    public string InstallPath { get; set; } = @"C:\Program Files\DataForgeStudio";
-
-    [JsonPropertyName("backend")]
-    public BackendConfig Backend { get; set; } = new();
-
-    [JsonPropertyName("frontend")]
-    public FrontendConfig Frontend { get; set; } = new();
-
-    [JsonPropertyName("database")]
-    public DatabaseConfig Database { get; set; } = new();
-}
-
-/// <summary>
-/// 后端服务配置
-/// </summary>
-public class BackendConfig
-{
-    [JsonPropertyName("port")]
-    public int Port { get; set; } = 5000;
-
-    [JsonPropertyName("serviceName")]
-    public string ServiceName { get; set; } = "DFAppService";
-}
-
-/// <summary>
-/// 前端配置
-/// </summary>
-public class FrontendConfig
-{
-    [JsonPropertyName("port")]
-    public int Port { get; set; } = 80;
-
-    [JsonPropertyName("mode")]
-    public string Mode { get; set; } = "iis";  // "iis" 或 "nginx"
-
-    [JsonPropertyName("iisSiteName")]
-    public string IisSiteName { get; set; } = "DataForgeStudio";
-
-    [JsonPropertyName("nginxPath")]
-    public string NginxPath { get; set; } = "";
-}
-
-/// <summary>
 /// 数据库配置
 /// </summary>
 public class DatabaseConfig

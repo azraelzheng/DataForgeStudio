@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>..\..\..\resources\icons\app.ico</ApplicationIcon>
     <AssemblyName>DeployManager</AssemblyName>
     <RootNamespace>DeployManager</RootNamespace>
     <NoWarn>NU1605</NoWarn>

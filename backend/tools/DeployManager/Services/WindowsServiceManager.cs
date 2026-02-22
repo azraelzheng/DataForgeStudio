@@ -23,8 +23,7 @@ public class WindowsServiceManager : IWindowsServiceManager
         if (configService == null)
             throw new ArgumentNullException(nameof(configService));
 
-        var config = configService.Load();
-        _serviceName = config.Backend.ServiceName ?? "DFAppService";
+        _serviceName = configService.ServiceName ?? "DFAppService";
     }
 
     /// <summary>

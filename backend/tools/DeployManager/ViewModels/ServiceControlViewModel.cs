@@ -153,8 +153,8 @@ public partial class ServiceControlViewModel : ObservableObject, IDisposable
     {
         try
         {
-            var config = _configService.Load();
-            WebServiceType = config.Frontend.Mode?.ToUpper() == "NGINX" ? "Nginx" : "IIS";
+            var frontendMode = _configService.GetFrontendMode();
+            WebServiceType = frontendMode.ToUpper() == "NGINX" ? "Nginx" : "IIS";
             AutoStart = false; // TODO: 从配置加载
         }
         catch (Exception)
@@ -459,9 +459,8 @@ public partial class ServiceControlViewModel : ObservableObject, IDisposable
     {
         try
         {
-            var config = _configService.Load();
-            // TODO: 在 DeployConfig 中添加 AutoStart 属性后保存
-            _configService.Save(config);
+            // TODO: 在 IConfigService 中添加 SaveAutoStart 方法后保存
+            // _configService.SaveAutoStart(autoStart);
         }
         catch (Exception)
         {

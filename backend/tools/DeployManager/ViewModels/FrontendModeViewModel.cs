@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DeployManager.Services;
+using System.IO;
 
 namespace DeployManager.ViewModels;
 
@@ -80,8 +81,22 @@ public partial class FrontendModeViewModel : ObservableObject
     /// </summary>
     public void CheckInstallationStatus()
     {
-        IisInstalled = _iisManager.IsIisInstalled();
-        NginxInstalled = _nginxManager.IsNginxInstalled();
+        FileLogger.Info("=== FrontendModeViewModel.CheckInstallationStatus() 开始 ===");
+
+        try
+        {
+            IisInstalled = _iisManager.IsIisInstalled();
+            FileLogger.Info($"IIS 安装状态: {IisInstalled}");
+
+            NginxInstalled = _nginxManager.IsNginxInstalled();
+            FileLogger.Info($"Nginx 安装状态: {NginxInstalled}");
+        }
+        catch (Exception ex)
+        {
+            FileLogger.Error("检查安装状态失败", ex);
+        }
+
+        FileLogger.Info($"最终状态: IisInstalled={IisInstalled}, NginxInstalled={NginxInstalled}");
     }
 
     /// <summary>
@@ -91,10 +106,8 @@ public partial class FrontendModeViewModel : ObservableObject
     {
         try
         {
-            var config = _configService.Load();
-
-            // 根据配置和安装状态设置模式
-            var configMode = config.Frontend.Mode?.ToLowerInvariant() ?? "nginx";
+            // 使用 getter 方法获取前端模式
+            var configMode = _configService.GetFrontendMode().ToLowerInvariant();
 
             // 如果配置的是 IIS 模式但 IIS 未安装，自动切换到 Nginx
             if (configMode == "iis" && !IisInstalled && NginxInstalled)
@@ -175,10 +188,11 @@ public partial class FrontendModeViewModel : ObservableObject
             {
                 try
                 {
-                    var config = _configService.Load();
-                    if (_iisManager.IsSiteExists(config.Frontend.IisSiteName))
+                    // IIS 站点名称硬编码为 "DataForgeStudio"
+                    const string iisSiteName = "DataForgeStudio";
+                    if (_iisManager.IsSiteExists(iisSiteName))
                     {
-                        _iisManager.StopSite(config.Frontend.IisSiteName);
+                        _iisManager.StopSite(iisSiteName);
                     }
                 }
                 catch (Exception ex)
@@ -200,29 +214,25 @@ public partial class FrontendModeViewModel : ObservableObject
                 }
             }
 
-            // 更新配置
-            var deployConfig = _configService.Load();
-            deployConfig.Frontend.Mode = targetMode;
-            _configService.Save(deployConfig);
-
             // 启动新服务
+            // 注意：模式现在是通过运行时检测确定的，不再保存到 config.json
             if (targetMode == "iis")
             {
-                var config = _configService.Load();
-                var siteName = config.Frontend.IisSiteName;
-                var port = config.Frontend.Port;
-                var physicalPath = System.IO.Path.Combine(config.InstallPath, "wwwroot");
+                const string siteName = "DataForgeStudio";
+                var port = _configService.GetFrontendPort();
+                var physicalPath = _configService.GetWebSitePath();
 
                 _iisManager.ConfigureSite(siteName, port, physicalPath);
                 _iisManager.StartSite(siteName);
             }
             else
             {
-                var config = _configService.Load();
-                var nginxConfigPath = System.IO.Path.Combine(config.InstallPath, "nginx", "conf", "nginx.conf");
-                var backendUrl = $"http://localhost:{config.Backend.Port}";
+                var nginxConfigPath = System.IO.Path.Combine(_configService.InstallPath, "WebServer", "conf", "nginx.conf");
+                var backendPort = _configService.GetBackendPort();
+                var frontendPort = _configService.GetFrontendPort();
+                var backendUrl = $"http://localhost:{backendPort}";
 
-                _nginxManager.UpdateConfig(nginxConfigPath, config.Frontend.Port, backendUrl);
+                _nginxManager.UpdateConfig(nginxConfigPath, frontendPort, backendUrl);
                 await _nginxManager.StartAsync(nginxConfigPath);
             }
 

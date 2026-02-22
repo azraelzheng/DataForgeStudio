@@ -3,6 +3,7 @@ using System.IO;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using DeployManager.Models;
 
 namespace DeployManager.Services;
@@ -10,17 +11,34 @@ namespace DeployManager.Services;
 /// <summary>
 /// 配置服务实现
 ///
-/// 配置管理分为两部分：
-/// 1. config.json - 本地缓存，保存安装路径、前端模式等元信息
-/// 2. appsettings.json - 实际项目配置，保存端口、数据库连接等
+/// 配置存储位置：
+/// - appsettings.json: 后端端口、数据库连接字符串
+/// - nginx.conf: 前端端口（nginx 模式）
+/// - IIS: 前端端口（iis 模式）
 ///
-/// Load() 从两个文件合并读取
-/// Save() 同时更新两个文件
+/// 不再使用 config.json 作为配置存储，所有配置直接从实际配置文件读取。
 /// </summary>
 public class ConfigService : IConfigService
 {
-    private readonly string _configPath;
     private readonly string _installPath;
+    private readonly IIisManager _iisManager;
+    private readonly INginxManager _nginxManager;
+
+    /// <summary>
+    /// 服务名称常量
+    /// </summary>
+    public const string ServiceName = "DFAppService";
+
+    /// <summary>
+    /// 默认后端端口
+    /// </summary>
+    private const int DefaultBackendPort = 5000;
+
+    /// <summary>
+    /// 默认前端端口
+    /// </summary>
+    private const int DefaultFrontendPort = 80;
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         WriteIndented = true,
@@ -31,20 +49,27 @@ public class ConfigService : IConfigService
     /// <summary>
     /// 初始化配置服务
     /// </summary>
-    /// <param name="configPath">配置文件路径（可选，默认为应用程序目录下的 config.json）</param>
+    /// <param name="iisManager">IIS 管理器</param>
+    /// <param name="nginxManager">Nginx 管理器</param>
+    /// <param name="configPath">配置文件路径（已弃用，保留参数是为了向后兼容）</param>
     /// <param name="installPath">安装路径（可选，默认从注册表或默认路径读取）</param>
-    public ConfigService(string? configPath = null, string? installPath = null)
+    public ConfigService(IIisManager iisManager, INginxManager nginxManager, string? configPath = null, string? installPath = null)
     {
-        _configPath = configPath ?? GetDefaultConfigPath();
+        _iisManager = iisManager ?? throw new ArgumentNullException(nameof(iisManager));
+        _nginxManager = nginxManager ?? throw new ArgumentNullException(nameof(nginxManager));
         _installPath = installPath ?? GetInstallPath();
-        Debug.WriteLine($"[ConfigService] 配置文件路径: {_configPath}");
+
+        FileLogger.Info($"=== ConfigService 初始化 ===");
+        FileLogger.Info($"程序目录: {AppDomain.CurrentDomain.BaseDirectory}");
+        FileLogger.Info($"安装路径: {_installPath}");
+
         Debug.WriteLine($"[ConfigService] 安装路径: {_installPath}");
     }
 
     /// <summary>
-    /// 获取配置文件路径
+    /// 服务名称（接口实现）
     /// </summary>
-    public string ConfigPath => _configPath;
+    string IConfigService.ServiceName => ServiceName;
 
     /// <summary>
     /// 获取安装路径
@@ -52,17 +77,8 @@ public class ConfigService : IConfigService
     public string InstallPath => _installPath;
 
     /// <summary>
-    /// 获取默认配置文件路径
-    /// </summary>
-    private static string GetDefaultConfigPath()
-    {
-        var appDir = AppDomain.CurrentDomain.BaseDirectory;
-        return Path.Combine(appDir, "config.json");
-    }
-
-    /// <summary>
     /// 获取安装路径
-    /// 自动检测：开发环境（查找.sln） -> 生产环境（查找api目录） -> 注册表 -> config.json -> 默认路径
+    /// 自动检测：开发环境（查找.sln） -> 生产环境（查找api目录） -> 注册表 -> 默认路径
     /// </summary>
     private string GetInstallPath()
     {
@@ -103,9 +119,9 @@ public class ConfigService : IConfigService
             }
         }
 
-        // 2. 尝试检测生产环境（当前目录或上级目录有 api/appsettings.json）
+        // 2. 尝试检测生产环境（当前目录或上级目录有 Server/appsettings.json）
         Debug.WriteLine($"[ConfigService] 步骤2: 检测生产环境...");
-        var prodApiPath = Path.Combine(appDir, "api", "appsettings.json");
+        var prodApiPath = Path.Combine(appDir, "Server", "appsettings.json");
         Debug.WriteLine($"[ConfigService] 检查生产环境路径1: {prodApiPath}, 存在: {File.Exists(prodApiPath)}");
         if (File.Exists(prodApiPath))
         {
@@ -117,7 +133,7 @@ public class ConfigService : IConfigService
         Debug.WriteLine($"[ConfigService] 父目录: {parentDir?.FullName ?? "无"}");
         if (parentDir != null)
         {
-            prodApiPath = Path.Combine(parentDir.FullName, "api", "appsettings.json");
+            prodApiPath = Path.Combine(parentDir.FullName, "Server", "appsettings.json");
             Debug.WriteLine($"[ConfigService] 检查生产环境路径2: {prodApiPath}, 存在: {File.Exists(prodApiPath)}");
             if (File.Exists(prodApiPath))
             {
@@ -135,7 +151,7 @@ public class ConfigService : IConfigService
             Debug.WriteLine($"[ConfigService] 注册表路径: {regPath ?? "未找到"}");
             if (!string.IsNullOrEmpty(regPath) && Directory.Exists(regPath))
             {
-                var regAppSettings = Path.Combine(regPath, "api", "appsettings.json");
+                var regAppSettings = Path.Combine(regPath, "Server", "appsettings.json");
                 Debug.WriteLine($"[ConfigService] 检查注册表路径的 appsettings.json: {regAppSettings}, 存在: {File.Exists(regAppSettings)}");
                 if (File.Exists(regAppSettings))
                 {
@@ -149,36 +165,9 @@ public class ConfigService : IConfigService
             Debug.WriteLine($"[ConfigService] 读取注册表失败: {ex.Message}");
         }
 
-        // 4. 尝试从 config.json 读取
-        Debug.WriteLine($"[ConfigService] 步骤4: 从 config.json 读取...");
-        Debug.WriteLine($"[ConfigService] config.json 路径: {_configPath}, 存在: {File.Exists(_configPath)}");
-        try
-        {
-            if (File.Exists(_configPath))
-            {
-                var json = File.ReadAllText(_configPath);
-                var config = JsonSerializer.Deserialize<DeployConfig>(json, JsonOptions);
-                Debug.WriteLine($"[ConfigService] config.json 中的 InstallPath: {config?.InstallPath ?? "未配置"}");
-                if (!string.IsNullOrEmpty(config?.InstallPath) && Directory.Exists(config.InstallPath))
-                {
-                    var configAppSettings = Path.Combine(config.InstallPath, "api", "appsettings.json");
-                    Debug.WriteLine($"[ConfigService] 检查 config.json 路径的 appsettings.json: {configAppSettings}, 存在: {File.Exists(configAppSettings)}");
-                    if (File.Exists(configAppSettings))
-                    {
-                        Debug.WriteLine($"[ConfigService] 成功! 从 config.json 读取安装路径: {config.InstallPath}");
-                        return config.InstallPath;
-                    }
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"[ConfigService] 读取 config.json 失败: {ex.Message}");
-        }
-
-        // 5. 使用默认路径
+        // 4. 使用默认路径
         const string defaultPath = @"C:\Program Files\DataForgeStudio";
-        Debug.WriteLine($"[ConfigService] 步骤5: 使用默认安装路径: {defaultPath}");
+        Debug.WriteLine($"[ConfigService] 步骤4: 使用默认安装路径: {defaultPath}");
         Debug.WriteLine($"[ConfigService] === 路径检测结束 ===");
         return defaultPath;
     }
@@ -234,8 +223,8 @@ public class ConfigService : IConfigService
             return directPath;
         }
 
-        // 检查 api 子目录（生产环境）
-        var apiPath = Path.Combine(_installPath, "api", "appsettings.json");
+        // 检查 Server 子目录（生产环境）
+        var apiPath = Path.Combine(_installPath, "Server", "appsettings.json");
         Debug.WriteLine($"[ConfigService] 检查生产环境路径: {apiPath}, 存在: {File.Exists(apiPath)}");
         if (File.Exists(apiPath))
         {
@@ -263,8 +252,8 @@ public class ConfigService : IConfigService
             return appDirPath;
         }
 
-        // 额外检查：程序目录的 api 子目录
-        var appDirApiPath = Path.Combine(appDir, "api", "appsettings.json");
+        // 额外检查：程序目录的 Server 子目录
+        var appDirApiPath = Path.Combine(appDir, "Server", "appsettings.json");
         Debug.WriteLine($"[ConfigService] 检查程序目录 api 子目录: {appDirApiPath}, 存在: {File.Exists(appDirApiPath)}");
         if (File.Exists(appDirApiPath))
         {
@@ -276,106 +265,6 @@ public class ConfigService : IConfigService
         Debug.WriteLine($"[ConfigService] 未找到 appsettings.json，返回默认路径: {apiPath}");
         Debug.WriteLine($"[ConfigService] === GetAppSettingsPath 结束 ===");
         return apiPath;
-    }
-
-    /// <summary>
-    /// 加载配置文件
-    /// 从 appsettings.json 读取端口和数据库配置，从 config.json 读取元信息
-    /// </summary>
-    /// <returns>部署配置对象</returns>
-    public DeployConfig Load()
-    {
-        var config = new DeployConfig();
-
-        try
-        {
-            Debug.WriteLine($"[ConfigService] === Load() 开始 ===");
-            Debug.WriteLine($"[ConfigService] 配置文件路径(config.json): {_configPath}");
-            Debug.WriteLine($"[ConfigService] 安装路径: {_installPath}");
-
-            // 获取并输出 appsettings.json 路径
-            var appSettingsPath = GetAppSettingsPath();
-            Debug.WriteLine($"[ConfigService] appsettings.json 路径: {appSettingsPath}");
-            Debug.WriteLine($"[ConfigService] appsettings.json 存在: {File.Exists(appSettingsPath)}");
-
-            // 从 appsettings.json 读取后端端口和数据库配置
-            LoadFromAppSettings(config);
-
-            // 从 config.json 读取元信息（安装路径、前端模式等）
-            LoadFromLocalConfig(config);
-
-            Debug.WriteLine($"[ConfigService] === Load() 完成 ===");
-            return config;
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"[ConfigService] 加载配置文件失败: {ex.Message}");
-            // 返回默认配置而不是抛出异常
-            return config;
-        }
-    }
-
-    /// <summary>
-    /// 从 appsettings.json 读取配置
-    /// </summary>
-    private void LoadFromAppSettings(DeployConfig config)
-    {
-        var appSettingsPath = GetAppSettingsPath();
-        if (!File.Exists(appSettingsPath))
-        {
-            Debug.WriteLine($"[ConfigService] appsettings.json 不存在: {appSettingsPath}");
-            return;
-        }
-
-        try
-        {
-            var json = File.ReadAllText(appSettingsPath);
-            var rootNode = JsonNode.Parse(json);
-            if (rootNode == null) return;
-
-            // 读取后端端口（从 Kestrel 配置）
-            // Kestrel 配置格式: "Kestrel": { "Endpoints": { "Http": { "Url": "http://0.0.0.0:5000" } } }
-            var kestrelNode = rootNode["Kestrel"];
-            if (kestrelNode != null)
-            {
-                var endpointsNode = kestrelNode["Endpoints"];
-                if (endpointsNode != null)
-                {
-                    var httpNode = endpointsNode["Http"];
-                    if (httpNode != null)
-                    {
-                        var url = httpNode["Url"]?.GetValue<string>();
-                        if (!string.IsNullOrEmpty(url))
-                        {
-                            // 从 URL 解析端口 (格式: http://0.0.0.0:5000)
-                            var port = ExtractPortFromUrl(url);
-                            if (port > 0)
-                            {
-                                config.Backend.Port = port;
-                                Debug.WriteLine($"[ConfigService] 从 appsettings.json 读取后端端口: {port}");
-                            }
-                        }
-                    }
-                }
-            }
-
-            // 读取数据库连接字符串
-            var connectionStringsNode = rootNode["ConnectionStrings"];
-            if (connectionStringsNode != null)
-            {
-                var defaultConnection = connectionStringsNode["DefaultConnection"]?.GetValue<string>();
-                if (!string.IsNullOrEmpty(defaultConnection))
-                {
-                    var dbConfig = ParseConnectionString(defaultConnection);
-                    config.Database = dbConfig;
-                    Debug.WriteLine($"[ConfigService] 从 appsettings.json 读取数据库配置: {dbConfig.Server}, {dbConfig.Database}");
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"[ConfigService] 读取 appsettings.json 失败: {ex.Message}");
-        }
     }
 
     /// <summary>
@@ -452,90 +341,9 @@ public class ConfigService : IConfigService
     }
 
     /// <summary>
-    /// 从本地 config.json 读取元信息
+    /// 更新 appsettings.json 中的指定节点
     /// </summary>
-    private void LoadFromLocalConfig(DeployConfig config)
-    {
-        if (!File.Exists(_configPath))
-        {
-            Debug.WriteLine($"[ConfigService] config.json 不存在: {_configPath}");
-            return;
-        }
-
-        try
-        {
-            var json = File.ReadAllText(_configPath);
-            var localConfig = JsonSerializer.Deserialize<DeployConfig>(json, JsonOptions);
-            if (localConfig == null) return;
-
-            // 只读取元信息
-            config.InstallPath = localConfig.InstallPath;
-            config.Frontend.Mode = localConfig.Frontend.Mode;
-            config.Frontend.IisSiteName = localConfig.Frontend.IisSiteName;
-            config.Frontend.NginxPath = localConfig.Frontend.NginxPath;
-            config.Frontend.Port = localConfig.Frontend.Port;
-            config.Backend.ServiceName = localConfig.Backend.ServiceName;
-
-            Debug.WriteLine($"[ConfigService] 从 config.json 读取元信息: 前端模式={config.Frontend.Mode}");
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"[ConfigService] 读取 config.json 失败: {ex.Message}");
-        }
-    }
-
-    /// <summary>
-    /// 保存配置到文件
-    /// 同时更新 config.json（元信息）和 appsettings.json（实际配置）
-    /// </summary>
-    /// <param name="config">部署配置对象</param>
-    /// <exception cref="ArgumentNullException">配置对象为空</exception>
-    /// <exception cref="InvalidOperationException">保存失败</exception>
-    public void Save(DeployConfig config)
-    {
-        if (config == null)
-        {
-            throw new ArgumentNullException(nameof(config));
-        }
-
-        Debug.WriteLine($"[ConfigService] === Save() 开始 ===");
-        Debug.WriteLine($"[ConfigService] 配置文件路径(config.json): {_configPath}");
-        Debug.WriteLine($"[ConfigService] 安装路径: {_installPath}");
-
-        try
-        {
-            // 保存到 appsettings.json
-            var appSettingsPath = GetAppSettingsPath();
-            Debug.WriteLine($"[ConfigService] appsettings.json 路径: {appSettingsPath}");
-            Debug.WriteLine($"[ConfigService] appsettings.json 存在: {File.Exists(appSettingsPath)}");
-
-            if (!File.Exists(appSettingsPath))
-            {
-                Debug.WriteLine($"[ConfigService] 警告: appsettings.json 不存在，跳过更新");
-                // 不抛出异常，只保存本地配置
-            }
-            else
-            {
-                UpdateAppSettings(config);
-            }
-
-            // 保存到 config.json（元信息）
-            SaveLocalConfig(config);
-
-            Debug.WriteLine($"[ConfigService] === Save() 完成 ===");
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"[ConfigService] 保存配置文件失败: {ex.Message}");
-            Debug.WriteLine($"[ConfigService] 堆栈跟踪: {ex.StackTrace}");
-            throw new InvalidOperationException($"保存配置文件失败: {ex.Message}", ex);
-        }
-    }
-
-    /// <summary>
-    /// 更新 appsettings.json
-    /// </summary>
-    private void UpdateAppSettings(DeployConfig config)
+    private void UpdateAppSettings(Action<JsonObject> updateAction)
     {
         var appSettingsPath = GetAppSettingsPath();
         Debug.WriteLine($"[ConfigService] === UpdateAppSettings 开始 ===");
@@ -544,7 +352,7 @@ public class ConfigService : IConfigService
         if (!File.Exists(appSettingsPath))
         {
             Debug.WriteLine($"[ConfigService] appsettings.json 不存在，跳过更新: {appSettingsPath}");
-            return;
+            throw new FileNotFoundException($"appsettings.json 不存在: {appSettingsPath}");
         }
 
         try
@@ -557,54 +365,11 @@ public class ConfigService : IConfigService
             if (rootNode == null)
             {
                 Debug.WriteLine($"[ConfigService] 警告: 无法解析 JSON");
-                return;
+                throw new InvalidOperationException("无法解析 appsettings.json");
             }
 
-            // 更新后端端口（Kestrel 配置）
-            Debug.WriteLine($"[ConfigService] 更新后端端口: {config.Backend.Port}");
-            var kestrelNode = rootNode["Kestrel"];
-            if (kestrelNode == null)
-            {
-                kestrelNode = new JsonObject();
-                rootNode["Kestrel"] = kestrelNode;
-                Debug.WriteLine($"[ConfigService] 创建 Kestrel 节点");
-            }
-
-            var endpointsNode = kestrelNode["Endpoints"];
-            if (endpointsNode == null)
-            {
-                endpointsNode = new JsonObject();
-                kestrelNode["Endpoints"] = endpointsNode;
-                Debug.WriteLine($"[ConfigService] 创建 Endpoints 节点");
-            }
-
-            var httpNode = endpointsNode["Http"];
-            if (httpNode == null)
-            {
-                httpNode = new JsonObject();
-                endpointsNode["Http"] = httpNode;
-                Debug.WriteLine($"[ConfigService] 创建 Http 节点");
-            }
-
-            httpNode["Url"] = $"http://0.0.0.0:{config.Backend.Port}";
-
-            // 更新数据库连接字符串
-            Debug.WriteLine($"[ConfigService] 更新数据库连接字符串");
-            var connectionStringsNode = rootNode["ConnectionStrings"];
-            if (connectionStringsNode == null)
-            {
-                connectionStringsNode = new JsonObject();
-                rootNode["ConnectionStrings"] = connectionStringsNode;
-                Debug.WriteLine($"[ConfigService] 创建 ConnectionStrings 节点");
-            }
-
-            var connectionString = config.Database.GetConnectionString();
-            connectionStringsNode["DefaultConnection"] = connectionString;
-            Debug.WriteLine($"[ConfigService] 连接字符串: {connectionString}");
-
-            // 同时更新 MasterConnection
-            var masterConnectionString = BuildMasterConnectionString(config.Database);
-            connectionStringsNode["MasterConnection"] = masterConnectionString;
+            // 执行更新操作
+            updateAction((JsonObject)rootNode);
 
             // 保存修改后的 JSON
             Debug.WriteLine($"[ConfigService] 保存修改后的 JSON...");
@@ -648,138 +413,7 @@ public class ConfigService : IConfigService
         return builder.ConnectionString;
     }
 
-    /// <summary>
-    /// 保存本地 config.json（仅元信息）
-    /// </summary>
-    private void SaveLocalConfig(DeployConfig config)
-    {
-        // 确保目录存在
-        var directory = Path.GetDirectoryName(_configPath);
-        if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
-        {
-            Directory.CreateDirectory(directory);
-            Debug.WriteLine($"[ConfigService] 创建配置目录: {directory}");
-        }
-
-        // 序列化并保存（使用 snake_case 格式）
-        var json = JsonSerializer.Serialize(config, JsonOptions);
-        File.WriteAllText(_configPath, json);
-
-        Debug.WriteLine($"[ConfigService] 本地配置已保存: {_configPath}");
-    }
-
-    /// <summary>
-    /// 更新后端端口到 appsettings.json
-    /// </summary>
-    /// <param name="port">端口号</param>
-    public void UpdateBackendPort(int port)
-    {
-        if (port < 1 || port > 65535)
-        {
-            throw new ArgumentOutOfRangeException(nameof(port), "端口号必须在 1-65535 之间");
-        }
-
-        var appSettingsPath = GetAppSettingsPath();
-        if (!File.Exists(appSettingsPath))
-        {
-            throw new FileNotFoundException($"appsettings.json 不存在: {appSettingsPath}");
-        }
-
-        try
-        {
-            var json = File.ReadAllText(appSettingsPath);
-            var rootNode = JsonNode.Parse(json);
-            if (rootNode == null) return;
-
-            // 更新 Kestrel 配置
-            var kestrelNode = rootNode["Kestrel"];
-            if (kestrelNode == null)
-            {
-                kestrelNode = new JsonObject();
-                rootNode["Kestrel"] = kestrelNode;
-            }
-
-            var endpointsNode = kestrelNode["Endpoints"];
-            if (endpointsNode == null)
-            {
-                endpointsNode = new JsonObject();
-                kestrelNode["Endpoints"] = endpointsNode;
-            }
-
-            var httpNode = endpointsNode["Http"];
-            if (httpNode == null)
-            {
-                httpNode = new JsonObject();
-                endpointsNode["Http"] = httpNode;
-            }
-
-            httpNode["Url"] = $"http://0.0.0.0:{port}";
-
-            // 保存
-            var serializerOptions = new JsonSerializerOptions { WriteIndented = true };
-            var updatedJson = rootNode.ToJsonString(serializerOptions);
-            File.WriteAllText(appSettingsPath, updatedJson, Encoding.UTF8);
-
-            Debug.WriteLine($"[ConfigService] 后端端口已更新: {port}");
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"[ConfigService] 更新后端端口失败: {ex.Message}");
-            throw new InvalidOperationException($"更新后端端口失败: {ex.Message}", ex);
-        }
-    }
-
-    /// <summary>
-    /// 更新数据库连接字符串到 appsettings.json
-    /// </summary>
-    /// <param name="config">数据库配置</param>
-    public void UpdateDatabaseConfig(DatabaseConfig config)
-    {
-        if (config == null)
-        {
-            throw new ArgumentNullException(nameof(config));
-        }
-
-        var appSettingsPath = GetAppSettingsPath();
-        if (!File.Exists(appSettingsPath))
-        {
-            throw new FileNotFoundException($"appsettings.json 不存在: {appSettingsPath}");
-        }
-
-        try
-        {
-            var json = File.ReadAllText(appSettingsPath);
-            var rootNode = JsonNode.Parse(json);
-            if (rootNode == null) return;
-
-            // 更新连接字符串
-            var connectionStringsNode = rootNode["ConnectionStrings"];
-            if (connectionStringsNode == null)
-            {
-                connectionStringsNode = new JsonObject();
-                rootNode["ConnectionStrings"] = connectionStringsNode;
-            }
-
-            var connectionString = config.GetConnectionString();
-            connectionStringsNode["DefaultConnection"] = connectionString;
-
-            // 同时更新 MasterConnection
-            var masterConnectionString = BuildMasterConnectionString(config);
-            connectionStringsNode["MasterConnection"] = masterConnectionString;
-
-            // 保存
-            var serializerOptions = new JsonSerializerOptions { WriteIndented = true };
-            var updatedJson = rootNode.ToJsonString(serializerOptions);
-            File.WriteAllText(appSettingsPath, updatedJson, Encoding.UTF8);
-
-            Debug.WriteLine($"[ConfigService] 数据库配置已更新");
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"[ConfigService] 更新数据库配置失败: {ex.Message}");
-            throw new InvalidOperationException($"更新数据库配置失败: {ex.Message}", ex);
-        }
-    }
+    // ========== 接口实现 ==========
 
     /// <summary>
     /// 从 appsettings.json 读取后端端口
@@ -790,32 +424,32 @@ public class ConfigService : IConfigService
         var appSettingsPath = GetAppSettingsPath();
         if (!File.Exists(appSettingsPath))
         {
-            return 5000;
+            return DefaultBackendPort;
         }
 
         try
         {
             var json = File.ReadAllText(appSettingsPath);
             var rootNode = JsonNode.Parse(json);
-            if (rootNode == null) return 5000;
+            if (rootNode == null) return DefaultBackendPort;
 
             var kestrelNode = rootNode["Kestrel"];
-            if (kestrelNode == null) return 5000;
+            if (kestrelNode == null) return DefaultBackendPort;
 
             var endpointsNode = kestrelNode["Endpoints"];
-            if (endpointsNode == null) return 5000;
+            if (endpointsNode == null) return DefaultBackendPort;
 
             var httpNode = endpointsNode["Http"];
-            if (httpNode == null) return 5000;
+            if (httpNode == null) return DefaultBackendPort;
 
             var url = httpNode["Url"]?.GetValue<string>();
-            if (string.IsNullOrEmpty(url)) return 5000;
+            if (string.IsNullOrEmpty(url)) return DefaultBackendPort;
 
             return ExtractPortFromUrl(url);
         }
         catch
         {
-            return 5000;
+            return DefaultBackendPort;
         }
     }
 
@@ -852,57 +486,159 @@ public class ConfigService : IConfigService
     }
 
     /// <summary>
-    /// 检查配置文件是否存在
+    /// 从 nginx.conf 解析前端端口
     /// </summary>
-    /// <returns>如果配置文件存在返回 true，否则返回 false</returns>
-    public bool ConfigExists()
-    {
-        return File.Exists(_configPath);
-    }
-
-    /// <summary>
-    /// 删除配置文件
-    /// </summary>
-    public void DeleteConfig()
+    private int ParseFrontendPort(string nginxConfPath)
     {
         try
         {
-            if (File.Exists(_configPath))
+            if (!File.Exists(nginxConfPath))
             {
-                File.Delete(_configPath);
-                Debug.WriteLine($"[ConfigService] 配置文件已删除: {_configPath}");
+                return DefaultFrontendPort;
             }
+            var content = File.ReadAllText(nginxConfPath);
+            var match = Regex.Match(content, @"listen\s+(\d+)");
+            if (match.Success && int.TryParse(match.Groups[1].Value, out var port))
+                return port;
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[ConfigService] 删除配置文件失败: {ex.Message}");
-            throw new InvalidOperationException($"删除配置文件失败: {ex.Message}", ex);
+            FileLogger.Warning($"解析前端端口失败: {ex.Message}");
+        }
+        return DefaultFrontendPort;
+    }
+
+    /// <summary>
+    /// 获取前端端口
+    /// </summary>
+    public int GetFrontendPort()
+    {
+        var nginxConfPath = Path.Combine(_installPath, "WebServer", "conf", "nginx.conf");
+        return ParseFrontendPort(nginxConfPath);
+    }
+
+    /// <summary>
+    /// 获取前端模式 (nginx/iis)
+    /// </summary>
+    public string GetFrontendMode()
+    {
+        // 优先使用 Nginx（安装包自带）
+        if (_nginxManager.IsNginxInstalled())
+            return "nginx";
+        if (_iisManager.IsIisInstalled())
+            return "iis";
+        return "nginx";
+    }
+
+    /// <summary>
+    /// 获取 Nginx 路径
+    /// </summary>
+    public string GetNginxPath() => Path.Combine(_installPath, "WebServer");
+
+    /// <summary>
+    /// 获取 WebSite 路径
+    /// </summary>
+    public string GetWebSitePath() => Path.Combine(_installPath, "WebSite");
+
+    /// <summary>
+    /// 保存后端端口（更新 appsettings.json）
+    /// </summary>
+    public void SaveBackendPort(int port)
+    {
+        if (port < 1 || port > 65535)
+        {
+            throw new ArgumentOutOfRangeException(nameof(port), "端口号必须在 1-65535 之间");
+        }
+
+        UpdateAppSettings(rootNode =>
+        {
+            // 更新 Kestrel 配置
+            var kestrelNode = rootNode["Kestrel"];
+            if (kestrelNode == null)
+            {
+                kestrelNode = new JsonObject();
+                rootNode["Kestrel"] = kestrelNode;
+            }
+
+            var endpointsNode = kestrelNode["Endpoints"];
+            if (endpointsNode == null)
+            {
+                endpointsNode = new JsonObject();
+                kestrelNode["Endpoints"] = endpointsNode;
+            }
+
+            var httpNode = endpointsNode["Http"];
+            if (httpNode == null)
+            {
+                httpNode = new JsonObject();
+                endpointsNode["Http"] = httpNode;
+            }
+
+            httpNode["Url"] = $"http://0.0.0.0:{port}";
+        });
+
+        Debug.WriteLine($"[ConfigService] 后端端口已更新: {port}");
+    }
+
+    /// <summary>
+    /// 保存前端端口（更新 nginx.conf）
+    /// </summary>
+    public void SaveFrontendPort(int port)
+    {
+        var nginxConfPath = Path.Combine(_installPath, "WebServer", "conf", "nginx.conf");
+
+        try
+        {
+            var content = File.ReadAllText(nginxConfPath);
+            var backendPort = GetBackendPort();
+
+            // 替换 listen 端口
+            content = Regex.Replace(content, @"listen\s+\d+", $"listen       {port}");
+
+            // 替换 proxy_pass 中的后端端口
+            content = Regex.Replace(
+                content,
+                @"proxy_pass\s+http://127\.0\.0\.1:\d+",
+                $"proxy_pass         http://127.0.0.1:{backendPort}");
+
+            File.WriteAllText(nginxConfPath, content);
+            FileLogger.Info($"前端端口已更新为 {port}");
+        }
+        catch (Exception ex)
+        {
+            FileLogger.Error($"保存前端端口失败: {ex.Message}");
+            throw;
         }
     }
 
     /// <summary>
-    /// 备份配置文件
+    /// 保存数据库配置（更新 appsettings.json 连接字符串）
     /// </summary>
-    /// <param name="backupPath">备份文件路径（可选，默认在原路径添加 .bak 后缀）</param>
-    public void BackupConfig(string? backupPath = null)
+    public void SaveDatabaseConfig(DatabaseConfig config)
     {
-        try
+        if (config == null)
         {
-            if (!File.Exists(_configPath))
+            throw new ArgumentNullException(nameof(config));
+        }
+
+        UpdateAppSettings(rootNode =>
+        {
+            // 更新连接字符串
+            var connectionStringsNode = rootNode["ConnectionStrings"];
+            if (connectionStringsNode == null)
             {
-                Debug.WriteLine("[ConfigService] 配置文件不存在，无需备份");
-                return;
+                connectionStringsNode = new JsonObject();
+                rootNode["ConnectionStrings"] = connectionStringsNode;
             }
 
-            backupPath ??= $"{_configPath}.bak";
-            File.Copy(_configPath, backupPath, overwrite: true);
+            var connectionString = config.GetConnectionString();
+            connectionStringsNode["DefaultConnection"] = connectionString;
 
-            Debug.WriteLine($"[ConfigService] 配置文件已备份: {backupPath}");
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"[ConfigService] 备份配置文件失败: {ex.Message}");
-            throw new InvalidOperationException($"备份配置文件失败: {ex.Message}", ex);
-        }
+            // 同时更新 MasterConnection
+            var masterConnectionString = BuildMasterConnectionString(config);
+            connectionStringsNode["MasterConnection"] = masterConnectionString;
+        });
+
+        Debug.WriteLine($"[ConfigService] 数据库配置已更新");
     }
 }

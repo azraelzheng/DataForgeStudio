@@ -205,13 +205,8 @@ public partial class DatabaseConfigViewModel : ObservableObject
         {
             var dbConfig = GetCurrentConfig();
 
-            // 1. 更新数据库配置到 appsettings.json
-            _configService.UpdateDatabaseConfig(dbConfig);
-
-            // 2. 保存元信息到 config.json
-            var config = _configService.Load();
-            config.Database = dbConfig;
-            _configService.Save(config);
+            // 保存数据库配置到 appsettings.json
+            _configService.SaveDatabaseConfig(dbConfig);
 
             TestResult = "数据库配置已保存到 appsettings.json，重启服务后生效";
             TestSuccess = true;

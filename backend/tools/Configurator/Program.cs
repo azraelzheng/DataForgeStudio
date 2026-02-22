@@ -1,4 +1,6 @@
 using System.CommandLine;
+using System.Net.Sockets;
+using System.Text.Json;
 using Microsoft.Data.SqlClient;
 
 namespace Configurator;
@@ -11,23 +13,22 @@ class Program
 
     static async Task<int> Main(string[] args)
     {
-        // 定义命令行参数
-        var installPathOption = new Option<string>("--install-path") { IsRequired = true };
-        var dbServerOption = new Option<string>("--db-server", () => "localhost");
-        var dbPortOption = new Option<int>("--db-port", () => 1433);
-        var dbNameOption = new Option<string>("--db-name", () => "DataForgeStudio");
-        var dbAuthOption = new Option<string>("--db-auth", () => "windows");
-        var dbUserOption = new Option<string>("--db-user", () => "");
-        var dbPasswordOption = new Option<string>("--db-password", () => "");
-        var backendPortOption = new Option<int>("--backend-port", () => 5000);
-        var frontendPortOption = new Option<int>("--frontend-port", () => 80);
+        // 定义命令行参数（安装模式）
+        var installPathOption = new Option<string>("--install-path") { Description = "安装路径" };
+        var dbServerOption = new Option<string>("--db-server", () => "localhost") { Description = "数据库服务器" };
+        var dbPortOption = new Option<int>("--db-port", () => 1433) { Description = "数据库端口" };
+        var dbAuthOption = new Option<string>("--db-auth", () => "windows") { Description = "认证方式 (windows/sql)" };
+        var dbUserOption = new Option<string>("--db-user", () => "") { Description = "数据库用户名" };
+        var dbPasswordOption = new Option<string>("--db-password", () => "") { Description = "数据库密码" };
+        var backendPortOption = new Option<int>("--backend-port", () => 5000) { Description = "后端API端口" };
+        var frontendPortOption = new Option<int>("--frontend-port", () => 80) { Description = "前端Web端口" };
 
-        var rootCommand = new RootCommand("DataForgeStudio Configurator")
+        // 安装命令
+        var installCommand = new Command("install", "执行安装配置")
         {
             installPathOption,
             dbServerOption,
             dbPortOption,
-            dbNameOption,
             dbAuthOption,
             dbUserOption,
             dbPasswordOption,
@@ -35,14 +36,13 @@ class Program
             frontendPortOption
         };
 
-        rootCommand.SetHandler(async (context) =>
+        installCommand.SetHandler(async (context) =>
         {
             var config = new Configuration
             {
                 InstallPath = context.ParseResult.GetValueForOption(installPathOption)!,
                 DbServer = context.ParseResult.GetValueForOption(dbServerOption),
                 DbPort = context.ParseResult.GetValueForOption(dbPortOption),
-                DbName = context.ParseResult.GetValueForOption(dbNameOption),
                 DbAuth = context.ParseResult.GetValueForOption(dbAuthOption),
                 DbUser = context.ParseResult.GetValueForOption(dbUserOption) ?? "",
                 DbPassword = context.ParseResult.GetValueForOption(dbPasswordOption) ?? "",
@@ -53,7 +53,260 @@ class Program
             context.ExitCode = await RunConfiguration(config);
         });
 
+        // 验证命令参数（JSON 格式）
+        var configOption = new Option<string>("--config") { Description = "JSON 格式配置", IsRequired = true };
+
+        var validateCommand = new Command("validate", "验证配置（返回 JSON 结果）")
+        {
+            configOption
+        };
+
+        validateCommand.SetHandler(async (context) =>
+        {
+            var configJson = context.ParseResult.GetValueForOption(configOption)!;
+            context.ExitCode = await RunValidation(configJson);
+        });
+
+        // 兼容旧版：无子命令时使用安装模式
+        var rootCommand = new RootCommand("DataForgeStudio 配置器")
+        {
+            installCommand,
+            validateCommand
+        };
+
+        // 向后兼容：直接调用时（无子命令）使用安装模式
+        rootCommand.SetHandler(async (context) =>
+        {
+            // 解析旧版参数
+            var parseResult = context.ParseResult;
+
+            var config = new Configuration
+            {
+                InstallPath = parseResult.GetValueForOption(installPathOption) ?? "",
+                DbServer = parseResult.GetValueForOption(dbServerOption) ?? "localhost",
+                DbPort = parseResult.GetValueForOption(dbPortOption),
+                DbAuth = parseResult.GetValueForOption(dbAuthOption) ?? "windows",
+                DbUser = parseResult.GetValueForOption(dbUserOption) ?? "",
+                DbPassword = parseResult.GetValueForOption(dbPasswordOption) ?? "",
+                BackendPort = parseResult.GetValueForOption(backendPortOption),
+                FrontendPort = parseResult.GetValueForOption(frontendPortOption)
+            };
+
+            if (string.IsNullOrEmpty(config.InstallPath))
+            {
+                Console.WriteLine("错误: 必须指定 --install-path 参数");
+                context.ExitCode = 1;
+                return;
+            }
+
+            context.ExitCode = await RunConfiguration(config);
+        });
+
+        // 添加全局选项到 root
+        rootCommand.AddOption(installPathOption);
+        rootCommand.AddOption(dbServerOption);
+        rootCommand.AddOption(dbPortOption);
+        rootCommand.AddOption(dbAuthOption);
+        rootCommand.AddOption(dbUserOption);
+        rootCommand.AddOption(dbPasswordOption);
+        rootCommand.AddOption(backendPortOption);
+        rootCommand.AddOption(frontendPortOption);
+
         return await rootCommand.InvokeAsync(args);
+    }
+
+    /// <summary>
+    /// 验证配置（返回 JSON 结果）
+    /// </summary>
+    static async Task<int> RunValidation(string configJson)
+    {
+        var result = new ValidationResult();
+
+        try
+        {
+            var config = JsonSerializer.Deserialize<Configuration>(configJson, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            });
+
+            if (config == null)
+            {
+                result.Errors.Add(new ValidationError("INVALID_CONFIG", "无法解析配置 JSON"));
+                OutputValidationResult(result);
+                return 1;
+            }
+
+            // 1. 验证数据库连接
+            await ValidateDatabaseConnection(config, result);
+
+            // 2. 验证端口占用
+            ValidatePortAvailability(config, result);
+
+            // 输出结果
+            OutputValidationResult(result);
+            return result.Success ? 0 : 1;
+        }
+        catch (Exception ex)
+        {
+            result.Errors.Add(new ValidationError("VALIDATION_ERROR", $"验证过程发生错误: {ex.Message}"));
+            OutputValidationResult(result);
+            return 1;
+        }
+    }
+
+    /// <summary>
+    /// 验证数据库连接
+    /// </summary>
+    static async Task ValidateDatabaseConnection(Configuration config, ValidationResult result)
+    {
+        try
+        {
+            var connectionString = GetConnectionString(config, "master");
+
+            using var connection = new SqlConnection(connectionString);
+            await connection.OpenAsync();
+
+            // 测试查询
+            using var cmd = new SqlCommand("SELECT 1", connection);
+            await cmd.ExecuteScalarAsync();
+
+            // 检查是否有创建数据库权限
+            try
+            {
+                using var checkCmd = new SqlCommand(
+                    "SELECT IS_SRVROLEMEMBER('sysadmin') + IS_MEMBER('dbcreator')",
+                    connection);
+                var hasPermission = await checkCmd.ExecuteScalarAsync();
+
+                if (hasPermission != null && Convert.ToInt32(hasPermission) == 0)
+                {
+                    result.Warnings.Add(new ValidationWarning("DB_PERMISSION_WARNING",
+                        "当前用户可能没有创建数据库的权限。如果数据库已存在，这不会影响安装。"));
+                }
+            }
+            catch
+            {
+                // 权限检查失败，忽略
+            }
+        }
+        catch (SqlException ex)
+        {
+            var errorMsg = ex.Number switch
+            {
+                2 => $"无法连接到数据库服务器 {config.DbServer}:{config.DbPort} - 网络连接失败",
+                53 => $"无法连接到数据库服务器 {config.DbServer}:{config.DbPort} - 服务器不存在或无法访问",
+                18456 => "登录失败 - 用户名或密码错误",
+                18452 => "登录失败 - 不允许使用该账户进行 SQL Server 身份验证",
+                18470 => "登录失败 - 该账户已被禁用",
+                _ => $"数据库连接失败: {ex.Message}"
+            };
+
+            result.Errors.Add(new ValidationError("DB_CONNECT_FAILED", errorMsg));
+        }
+        catch (Exception ex)
+        {
+            result.Errors.Add(new ValidationError("DB_CONNECT_FAILED", $"数据库连接失败: {ex.Message}"));
+        }
+    }
+
+    /// <summary>
+    /// 验证端口可用性
+    /// </summary>
+    static void ValidatePortAvailability(Configuration config, ValidationResult result)
+    {
+        // 检查后端端口
+        var backendInUse = IsPortInUse(config.BackendPort, out var backendProcess);
+        if (backendInUse)
+        {
+            result.Warnings.Add(new ValidationWarning("BACKEND_PORT_IN_USE",
+                $"后端端口 {config.BackendPort} 已被占用{(backendProcess != null ? $" ({backendProcess})" : "")}"));
+        }
+
+        // 检查前端端口
+        var frontendInUse = IsPortInUse(config.FrontendPort, out var frontendProcess);
+        if (frontendInUse)
+        {
+            result.Warnings.Add(new ValidationWarning("FRONTEND_PORT_IN_USE",
+                $"前端端口 {config.FrontendPort} 已被占用{(frontendProcess != null ? $" ({frontendProcess})" : "")}"));
+        }
+    }
+
+    /// <summary>
+    /// 检查端口是否被占用
+    /// </summary>
+    static bool IsPortInUse(int port, out string? processName)
+    {
+        processName = null;
+
+        try
+        {
+            using var listener = new TcpListener(System.Net.IPAddress.Any, port);
+            listener.Start();
+            listener.Stop();
+            return false;
+        }
+        catch
+        {
+            // 端口被占用，尝试获取进程名
+            try
+            {
+                using var process = new System.Diagnostics.Process
+                {
+                    StartInfo = new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = "netstat.exe",
+                        Arguments = $"-ano | findstr :{port}",
+                        UseShellExecute = false,
+                        CreateNoWindow = true,
+                        RedirectStandardOutput = true
+                    }
+                };
+                process.Start();
+                var output = process.StandardOutput.ReadToEnd();
+                process.WaitForExit();
+
+                // 解析 PID
+                var lines = output.Split('\n');
+                foreach (var line in lines)
+                {
+                    if (line.Contains($":{port}") && line.Contains("LISTENING"))
+                    {
+                        var parts = line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                        if (parts.Length > 0)
+                        {
+                            if (int.TryParse(parts[^1], out var pid))
+                            {
+                                try
+                                {
+                                    var proc = System.Diagnostics.Process.GetProcessById(pid);
+                                    processName = $"{proc.ProcessName} (PID: {pid})";
+                                }
+                                catch { }
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+            catch { }
+
+            return true;
+        }
+    }
+
+    /// <summary>
+    /// 输出验证结果 JSON
+    /// </summary>
+    static void OutputValidationResult(ValidationResult result)
+    {
+        var options = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = false
+        };
+
+        Console.WriteLine(JsonSerializer.Serialize(result, options));
     }
 
     static void InitLogging(string installPath)
@@ -150,7 +403,6 @@ class Program
             Log("[2/5] 生成配置文件...");
             GenerateAppSettings(config);
             GenerateNginxConfig(config);
-            GenerateDeployConfig(config);
             Log("✓ 配置文件生成完成");
 
             // 步骤3: 初始化数据库
@@ -172,9 +424,7 @@ class Program
             Log("========================================");
             Log("配置完成!");
             Log($"安装路径: {config.InstallPath}");
-            Log($"默认用户名: root");
-            Log($"默认密码: Admin@123");
-            Log("请登录后立即修改密码!");
+            Log($"请启动服务后登录系统，首次登录需要设置密码。");
             Log("========================================");
 
             return 0;
@@ -214,7 +464,7 @@ class Program
 
     static void GenerateAppSettings(Configuration config)
     {
-        var appSettingsPath = Path.Combine(config.InstallPath, "api", "appsettings.json");
+        var appSettingsPath = Path.Combine(config.InstallPath, "Server", "appsettings.json");
         var connectionString = GetConnectionString(config, config.DbName);
         var masterConnectionString = GetConnectionString(config, "master");
 
@@ -236,7 +486,7 @@ class Program
 
     static void GenerateNginxConfig(Configuration config)
     {
-        var nginxConfPath = Path.Combine(config.InstallPath, "nginx", "conf", "nginx.conf");
+        var nginxConfPath = Path.Combine(config.InstallPath, "WebServer", "conf", "nginx.conf");
         var nginxConf = $$"""
 worker_processes  1;
 events { worker_connections  1024; }
@@ -275,47 +525,6 @@ http {
         File.WriteAllText(nginxConfPath, nginxConf);
     }
 
-    static void GenerateDeployConfig(Configuration config)
-    {
-        var nginxPath = Path.Combine(config.InstallPath, "nginx").Replace("\\", "\\\\");
-        var installPathEscaped = config.InstallPath.Replace("\\", "\\\\");
-
-        var configContent = $$"""
-{
-  "version": "1.0.0",
-  "installPath": "{{installPathEscaped}}",
-  "backend": {
-    "port": {{config.BackendPort}},
-    "serviceName": "DFAppService"
-  },
-  "frontend": {
-    "port": {{config.FrontendPort}},
-    "mode": "nginx",
-    "iisSiteName": "DataForgeStudio",
-    "nginxPath": "{{nginxPath}}"
-  },
-  "database": {
-    "server": "{{config.DbServer}}",
-    "port": {{config.DbPort}},
-    "database": "{{config.DbName}}",
-    "username": "{{config.DbUser}}",
-    "password": "{{config.DbPassword}}",
-    "useWindowsAuth": {{config.DbAuth.Equals("windows", StringComparison.OrdinalIgnoreCase).ToString().ToLower()}}
-  }
-}
-""";
-
-        // 生成 config.json 到安装根目录（DeployManager 使用）
-        var configJsonPath = Path.Combine(config.InstallPath, "config.json");
-        File.WriteAllText(configJsonPath, configContent);
-        Log($"  生成: {configJsonPath}");
-
-        // 生成 deploy-config.json 到 config 子目录（备份）
-        var deployConfigPath = Path.Combine(config.InstallPath, "config", "deploy-config.json");
-        File.WriteAllText(deployConfigPath, configContent);
-        Log($"  生成: {deployConfigPath}");
-    }
-
     static async Task InitializeDatabase(Configuration config)
     {
         var masterConnectionString = GetConnectionString(config, "master");
@@ -336,9 +545,43 @@ http {
             return;
         }
 
-        // 创建数据库
+        // 确保数据库文件目录存在
+        var dbServerPath = Path.Combine(config.InstallPath, "DBServer");
+        if (!Directory.Exists(dbServerPath))
+        {
+            Directory.CreateDirectory(dbServerPath);
+            Console.WriteLine($"  创建数据库目录: {dbServerPath}");
+        }
+
+        // 数据库文件路径
+        var mdfPath = Path.Combine(dbServerPath, $"{config.DbName}.mdf");
+        var ldfPath = Path.Combine(dbServerPath, $"{config.DbName}_log.ldf");
+
+        // 创建数据库（指定文件路径）
         Console.WriteLine($"  创建数据库 {config.DbName}...");
-        var createDbCmd = new SqlCommand($"CREATE DATABASE [{config.DbName}]", masterConnection);
+        Console.WriteLine($"  数据文件: {mdfPath}");
+        Console.WriteLine($"  日志文件: {ldfPath}");
+
+        var createDbSql = $@"
+CREATE DATABASE [{config.DbName}]
+ON PRIMARY
+(
+    NAME = N'{config.DbName}',
+    FILENAME = N'{mdfPath.Replace("'", "''")}',
+    SIZE = 10MB,
+    MAXSIZE = UNLIMITED,
+    FILEGROWTH = 10%
+)
+LOG ON
+(
+    NAME = N'{config.DbName}_log',
+    FILENAME = N'{ldfPath.Replace("'", "''")}',
+    SIZE = 5MB,
+    MAXSIZE = UNLIMITED,
+    FILEGROWTH = 10%
+)";
+
+        var createDbCmd = new SqlCommand(createDbSql, masterConnection);
         await createDbCmd.ExecuteNonQueryAsync();
 
         // 切换到新数据库并创建表结构
@@ -613,22 +856,60 @@ WHERE u.Username = 'root' AND r.RoleCode = 'admin';
 
     static void RegisterWindowsService(Configuration config)
     {
-        var apiExePath = Path.Combine(config.InstallPath, "api", "DataForgeStudio.Api.exe");
+        var serverExePath = Path.Combine(config.InstallPath, "Server", "DataForgeStudio.Api.exe");
         var serviceName = "DFAppService";
 
-        var startInfo = new System.Diagnostics.ProcessStartInfo
+        // 检查服务是否已存在
+        var checkInfo = new System.Diagnostics.ProcessStartInfo
         {
             FileName = "sc.exe",
-            Arguments = $"create \"{serviceName}\" binPath= \"{apiExePath}\" start= auto DisplayName= \"{serviceName}\"",
+            Arguments = $"query \"{serviceName}\"",
             UseShellExecute = false,
             CreateNoWindow = true,
             RedirectStandardOutput = true,
             RedirectStandardError = true
         };
 
-        using var process = System.Diagnostics.Process.Start(startInfo);
-        process?.WaitForExit();
+        using (var checkProcess = System.Diagnostics.Process.Start(checkInfo))
+        {
+            if (checkProcess != null)
+            {
+                checkProcess.WaitForExit();
+                if (checkProcess.ExitCode == 0)
+                {
+                    Console.WriteLine("  Windows 服务已存在，跳过注册");
+                    return;
+                }
+            }
+        }
 
+        // 创建服务
+        var startInfo = new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = "sc.exe",
+            Arguments = $"create \"{serviceName}\" binPath= \"{serverExePath}\" start= auto DisplayName= \"DataForgeStudio API\"",
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true
+        };
+
+        using (var process = System.Diagnostics.Process.Start(startInfo))
+        {
+            if (process == null)
+            {
+                throw new Exception("无法启动 sc.exe 进程");
+            }
+            process.WaitForExit();
+
+            if (process.ExitCode != 0)
+            {
+                var error = process.StandardError.ReadToEnd();
+                throw new Exception($"创建 Windows 服务失败: {error}");
+            }
+        }
+
+        // 设置服务描述
         var descInfo = new System.Diagnostics.ProcessStartInfo
         {
             FileName = "sc.exe",
@@ -645,7 +926,7 @@ WHERE u.Username = 'root' AND r.RoleCode = 'admin';
     {
         var desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
         var shortcutPath = Path.Combine(desktopPath, "DataForgeStudio 管理工具.lnk");
-        var managerPath = Path.Combine(config.InstallPath, "DeployManager.exe");
+        var managerPath = Path.Combine(config.InstallPath, "Manager", "DeployManager.exe");
 
         var script = $@"
 $WshShell = New-Object -ComObject WScript.Shell
@@ -680,4 +961,44 @@ class Configuration
     public string DbPassword { get; set; } = "";
     public int BackendPort { get; set; } = 5000;
     public int FrontendPort { get; set; } = 80;
+}
+
+/// <summary>
+/// 验证结果
+/// </summary>
+class ValidationResult
+{
+    public bool Success => Errors.Count == 0;
+    public List<ValidationError> Errors { get; set; } = new();
+    public List<ValidationWarning> Warnings { get; set; } = new();
+}
+
+/// <summary>
+/// 验证错误（阻止安装）
+/// </summary>
+class ValidationError
+{
+    public string Code { get; set; } = "";
+    public string Message { get; set; } = "";
+
+    public ValidationError(string code, string message)
+    {
+        Code = code;
+        Message = message;
+    }
+}
+
+/// <summary>
+/// 验证警告（可继续）
+/// </summary>
+class ValidationWarning
+{
+    public string Code { get; set; } = "";
+    public string Message { get; set; } = "";
+
+    public ValidationWarning(string code, string message)
+    {
+        Code = code;
+        Message = message;
+    }
 }

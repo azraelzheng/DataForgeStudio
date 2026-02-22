@@ -31,10 +31,9 @@ public class WebServiceManager : IWebServiceManager
     {
         _configService = configService ?? throw new ArgumentNullException(nameof(configService));
 
-        var config = _configService.Load();
-        _mode = config.Frontend.Mode ?? "iis";
-        _iisSiteName = config.Frontend.IisSiteName ?? "DataForgeStudio";
-        _nginxPath = config.Frontend.NginxPath ?? "";
+        _mode = _configService.GetFrontendMode();
+        _iisSiteName = "DataForgeStudio";  // IIS 站点名称硬编码
+        _nginxPath = _configService.GetNginxPath();
 
         Debug.WriteLine($"[WebServiceManager] 初始化，模式: {_mode}, IIS站点: {_iisSiteName}, Nginx路径: {_nginxPath}");
     }

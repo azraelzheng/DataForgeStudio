@@ -30,48 +30,87 @@ WizardStyle=modern
 PrivilegesRequired=admin
 ArchitecturesAllowed=x64
 ArchitecturesInstallIn64BitMode=x64
-UninstallDisplayIcon={app}\DeployManager.exe
+UninstallDisplayIcon={app}\Manager\DeployManager.exe
 UninstallDisplayName={#AppName}
+SetupLogging=yes
+SetupIconFile={#ProjectRoot}\resources\icons\app.ico
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
+[Messages]
+english.BeveledLabel=DataForgeStudio
+english.WelcomeLabel1=DataForgeStudio 安装向导
+english.WelcomeLabel2=本向导将引导您完成 DataForgeStudio 的安装过程。%n%n建议您在继续之前关闭所有其他应用程序。
+english.SelectDirDesc=请选择安装位置
+english.SelectDirLabel3=程序将安装到以下文件夹：
+english.ReadyLabel1=安装程序已准备好将 DataForgeStudio 安装到您的计算机。
+english.ReadyLabel2=点击 [安装(I)] 继续安装 DataForgeStudio。如果您想回顾或更改任何设置，请点击 [上一步(P)]。
+english.InstallingLabel=正在安装 DataForgeStudio，请稍候...
+english.FinishedHeadingLabel=DataForgeStudio 安装完成
+english.FinishedLabel=安装程序已在您的计算机上安装了 DataForgeStudio。%n%n点击 [完成(F)] 退出安装程序。
+english.ExitSetupTitle=退出安装
+english.ExitSetupMessage=安装程序尚未完成安装。如果您现在退出，程序将无法安装。%n%n您要退出安装吗？
+english.ConfirmUninstall=您确定要完全删除 %1 及其所有组件吗？
+
+[CustomMessages]
+english.DbConfigTitle=数据库配置
+english.DbConfigDesc=配置 SQL Server 数据库连接信息
+english.DbServerLabel=服务器地址:
+english.DbPortLabel=端口:
+english.DbAuthLabel=认证方式:
+english.DbWindowsAuth=Windows 身份验证
+english.DbSqlAuth=SQL Server 身份验证
+english.DbUserLabel=用户名:
+english.DbPasswordLabel=密码:
+english.PortConfigTitle=端口配置
+english.PortConfigDesc=配置服务端口
+english.BackendPortLabel=后端 API 端口:
+english.FrontendPortLabel=前端 Web 端口:
+english.BackendPortHint=(API 服务监听端口)
+english.FrontendPortHint=(Web 访问端口)
+english.ErrorPortRange=端口必须在 1-65535 之间
+english.ErrorPortNumber=端口必须是有效的数字
+english.ErrorSqlAuthRequired=SQL Server 身份验证需要填写用户名和密码
+english.ErrorServerEmpty=服务器地址不能为空
+english.ValidatingConfig=正在验证配置...
+english.ValidationFailed=配置验证失败
+english.ValidationWarning=配置验证警告
+english.ContinueAnyway=是否仍要继续安装？
+
 [Files]
 Source: "{#BuildDir}\configurator\*"; DestDir: "{tmp}\configurator"; Flags: deleteafterinstall ignoreversion recursesubdirs createallsubdirs
-Source: "{#BuildDir}\api\*"; DestDir: "{app}\api"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "{#BuildDir}\frontend\*"; DestDir: "{app}\WebSite"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "{#BuildDir}\nginx\*"; DestDir: "{app}\nginx"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "{#BuildDir}\manager\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#BuildDir}\Server\*"; DestDir: "{app}\Server"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#BuildDir}\WebSite\*"; DestDir: "{app}\WebSite"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#BuildDir}\WebServer\*"; DestDir: "{app}\WebServer"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#BuildDir}\manager\*"; DestDir: "{app}\Manager"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Dirs]
-Name: "{app}\config"; Permissions: users-modify
 Name: "{app}\keys"; Permissions: users-modify
 Name: "{app}\logs"; Permissions: users-modify
-Name: "{app}\nginx\logs"; Permissions: users-modify
-Name: "{app}\nginx\temp"; Permissions: users-modify
+Name: "{app}\DBServer"; Permissions: users-modify
+Name: "{app}\WebServer\logs"; Permissions: users-modify
+Name: "{app}\WebServer\temp"; Permissions: users-modify
 
 [Registry]
 Root: HKLM; Subkey: "Software\{#AppName}"; ValueType: string; ValueName: "InstallPath"; ValueData: "{app}"
 Root: HKLM; Subkey: "Software\{#AppName}"; ValueType: string; ValueName: "Version"; ValueData: "{#AppVersion}"
 
 [Run]
-; 安装完成后运行配置器（显示输出以便用户看到进度和错误）
-Filename: "{tmp}\configurator\Configurator.exe"; Parameters: "--install-path ""{app}"" --db-server ""{code:GetDbServer}"" --db-port {code:GetDbPort} --db-name ""{code:GetDbName}"" --db-auth ""{code:GetDbAuth}"" --db-user ""{code:GetDbUser}"" --db-password ""{code:GetDbPassword}"" --backend-port {code:GetBackendPort} --frontend-port {code:GetFrontendPort}"; Flags: waituntilterminated
-
-[UninstallRun]
-Filename: "sc.exe"; Parameters: "stop ""DFAppService"""; RunOnceId: "StopAppService"; Flags: runhidden
-Filename: "sc.exe"; Parameters: "delete ""DFAppService"""; RunOnceId: "DeleteAppService"; Flags: runhidden
+; 安装完成后运行配置器
+Filename: "{tmp}\configurator\Configurator.exe"; Parameters: "install --install-path ""{app}"" --db-server ""{code:GetDbServer}"" --db-port {code:GetDbPort} --db-auth ""{code:GetDbAuth}"" --db-user ""{code:GetDbUser}"" --db-password ""{code:GetDbPassword}"" --backend-port {code:GetBackendPort} --frontend-port {code:GetFrontendPort}"; Flags: waituntilterminated; StatusMsg: "正在配置系统..."
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}\logs"
-Type: filesandordirs; Name: "{app}\nginx\logs"
-Type: filesandordirs; Name: "{app}\nginx\temp"
+Type: filesandordirs; Name: "{app}\WebServer\logs"
+Type: filesandordirs; Name: "{app}\WebServer\temp"
+Type: filesandordirs; Name: "{app}\keys"
+Type: filesandordirs; Name: "{app}\DBServer"
 
 [Code]
 var
   DbServerEdit: TEdit;
   DbPortEdit: TEdit;
-  DbNameEdit: TEdit;
   DbAuthRadioWindows: TRadioButton;
   DbAuthRadioSql: TRadioButton;
   DbUserEdit: TEdit;
@@ -80,6 +119,7 @@ var
   FrontendPortEdit: TEdit;
   DbConfigPage: TWizardPage;
   PortConfigPage: TWizardPage;
+  ErrorLabel: TLabel;
 
 // 更新用户名密码输入框的启用状态
 procedure UpdateAuthFields;
@@ -98,22 +138,118 @@ begin
   end;
 end;
 
+// 验证端口输入（只允许数字）
+procedure PortEditKeyPress(Sender: TObject; var Key: Char);
+begin
+  if not ((Key >= '0') and (Key <= '9') or (Key = #8)) then
+    Key := #0;
+end;
+
 // Windows 认证单选按钮点击事件
 procedure DbAuthRadioWindowsClick(Sender: TObject);
 begin
   UpdateAuthFields;
+  ErrorLabel.Caption := '';
 end;
 
 // SQL Server 认证单选按钮点击事件
 procedure DbAuthRadioSqlClick(Sender: TObject);
 begin
   UpdateAuthFields;
+  ErrorLabel.Caption := '';
+end;
+
+// 输入框变化时清除错误
+procedure EditChange(Sender: TObject);
+begin
+  ErrorLabel.Caption := '';
+end;
+
+// 检查字符串是否为有效数字
+function IsNumeric(const S: String): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  if Length(S) = 0 then Exit;
+  for I := 1 to Length(S) do
+  begin
+    if (S[I] < '0') or (S[I] > '9') then Exit;
+  end;
+  Result := True;
+end;
+
+// 验证端口范围
+function ValidatePort(const S: String): Boolean;
+var
+  Port: Integer;
+begin
+  Result := False;
+  if not IsNumeric(S) then Exit;
+  Port := StrToIntDef(S, 0);
+  Result := (Port >= 1) and (Port <= 65535);
+end;
+
+// 验证数据库配置页面输入
+function ValidateDbConfigPage: Boolean;
+begin
+  Result := False;
+  ErrorLabel.Caption := '';
+
+  // 检查服务器地址
+  if Trim(DbServerEdit.Text) = '' then
+  begin
+    ErrorLabel.Caption := '服务器地址不能为空';
+    Exit;
+  end;
+
+  // 检查端口
+  if not ValidatePort(DbPortEdit.Text) then
+  begin
+    ErrorLabel.Caption := '端口必须在 1-65535 之间';
+    Exit;
+  end;
+
+  // SQL 认证时检查用户名密码
+  if DbAuthRadioSql.Checked then
+  begin
+    if (Trim(DbUserEdit.Text) = '') or (DbPasswordEdit.Text = '') then
+    begin
+      ErrorLabel.Caption := 'SQL Server 身份验证需要填写用户名和密码';
+      Exit;
+    end;
+  end;
+
+  Result := True;
+end;
+
+// 验证端口配置页面输入
+function ValidatePortConfigPage: Boolean;
+begin
+  Result := False;
+  ErrorLabel.Caption := '';
+
+  // 检查后端端口
+  if not ValidatePort(BackendPortEdit.Text) then
+  begin
+    ErrorLabel.Caption := '端口必须在 1-65535 之间';
+    Exit;
+  end;
+
+  // 检查前端端口
+  if not ValidatePort(FrontendPortEdit.Text) then
+  begin
+    ErrorLabel.Caption := '端口必须在 1-65535 之间';
+    Exit;
+  end;
+
+  Result := True;
 end;
 
 procedure InitializeWizard;
 begin
   // 创建数据库配置页面
-  DbConfigPage := CreateCustomPage(wpSelectDir, '数据库配置', '配置 SQL Server 数据库连接');
+  DbConfigPage := CreateCustomPage(wpSelectDir, '数据库配置', '配置 SQL Server 数据库连接信息');
 
   // 服务器
   with TLabel.Create(WizardForm) do
@@ -131,6 +267,7 @@ begin
     Top := 8;
     Width := 200;
     Text := 'localhost';
+    OnChange := @EditChange;
   end;
 
   // 端口
@@ -149,26 +286,8 @@ begin
     Top := 33;
     Width := 80;
     Text := '1433';
-  end;
-
-  // 数据库名
-  with TLabel.Create(WizardForm) do
-  begin
-    Parent := DbConfigPage.Surface;
-    Caption := '数据库名:';
-    Left := 0;
-    Top := 60;
-  end;
-  DbNameEdit := TEdit.Create(WizardForm);
-  with DbNameEdit do
-  begin
-    Parent := DbConfigPage.Surface;
-    Left := 100;
-    Top := 58;
-    Width := 200;
-    Text := 'DataForgeStudio';
-    Enabled := False;
-    Color := clBtnFace;
+    OnKeyPress := @PortEditKeyPress;
+    OnChange := @EditChange;
   end;
 
   // 认证方式
@@ -177,14 +296,14 @@ begin
     Parent := DbConfigPage.Surface;
     Caption := '认证方式:';
     Left := 0;
-    Top := 90;
+    Top := 65;
   end;
   DbAuthRadioWindows := TRadioButton.Create(WizardForm);
   with DbAuthRadioWindows do
   begin
     Parent := DbConfigPage.Surface;
     Left := 100;
-    Top := 88;
+    Top := 63;
     Width := 150;
     Caption := 'Windows 身份验证';
     Checked := True;
@@ -195,7 +314,7 @@ begin
   begin
     Parent := DbConfigPage.Surface;
     Left := 250;
-    Top := 88;
+    Top := 63;
     Width := 150;
     Caption := 'SQL Server 身份验证';
     OnClick := @DbAuthRadioSqlClick;
@@ -207,17 +326,19 @@ begin
     Parent := DbConfigPage.Surface;
     Caption := '用户名:';
     Left := 0;
-    Top := 120;
+    Top := 95;
   end;
   DbUserEdit := TEdit.Create(WizardForm);
   with DbUserEdit do
   begin
     Parent := DbConfigPage.Surface;
     Left := 100;
-    Top := 118;
+    Top := 93;
     Width := 200;
     Text := 'sa';
     Enabled := False;
+    Color := clBtnFace;
+    OnChange := @EditChange;
   end;
 
   // 密码
@@ -226,16 +347,28 @@ begin
     Parent := DbConfigPage.Surface;
     Caption := '密码:';
     Left := 0;
-    Top := 145;
+    Top := 120;
   end;
   DbPasswordEdit := TPasswordEdit.Create(WizardForm);
   with DbPasswordEdit do
   begin
     Parent := DbConfigPage.Surface;
     Left := 100;
-    Top := 143;
+    Top := 118;
     Width := 200;
     Enabled := False;
+  end;
+
+  // 错误提示标签
+  ErrorLabel := TLabel.Create(WizardForm);
+  with ErrorLabel do
+  begin
+    Parent := DbConfigPage.Surface;
+    Left := 0;
+    Top := 155;
+    Width := 350;
+    Font.Color := clRed;
+    Caption := '';
   end;
 
   // 创建端口配置页面
@@ -257,6 +390,8 @@ begin
     Top := 18;
     Width := 80;
     Text := '5000';
+    OnKeyPress := @PortEditKeyPress;
+    OnChange := @EditChange;
   end;
   with TLabel.Create(WizardForm) do
   begin
@@ -264,6 +399,7 @@ begin
     Caption := '(API 服务监听端口)';
     Left := 210;
     Top := 22;
+    Font.Color := clGray;
   end;
 
   // 前端端口
@@ -282,6 +418,8 @@ begin
     Top := 48;
     Width := 80;
     Text := '80';
+    OnKeyPress := @PortEditKeyPress;
+    OnChange := @EditChange;
   end;
   with TLabel.Create(WizardForm) do
   begin
@@ -289,6 +427,19 @@ begin
     Caption := '(Web 访问端口)';
     Left := 210;
     Top := 52;
+    Font.Color := clGray;
+  end;
+
+  // 错误提示标签（端口页）
+  ErrorLabel := TLabel.Create(WizardForm);
+  with ErrorLabel do
+  begin
+    Parent := PortConfigPage.Surface;
+    Left := 0;
+    Top := 85;
+    Width := 350;
+    Font.Color := clRed;
+    Caption := '';
   end;
 end;
 
@@ -298,7 +449,29 @@ begin
   if CurPageID = DbConfigPage.ID then
   begin
     UpdateAuthFields;
+    ErrorLabel.Caption := '';
+  end
+  else if CurPageID = PortConfigPage.ID then
+  begin
+    ErrorLabel.Caption := '';
   end;
+end;
+
+// 验证当前页面
+function ValidateCurrentPage(CurPageID: Integer): Boolean;
+begin
+  Result := True;
+
+  if CurPageID = DbConfigPage.ID then
+    Result := ValidateDbConfigPage
+  else if CurPageID = PortConfigPage.ID then
+    Result := ValidatePortConfigPage;
+end;
+
+// 点击"下一步"时验证
+function NextButtonClick(CurPageID: Integer): Boolean;
+begin
+  Result := ValidateCurrentPage(CurPageID);
 end;
 
 function GetDbServer(Param: String): String;
@@ -309,11 +482,6 @@ end;
 function GetDbPort(Param: String): String;
 begin
   Result := DbPortEdit.Text;
-end;
-
-function GetDbName(Param: String): String;
-begin
-  Result := DbNameEdit.Text;
 end;
 
 function GetDbAuth(Param: String): String;
@@ -342,4 +510,96 @@ end;
 function GetFrontendPort(Param: String): String;
 begin
   Result := FrontendPortEdit.Text;
+end;
+
+// 检查服务是否存在
+function ServiceExists(const ServiceName: String): Boolean;
+var
+  ResultCode: Integer;
+begin
+  Result := Exec('sc.exe', 'query "' + ServiceName + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = 0);
+end;
+
+// 等待服务状态变为指定状态（最多等待 MaxWaitMs 毫秒）
+function WaitForServiceStatus(const ServiceName, TargetState: String; MaxWaitMs: Integer): Boolean;
+var
+  ResultCode: Integer;
+  Output: String;
+  StartTime: Cardinal;
+  CheckCmd: String;
+begin
+  Result := False;
+  StartTime := GetTickCount;
+  CheckCmd := 'query "' + ServiceName + '" | findstr /i "' + TargetState + '"';
+
+  while (GetTickCount - StartTime) < Cardinal(MaxWaitMs) do
+  begin
+    if Exec('sc.exe', CheckCmd, '', SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = 0) then
+    begin
+      Result := True;
+      Exit;
+    end;
+    Sleep(500);
+  end;
+end;
+
+// 强制终止服务进程
+function KillServiceProcess(const ServiceName: String): Boolean;
+var
+  ResultCode: Integer;
+  Output: String;
+  PidStr: String;
+  Pid: Integer;
+begin
+  Result := False;
+
+  // 使用 sc qc 获取服务路径，然后用 taskkill 终止
+  // 直接使用 taskkill 终止服务主进程
+  Exec('taskkill.exe', '/F /IM DataForgeStudio.Api.exe', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Result := True;
+end;
+
+// 卸载前执行：停止并删除服务
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+var
+  ResultCode: Integer;
+  RetryCount: Integer;
+begin
+  if CurUninstallStep = usUninstall then
+  begin
+    // 1. 停止 Nginx 进程（如果运行中）
+    Exec('taskkill.exe', '/F /IM nginx.exe', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+
+    // 2. 检查服务是否存在
+    if ServiceExists('DFAppService') then
+    begin
+      // 3. 发送停止命令
+      Exec('sc.exe', 'stop DFAppService', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+
+      // 4. 等待服务停止（最多等待 10 秒）
+      WaitForServiceStatus('DFAppService', 'STOPPED', 10000);
+
+      // 5. 强制终止服务进程（确保进程完全退出）
+      KillServiceProcess('DFAppService');
+      Sleep(1000);
+
+      // 6. 删除 Windows 服务（带重试机制）
+      for RetryCount := 1 to 3 do
+      begin
+        Exec('sc.exe', 'delete DFAppService', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+        if not ServiceExists('DFAppService') then
+          Break;
+        Sleep(2000);
+      end;
+
+      // 7. 再等待一下确保服务删除生效
+      Sleep(1000);
+    end;
+
+    // 8. 删除注册表项
+    RegDeleteKeyIncludingSubkeys(HKLM, 'Software\DataForgeStudio');
+
+    // 9. 删除桌面快捷方式
+    DeleteFile(ExpandConstant('{userdesktop}\DataForgeStudio 管理工具.lnk'));
+  end;
 end;

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.SqlClient;
 using DataForgeStudio.Data.Data;
 using DataForgeStudio.Domain.Entities;
 using DataForgeStudio.Shared.Utils;
@@ -17,6 +18,9 @@ public static class DbInitializer
     {
         // 确保数据库已创建
         await context.Database.EnsureCreatedAsync();
+
+        // 验证并修复数据库架构（处理旧版 SQL 脚本创建的数据库）
+        await ValidateAndFixSchemaAsync(context);
 
         // 强制重建权限（用于开发调试）
         if (forceResetPermissions)
@@ -205,6 +209,154 @@ public static class DbInitializer
 
         // 创建所有权限
         await CreateAllPermissionsAsync(context);
+    }
+
+    /// <summary>
+    /// 验证并修复数据库架构
+    /// 处理旧版 SQL 脚本创建的数据库与实体定义不匹配的问题
+    /// </summary>
+    private static async Task ValidateAndFixSchemaAsync(DataForgeStudioDbContext context)
+    {
+        var connection = context.Database.GetDbConnection();
+        await connection.OpenAsync();
+
+        try
+        {
+            using var command = connection.CreateCommand();
+
+            // 1. 检查并修复 RolePermissions 表
+            command.CommandText = @"
+                SELECT COLUMN_NAME
+                FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_NAME = 'RolePermissions'";
+
+            var rolePermissionColumns = new List<string>();
+            using (var reader = await command.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    rolePermissionColumns.Add(reader.GetString(0));
+                }
+            }
+
+            // 检查是否缺少 RolePermissionId 列（旧版结构）
+            if (!rolePermissionColumns.Contains("RolePermissionId", StringComparer.OrdinalIgnoreCase))
+            {
+                Console.WriteLine("检测到 RolePermissions 表结构为旧版本，正在修复...");
+
+                // 备份现有数据
+                command.CommandText = "SELECT * INTO #TempRolePermissions FROM RolePermissions";
+                await command.ExecuteNonQueryAsync();
+
+                // 删除旧表
+                command.CommandText = "DROP TABLE RolePermissions";
+                await command.ExecuteNonQueryAsync();
+
+                // 创建新表结构
+                command.CommandText = @"
+                    CREATE TABLE RolePermissions (
+                        RolePermissionId INT IDENTITY(1,1) PRIMARY KEY,
+                        RoleId INT NOT NULL,
+                        PermissionId INT NOT NULL,
+                        CreatedBy INT NULL,
+                        CreatedTime DATETIME2 DEFAULT GETDATE()
+                    )";
+                await command.ExecuteNonQueryAsync();
+
+                Console.WriteLine("✓ RolePermissions 表结构已修复");
+            }
+
+            // 2. 检查并修复 Permissions 表
+            command.CommandText = @"
+                SELECT COLUMN_NAME
+                FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_NAME = 'Permissions'";
+
+            var permissionColumns = new List<string>();
+            using (var reader = await command.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    permissionColumns.Add(reader.GetString(0));
+                }
+            }
+
+            // 检查是否缺少必要的列
+            var requiredColumns = new[] { "Module", "Action", "ParentId", "IsSystem", "CreatedTime" };
+            var missingColumns = requiredColumns.Where(c => !permissionColumns.Contains(c, StringComparer.OrdinalIgnoreCase)).ToList();
+
+            if (missingColumns.Count > 0)
+            {
+                Console.WriteLine($"检测到 Permissions 表缺少列: {string.Join(", ", missingColumns)}，正在修复...");
+
+                foreach (var column in missingColumns)
+                {
+                    var columnDef = column switch
+                    {
+                        "Module" => "Module NVARCHAR(50) NOT NULL DEFAULT ''",
+                        "Action" => "Action NVARCHAR(50) NOT NULL DEFAULT ''",
+                        "ParentId" => "ParentId INT NULL",
+                        "IsSystem" => "IsSystem BIT NOT NULL DEFAULT 0",
+                        "CreatedTime" => "CreatedTime DATETIME2 NULL DEFAULT GETDATE()",
+                        _ => null
+                    };
+
+                    if (columnDef != null)
+                    {
+                        command.CommandText = $"ALTER TABLE Permissions ADD {columnDef}";
+                        await command.ExecuteNonQueryAsync();
+                    }
+                }
+
+                // 更新现有数据的默认值
+                command.CommandText = @"
+                    UPDATE Permissions SET CreatedTime = GETDATE() WHERE CreatedTime IS NULL;
+                    UPDATE Permissions SET Module = 'System' WHERE Module = '' OR Module IS NULL;
+                    UPDATE Permissions SET Action = 'View' WHERE Action = '' OR Action IS NULL;
+                    UPDATE Permissions SET IsSystem = 1 WHERE IsSystem IS NULL";
+                await command.ExecuteNonQueryAsync();
+
+                Console.WriteLine("✓ Permissions 表结构已修复");
+            }
+
+            // 3. 检查 BackupSchedules 表是否存在
+            command.CommandText = @"
+                SELECT COUNT(*)
+                FROM INFORMATION_SCHEMA.TABLES
+                WHERE TABLE_NAME = 'BackupSchedules'";
+
+            var result = await command.ExecuteScalarAsync();
+            var tableExists = Convert.ToInt32(result) > 0;
+
+            if (!tableExists)
+            {
+                Console.WriteLine("检测到 BackupSchedules 表不存在，正在创建...");
+
+                command.CommandText = @"
+                    CREATE TABLE BackupSchedules (
+                        ScheduleId INT IDENTITY(1,1) PRIMARY KEY,
+                        ScheduleName NVARCHAR(100) NOT NULL,
+                        ScheduleType NVARCHAR(20) NOT NULL DEFAULT 'Recurring',
+                        RecurringDays NVARCHAR(50) NULL,
+                        ScheduledTime NVARCHAR(10) NULL,
+                        OnceDate DATETIME2 NULL,
+                        RetentionCount INT NOT NULL DEFAULT 10,
+                        IsEnabled BIT NOT NULL DEFAULT 1,
+                        LastRunTime DATETIME2 NULL,
+                        NextRunTime DATETIME2 NULL,
+                        CreatedTime DATETIME2 NOT NULL DEFAULT GETDATE(),
+                        UpdatedTime DATETIME2 NULL
+                    )";
+                await command.ExecuteNonQueryAsync();
+
+                Console.WriteLine("✓ BackupSchedules 表已创建");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"数据库架构验证失败: {ex.Message}");
+            // 不抛出异常，允许继续执行
+        }
     }
 
     /// <summary>
