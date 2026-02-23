@@ -194,12 +194,12 @@ public class LoginRequest
     /// <summary>
     /// 用户名
     /// </summary>
-    public string Username { get; set; }
+    public required string Username { get; set; }
 
     /// <summary>
     /// 密码
     /// </summary>
-    public string Password { get; set; }
+    public required string Password { get; set; }
 
     /// <summary>
     /// 验证码
@@ -266,7 +266,7 @@ public class UserInfoDto
     /// <summary>
     /// 用户名
     /// </summary>
-    public string Username { get; set; }
+    public required string Username { get; set; }
 
     /// <summary>
     /// 真实姓名
@@ -286,12 +286,12 @@ public class UserInfoDto
     /// <summary>
     /// 角色列表
     /// </summary>
-    public List<string> Roles { get; set; }
+    public List<string> Roles { get; set; } = new();
 
     /// <summary>
     /// 权限列表
     /// </summary>
-    public List<string> Permissions { get; set; }
+    public List<string> Permissions { get; set; } = new();
 }
 
 /// <summary>
@@ -347,14 +347,14 @@ public class ForcePasswordChangeRequest
 public class UserDto
 {
     public int UserId { get; set; }
-    public string Username { get; set; }
+    public required string Username { get; set; }
     public string? RealName { get; set; }
     public string? Email { get; set; }
     public string? Phone { get; set; }
     public bool IsActive { get; set; }
     public DateTime? LastLoginTime { get; set; }
     public DateTime CreatedTime { get; set; }
-    public List<RoleDto> Roles { get; set; }
+    public List<RoleDto> Roles { get; set; } = new();
     /// <summary>
     /// 是否有操作日志记录（有记录的用户只能停用不能删除）
     /// </summary>
@@ -366,7 +366,7 @@ public class UserDto
 /// </summary>
 public class CreateUserRequest
 {
-    public string Username { get; set; }
+    public required string Username { get; set; }
 
     /// <summary>
     /// 密码（至少 8 个字符，必须包含大小写字母和数字）
@@ -386,7 +386,7 @@ public class ResetPasswordRequest
     /// <summary>
     /// 新密码（至少 8 个字符，必须包含大小写字母和数字）
     /// </summary>
-    public string NewPassword { get; set; }
+    public required string NewPassword { get; set; }
 }
 
 /// <summary>
@@ -394,7 +394,7 @@ public class ResetPasswordRequest
 /// </summary>
 public class AssignRolesRequest
 {
-    public List<int> RoleIds { get; set; }
+    public List<int> RoleIds { get; set; } = new();
 }
 
 /// <summary>
@@ -403,7 +403,7 @@ public class AssignRolesRequest
 public class RoleDto
 {
     public int RoleId { get; set; }
-    public string RoleName { get; set; }
+    public required string RoleName { get; set; }
     public string? Description { get; set; }
     public bool IsSystem { get; set; }
     public DateTime CreatedTime { get; set; }
@@ -416,7 +416,7 @@ public class RoleDto
 /// </summary>
 public class CreateRoleRequest
 {
-    public string RoleName { get; set; }
+    public required string RoleName { get; set; }
     public string? Description { get; set; }
 }
 
@@ -425,7 +425,7 @@ public class CreateRoleRequest
 /// </summary>
 public class AssignPermissionsRequest
 {
-    public List<string> Permissions { get; set; }
+    public List<string> Permissions { get; set; } = new();
 }
 
 /// <summary>
@@ -434,9 +434,9 @@ public class AssignPermissionsRequest
 public class DataSourceDto
 {
     public int DataSourceId { get; set; }
-    public string DataSourceName { get; set; }
-    public string DbType { get; set; }
-    public string ServerAddress { get; set; }
+    public required string DataSourceName { get; set; }
+    public required string DbType { get; set; }
+    public required string ServerAddress { get; set; }
     public int? Port { get; set; }
     public string? DatabaseName { get; set; }
     public string? Username { get; set; }
@@ -449,13 +449,13 @@ public class DataSourceDto
 /// </summary>
 public class CreateDataSourceRequest
 {
-    public string DataSourceName { get; set; }
-    public string DbType { get; set; }
-    public string Server { get; set; }
+    public required string DataSourceName { get; set; }
+    public required string DbType { get; set; }
+    public required string Server { get; set; }
     public int Port { get; set; }
-    public string Database { get; set; }
-    public string Username { get; set; }
-    public string Password { get; set; }
+    public required string Database { get; set; }
+    public required string Username { get; set; }
+    public required string Password { get; set; }
     public string? Description { get; set; }
 }
 
@@ -465,7 +465,7 @@ public class CreateDataSourceRequest
 public class ReportDto
 {
     public int ReportId { get; set; }
-    public string ReportName { get; set; }
+    public required string ReportName { get; set; }
     public string? ReportCategory { get; set; }
     public int DataSourceId { get; set; }
     public string? Description { get; set; }
@@ -480,9 +480,9 @@ public class ReportDto
 /// </summary>
 public class ReportDetailDto : ReportDto
 {
-    public string SqlQuery { get; set; }
-    public List<ReportFieldDto> Columns { get; set; }
-    public List<ReportParameterDto> Parameters { get; set; }
+    public required string SqlQuery { get; set; }
+    public List<ReportFieldDto> Columns { get; set; } = new();
+    public List<ReportParameterDto> Parameters { get; set; } = new();
     public bool EnableChart { get; set; }
     public ChartConfigDto? ChartConfig { get; set; }
     public List<QueryConditionDto>? QueryConditions { get; set; }
@@ -493,11 +493,11 @@ public class ReportDetailDto : ReportDto
 /// </summary>
 public class ReportFieldDto
 {
-    public string FieldName { get; set; }
-    public string DisplayName { get; set; }
-    public string DataType { get; set; }
+    public required string FieldName { get; set; }
+    public required string DisplayName { get; set; }
+    public required string DataType { get; set; }
     public int Width { get; set; }
-    public string Align { get; set; }
+    public string Align { get; set; } = "left";
     public bool IsVisible { get; set; }
     public bool IsSortable { get; set; }
     /// <summary>
@@ -515,9 +515,9 @@ public class ReportFieldDto
 /// </summary>
 public class ReportParameterDto
 {
-    public string Name { get; set; }
-    public string Label { get; set; }
-    public string DataType { get; set; }
+    public required string Name { get; set; }
+    public required string Label { get; set; }
+    public required string DataType { get; set; }
     public string? DefaultValue { get; set; }
 }
 
@@ -550,13 +550,13 @@ public class ChartConfigDto
 public class CreateReportRequest
 {
     public int? ReportId { get; set; }
-    public string ReportName { get; set; }
-    public string ReportCategory { get; set; }
+    public required string ReportName { get; set; }
+    public required string ReportCategory { get; set; }
     public int DataSourceId { get; set; }
-    public string SqlQuery { get; set; }
+    public required string SqlQuery { get; set; }
     public string? Description { get; set; }
-    public List<ReportFieldDto> Columns { get; set; }
-    public List<ReportParameterDto> Parameters { get; set; }
+    public List<ReportFieldDto> Columns { get; set; } = new();
+    public List<ReportParameterDto> Parameters { get; set; } = new();
     public bool EnableChart { get; set; }
     public ChartConfigDto? ChartConfig { get; set; }
     public List<QueryConditionDto>? QueryConditions { get; set; }
@@ -567,7 +567,7 @@ public class CreateReportRequest
 /// </summary>
 public class ExecuteReportRequest
 {
-    public Dictionary<string, object> Parameters { get; set; }
+    public Dictionary<string, object> Parameters { get; set; } = new();
 }
 
 /// <summary>
@@ -605,7 +605,7 @@ public class ExportReportRequest : ExecuteReportRequest
 public class LicenseInfoDto
 {
     public int LicenseId { get; set; }
-    public string LicenseType { get; set; }
+    public required string LicenseType { get; set; }
     public string? CustomerName { get; set; }
     public DateTime? ExpiryDate { get; set; }
     public int? MaxUsers { get; set; }
@@ -619,7 +619,7 @@ public class LicenseInfoDto
 /// </summary>
 public class ActivateLicenseRequest
 {
-    public string LicenseKey { get; set; }
+    public required string LicenseKey { get; set; }
 }
 
 /// <summary>
@@ -638,12 +638,12 @@ public class LicenseValidationResponse
 public class OperationLogDto
 {
     public int LogId { get; set; }
-    public string Username { get; set; }
-    public string Action { get; set; }
-    public string Module { get; set; }
-    public string Description { get; set; }
-    public string Ip { get; set; }
-    public string CreatedTime { get; set; }
+    public required string Username { get; set; }
+    public required string Action { get; set; }
+    public required string Module { get; set; }
+    public required string Description { get; set; }
+    public required string Ip { get; set; }
+    public required string CreatedTime { get; set; }
 }
 
 /// <summary>
@@ -652,9 +652,9 @@ public class OperationLogDto
 public class SystemConfigDto
 {
     public int ConfigId { get; set; }
-    public string ConfigKey { get; set; }
+    public required string ConfigKey { get; set; }
     public string? ConfigValue { get; set; }
-    public string ConfigType { get; set; }
+    public required string ConfigType { get; set; }
     public string? Description { get; set; }
 }
 
@@ -664,12 +664,12 @@ public class SystemConfigDto
 public class BackupRecordDto
 {
     public int BackupId { get; set; }
-    public string BackupName { get; set; }
-    public string FileName { get; set; }
+    public required string BackupName { get; set; }
+    public required string FileName { get; set; }
     public long? FileSize { get; set; }
     public string? Description { get; set; }
-    public string CreatedBy { get; set; }
-    public string CreatedTime { get; set; }
+    public required string CreatedBy { get; set; }
+    public required string CreatedTime { get; set; }
 }
 
 /// <summary>
