@@ -297,21 +297,30 @@ if (!isTestingEnvironment)
                 Console.WriteLine("🎉 检测到首次运行，正在初始化试用期...");
                 trialTracker.RecordFirstRun();
                 Console.WriteLine($"✅ 试用期已激活，有效期 {TrialLicenseTracker.TRIAL_DAYS_STRING} 天");
+            }
 
+            // 无论是否首次运行，只要试用期有效，就尝试生成试用许可证（如果没有现有许可证）
+            if (trialStatus.IsValid || trialStatus.IsFirstRun)
+            {
                 // 自动生成试用许可证
                 var trialResult = await licenseService.GenerateTrialLicenseAsync();
                 if (trialResult.Success)
                 {
-                    Console.WriteLine($"✅ 试用许可证已自动生成");
+                    Console.WriteLine($"✅ 试用许可证已生成/更新");
+                }
+                else if (trialResult.ErrorCode == "TRIAL_USED")
+                {
+                    Console.WriteLine($"📋 试用许可证已存在");
                 }
                 else
                 {
                     Console.WriteLine($"⚠️ 试用许可证生成失败: {trialResult.Message}");
                 }
-            }
-            else if (trialStatus.IsValid)
-            {
-                Console.WriteLine($"📋 试用期剩余: {trialStatus.DaysRemaining} 天");
+
+                if (!trialStatus.IsFirstRun && trialStatus.IsValid)
+                {
+                    Console.WriteLine($"📋 试用期剩余: {trialStatus.DaysRemaining} 天");
+                }
             }
             else
             {
