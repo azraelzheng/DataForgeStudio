@@ -19,12 +19,12 @@ public static class ProductionKeys
     /// 数据加密 AES 密钥（精确 32 字符）
     /// 用于：数据库连接字符串密码加密、数据源密码加密
     /// </summary>
-    public const string AesKey = "DataForgeStudioV4AESKey32Bytes";
+    public const string AesKey = "DataForgeStudioV4AESKey32Bytes!!";
 
     /// <summary>
     /// 数据加密 AES IV（精确 16 字符）
     /// </summary>
-    public const string AesIV = "DataForgeIV16Byte!";
+    public const string AesIV = "DataForgeIV16Byt";
 
     /// <summary>
     /// JWT 签名密钥（至少 64 字符）
@@ -36,12 +36,12 @@ public static class ProductionKeys
     /// 许可证加密 AES 密钥（精确 32 字符）
     /// 用于：许可证文件加密
     /// </summary>
-    public const string LicenseAesKey = "DataForgeStudioV4AESLicenseKey32Bytes";
+    public const string LicenseAesKey = "DataForgeStudioV4LicenseAES32!!!";
 
     /// <summary>
     /// 许可证加密 AES IV（精确 16 字符）
     /// </summary>
-    public const string LicenseAesIV = "DataForgeIV16Byte!";
+    public const string LicenseAesIV = "LicenseIV16Bytes";
 
     // ====== JWT 配置（通常不需要修改） ======
 
