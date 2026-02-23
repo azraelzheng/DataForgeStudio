@@ -311,7 +311,7 @@ public class DataSourceService : IDataSourceService
                 return ApiResponse<List<string>>.Fail(result.Message, result.ErrorCode);
             }
 
-            return ApiResponse<List<string>>.Ok(result.Data);
+            return ApiResponse<List<string>>.Ok(result.Data ?? new List<string>());
         }
         catch (Exception ex)
         {

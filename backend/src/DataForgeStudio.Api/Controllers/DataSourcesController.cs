@@ -78,7 +78,7 @@ public class DataSourcesController : ControllerBase
         {
             return ApiResponse<List<DataSourceDto>>.Fail(result.Message, result.ErrorCode);
         }
-        return ApiResponse<List<DataSourceDto>>.Ok(result.Data.Items);
+        return ApiResponse<List<DataSourceDto>>.Ok(result.Data?.Items ?? new List<DataSourceDto>());
     }
 
     /// <summary>

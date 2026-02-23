@@ -58,7 +58,7 @@ public class SystemService : ISystemService
 
         if (!string.IsNullOrWhiteSpace(username))
         {
-            query = query.Where(l => l.Username.Contains(username));
+            query = query.Where(l => l.Username != null && l.Username.Contains(username));
         }
 
         if (!string.IsNullOrWhiteSpace(action))
@@ -90,11 +90,11 @@ public class SystemService : ISystemService
             .Select(l => new OperationLogDto
             {
                 LogId = l.LogId,
-                Username = l.Username,
+                Username = l.Username ?? string.Empty,
                 Action = l.Action,
                 Module = l.Module,
-                Description = l.Description,
-                Ip = l.IpAddress,
+                Description = l.Description ?? string.Empty,
+                Ip = l.IpAddress ?? string.Empty,
                 CreatedTime = l.CreatedTime.ToString("yyyy-MM-dd HH:mm:ss")
             })
             .ToListAsync();
@@ -471,21 +471,22 @@ public class SystemService : ISystemService
 
         var totalCount = await query.CountAsync();
 
-        var backups = await query
+        var backupEntities = await query
             .OrderByDescending(b => b.CreatedTime)
             .Skip((request.PageIndex - 1) * request.PageSize)
             .Take(request.PageSize)
-            .Select(b => new BackupRecordDto
-            {
-                BackupId = b.BackupId,
-                BackupName = b.BackupName,
-                FileName = System.IO.Path.GetFileName(b.BackupPath),
-                FileSize = b.FileSize,
-                Description = b.Description,
-                CreatedBy = b.CreatedBy.ToString(),
-                CreatedTime = b.CreatedTime.ToString("yyyy-MM-dd HH:mm:ss")
-            })
             .ToListAsync();
+
+        var backups = backupEntities.Select(b => new BackupRecordDto
+        {
+            BackupId = b.BackupId,
+            BackupName = b.BackupName,
+            FileName = System.IO.Path.GetFileName(b.BackupPath),
+            FileSize = b.FileSize,
+            Description = b.Description,
+            CreatedBy = b.CreatedBy?.ToString() ?? "System",
+            CreatedTime = b.CreatedTime.ToString("yyyy-MM-dd HH:mm:ss")
+        }).ToList();
 
         var pagedResponse = new PagedResponse<BackupRecordDto>(backups, totalCount, request.PageIndex, request.PageSize);
         return ApiResponse<PagedResponse<BackupRecordDto>>.Ok(pagedResponse);

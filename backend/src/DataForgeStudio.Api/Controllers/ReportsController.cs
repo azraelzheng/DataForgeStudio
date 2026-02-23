@@ -215,7 +215,7 @@ public class ReportsController : ControllerBase
     {
         var result = await _reportService.ExportReportAsync(id, request);
 
-        if (!result.Success)
+        if (!result.Success || result.Data == null)
         {
             return BadRequest(result);
         }
