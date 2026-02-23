@@ -215,8 +215,16 @@ public class NginxManager : INginxManager
                 throw new InvalidOperationException("无法启动 Nginx 进程");
             }
 
+            // 异步读取输出流，避免缓冲区满导致死锁
+            var stdoutTask = process.StandardOutput.ReadToEndAsync();
+            var stderrTask = process.StandardError.ReadToEndAsync();
+
             // 等待进程启动
             await Task.Run(() => process.WaitForExit(5000));
+
+            // 确保流读取完成
+            _ = await stdoutTask;
+            var error = await stderrTask;
 
             // 检查是否启动成功
             await Task.Delay(1000); // 等待 Nginx 完全启动
@@ -227,7 +235,6 @@ public class NginxManager : INginxManager
             }
             else
             {
-                var error = await process.StandardError.ReadToEndAsync();
                 throw new InvalidOperationException($"Nginx 启动失败: {error}");
             }
         }
@@ -282,7 +289,15 @@ public class NginxManager : INginxManager
                 throw new InvalidOperationException("无法执行 Nginx 停止命令");
             }
 
+            // 异步读取输出流，避免缓冲区满导致死锁
+            var stdoutTask = process.StandardOutput.ReadToEndAsync();
+            var stderrTask = process.StandardError.ReadToEndAsync();
+
             await Task.Run(() => process.WaitForExit(10000));
+
+            // 确保流读取完成（忽略输出内容）
+            _ = await stdoutTask;
+            _ = await stderrTask;
 
             // 等待进程完全停止
             var maxWait = 10;

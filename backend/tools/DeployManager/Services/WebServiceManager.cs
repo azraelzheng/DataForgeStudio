@@ -224,11 +224,14 @@ public class WebServiceManager : IWebServiceManager
                 throw new InvalidOperationException("无法启动 Nginx 进程");
             }
 
+            // 异步读取输出流，避免死锁
+            var stderrTask = process.StandardError.ReadToEndAsync();
+
             // 等待进程完成（Nginx 主进程会快速退出，这是正常的）
             process.WaitForExit(5000);
 
-            // 读取错误输出
-            var errorOutput = process.StandardError.ReadToEnd();
+            // 获取错误输出
+            var errorOutput = await stderrTask;
 
             // 等待 Nginx 完全启动（master 和 worker 进程）
             await Task.Delay(2000);

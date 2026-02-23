@@ -265,29 +265,26 @@ builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 
-// 初始化数据库 - 创建 root 用户和默认权限（测试环境跳过）
+// 注册应用启动后的初始化回调（异步执行，不阻塞服务启动）
+// 这样 Windows 服务可以快速报告"已启动"状态，避免 1053 超时错误
 if (!isTestingEnvironment)
 {
-    try
+    app.Lifetime.ApplicationStarted.Register(async () =>
     {
-        using (var scope = app.Services.CreateScope())
+        try
         {
+            using var scope = app.Services.CreateScope();
+
+            // 初始化数据库 - 创建 root 用户和默认权限
             var dbContext = scope.ServiceProvider.GetRequiredService<DataForgeStudioDbContext>();
-            // 开发环境可以设置为 true 强制重建权限，生产环境设置为 false
-            DbInitializer.InitializeAsync(dbContext, forceResetPermissions: false).GetAwaiter().GetResult();
-        }
+            await DbInitializer.InitializeAsync(dbContext, forceResetPermissions: false);
 
-        // 初始化密钥 - 生成 RSA 密钥对（如果不存在）
-        using (var scope = app.Services.CreateScope())
-        {
+            // 初始化密钥 - 生成 RSA 密钥对（如果不存在）
             var keyService = scope.ServiceProvider.GetRequiredService<IKeyManagementService>();
-            keyService.EnsureKeyPairExistsAsync().GetAwaiter().GetResult();
-            keyService.EnsureAesKeyExistsAsync().GetAwaiter().GetResult();
-        }
+            await keyService.EnsureKeyPairExistsAsync();
+            await keyService.EnsureAesKeyExistsAsync();
 
-        // 初始化试用期 - 记录首次运行时间并自动生成试用许可证（如果是首次运行）
-        using (var scope = app.Services.CreateScope())
-        {
+            // 初始化试用期 - 记录首次运行时间并自动生成试用许可证（如果是首次运行）
             var trialTracker = scope.ServiceProvider.GetRequiredService<ITrialLicenseTracker>();
             var licenseService = scope.ServiceProvider.GetRequiredService<ILicenseService>();
 
@@ -317,13 +314,15 @@ if (!isTestingEnvironment)
             {
                 Console.WriteLine($"⚠️ 试用期状态: {trialStatus.ErrorMessage ?? "已过期"}");
             }
+
+            Console.WriteLine("✅ 应用初始化完成");
         }
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"⚠️ 初始化失败: {ex.Message}");
-        throw;
-    }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"⚠️ 初始化失败: {ex.Message}");
+            // 不抛出异常，允许服务继续运行
+        }
+    });
 }
 
 // 配置 HTTP 请求管道

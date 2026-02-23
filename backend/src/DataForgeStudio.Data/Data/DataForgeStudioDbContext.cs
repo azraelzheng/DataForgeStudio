@@ -130,9 +130,8 @@ public class DataForgeStudioDbContext : DbContext
             entity.Property(e => e.DbType).HasMaxLength(20).IsRequired();
             entity.Property(e => e.ServerAddress).HasMaxLength(200).IsRequired();
 
-            // 约束: 只能有一个默认数据源
-            entity.ToTable(t => t.HasCheckConstraint("CK_DataSources_DefaultCount",
-                "[IsDefault] = 0 OR NOT EXISTS (SELECT 1 FROM DataSources d2 WHERE d2.IsDefault = 1 AND d2.DataSourceId <> [DataSourceId])"));
+            // 注意: "只能有一个默认数据源" 的约束已移至业务逻辑层 (DataSourceService)
+            // SQL Server CHECK 约束不支持子查询
         });
 
         // 配置 Report

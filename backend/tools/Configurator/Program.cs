@@ -539,30 +539,26 @@ http {
         checkDbCmd.Parameters.AddWithValue("@dbName", config.DbName);
         var dbExists = Convert.ToInt32(await checkDbCmd.ExecuteScalarAsync()) > 0;
 
-        if (dbExists)
+        if (!dbExists)
         {
-            Console.WriteLine("  数据库已存在，跳过创建");
-            return;
-        }
+            // 确保数据库文件目录存在
+            var dbServerPath = Path.Combine(config.InstallPath, "DBServer");
+            if (!Directory.Exists(dbServerPath))
+            {
+                Directory.CreateDirectory(dbServerPath);
+                Console.WriteLine($"  创建数据库目录: {dbServerPath}");
+            }
 
-        // 确保数据库文件目录存在
-        var dbServerPath = Path.Combine(config.InstallPath, "DBServer");
-        if (!Directory.Exists(dbServerPath))
-        {
-            Directory.CreateDirectory(dbServerPath);
-            Console.WriteLine($"  创建数据库目录: {dbServerPath}");
-        }
+            // 数据库文件路径
+            var mdfPath = Path.Combine(dbServerPath, $"{config.DbName}.mdf");
+            var ldfPath = Path.Combine(dbServerPath, $"{config.DbName}_log.ldf");
 
-        // 数据库文件路径
-        var mdfPath = Path.Combine(dbServerPath, $"{config.DbName}.mdf");
-        var ldfPath = Path.Combine(dbServerPath, $"{config.DbName}_log.ldf");
+            // 创建数据库（指定文件路径）
+            Console.WriteLine($"  创建数据库 {config.DbName}...");
+            Console.WriteLine($"  数据文件: {mdfPath}");
+            Console.WriteLine($"  日志文件: {ldfPath}");
 
-        // 创建数据库（指定文件路径）
-        Console.WriteLine($"  创建数据库 {config.DbName}...");
-        Console.WriteLine($"  数据文件: {mdfPath}");
-        Console.WriteLine($"  日志文件: {ldfPath}");
-
-        var createDbSql = $@"
+            var createDbSql = $@"
 CREATE DATABASE [{config.DbName}]
 ON PRIMARY
 (
@@ -581,11 +577,31 @@ LOG ON
     FILEGROWTH = 10%
 )";
 
-        var createDbCmd = new SqlCommand(createDbSql, masterConnection);
-        await createDbCmd.ExecuteNonQueryAsync();
+            var createDbCmd = new SqlCommand(createDbSql, masterConnection);
+            await createDbCmd.ExecuteNonQueryAsync();
+            Console.WriteLine("  数据库创建完成");
+        }
+        else
+        {
+            Console.WriteLine("  数据库已存在");
+        }
 
-        // 切换到新数据库并创建表结构
+        // 切换到目标数据库
         masterConnection.ChangeDatabase(config.DbName);
+
+        // 检查是否有必要的表
+        var checkTablesCmd = new SqlCommand(
+            "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'",
+            masterConnection);
+        var tableCount = Convert.ToInt32(await checkTablesCmd.ExecuteScalarAsync());
+
+        if (tableCount > 0)
+        {
+            Console.WriteLine($"  数据库已有 {tableCount} 个表，跳过表结构创建");
+            return;
+        }
+
+        Console.WriteLine("  开始创建表结构...");
 
         // 创建表结构
         await ExecuteSqlScriptAsync(masterConnection, GetCreateTablesSql());
@@ -619,8 +635,16 @@ LOG ON
 
     static string GetCreateTablesSql()
     {
+        // 注意: 此 SQL 必须与 EF Core 实体定义完全一致
+        // 实体定义文件: DataForgeStudio.Domain/Entities/*.cs
+        // DbContext配置: DataForgeStudio.Data/Data/DataForgeStudioDbContext.cs
         return @"
--- Users Table
+-- =====================================================
+-- DataForgeStudio V4 数据库表结构
+-- 基于 EF Core 实体定义生成
+-- =====================================================
+
+-- Users Table (用户表)
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Users]') AND type in (N'U'))
 BEGIN
     CREATE TABLE [dbo].[Users](
@@ -648,9 +672,11 @@ BEGIN
         CONSTRAINT [UQ_Users_Username] UNIQUE NONCLUSTERED ([Username] ASC),
         CONSTRAINT [CK_Users_IsSystem] CHECK ([IsSystem] = 0 OR [Username] = 'root')
     );
+    CREATE NONCLUSTERED INDEX [IX_Users_IsActive] ON [dbo].[Users] ([IsActive]);
+    CREATE NONCLUSTERED INDEX [IX_Users_IsSystem] ON [dbo].[Users] ([IsSystem]);
 END
 
--- Roles Table
+-- Roles Table (角色表)
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Roles]') AND type in (N'U'))
 BEGIN
     CREATE TABLE [dbo].[Roles](
@@ -669,9 +695,10 @@ BEGIN
         CONSTRAINT [PK_Roles] PRIMARY KEY CLUSTERED ([RoleId] ASC),
         CONSTRAINT [UQ_Roles_RoleCode] UNIQUE NONCLUSTERED ([RoleCode] ASC)
     );
+    CREATE NONCLUSTERED INDEX [IX_Roles_IsActive] ON [dbo].[Roles] ([IsActive]);
 END
 
--- UserRoles Table
+-- UserRoles Table (用户角色关联表)
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[UserRoles]') AND type in (N'U'))
 BEGIN
     CREATE TABLE [dbo].[UserRoles](
@@ -685,172 +712,361 @@ BEGIN
     );
 END
 
--- RolePermissions Table
-IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[RolePermissions]') AND type in (N'U'))
-BEGIN
-    CREATE TABLE [dbo].[RolePermissions](
-        [PermissionId] [int] IDENTITY(1,1) NOT NULL,
-        [RoleId] [int] NOT NULL,
-        [PermissionCode] [nvarchar](100) NOT NULL,
-        [CreatedBy] [int] NULL,
-        [CreatedTime] [datetime] NOT NULL DEFAULT GETUTCDATE(),
-        CONSTRAINT [PK_RolePermissions] PRIMARY KEY CLUSTERED ([PermissionId] ASC),
-        CONSTRAINT [UQ_RolePermissions_Role_Code] UNIQUE NONCLUSTERED ([RoleId] ASC, [PermissionCode] ASC)
-    );
-END
-
--- Permissions Table
+-- Permissions Table (权限表)
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Permissions]') AND type in (N'U'))
 BEGIN
     CREATE TABLE [dbo].[Permissions](
         [PermissionId] [int] IDENTITY(1,1) NOT NULL,
-        [PermissionName] [nvarchar](50) NOT NULL,
         [PermissionCode] [nvarchar](100) NOT NULL,
-        [Category] [nvarchar](50) NOT NULL,
+        [PermissionName] [nvarchar](100) NOT NULL,
+        [Module] [nvarchar](50) NOT NULL,
+        [Action] [nvarchar](50) NOT NULL,
         [Description] [nvarchar](200) NULL,
+        [ParentId] [int] NULL,
         [SortOrder] [int] NOT NULL DEFAULT 0,
+        [IsSystem] [bit] NOT NULL DEFAULT 0,
+        [CreatedTime] [datetime] NOT NULL DEFAULT GETUTCDATE(),
         CONSTRAINT [PK_Permissions] PRIMARY KEY CLUSTERED ([PermissionId] ASC),
         CONSTRAINT [UQ_Permissions_Code] UNIQUE NONCLUSTERED ([PermissionCode] ASC)
     );
+    CREATE NONCLUSTERED INDEX [IX_Permissions_Module] ON [dbo].[Permissions] ([Module]);
+    CREATE NONCLUSTERED INDEX [IX_Permissions_ParentId] ON [dbo].[Permissions] ([ParentId]);
 END
 
--- DataSources Table
+-- RolePermissions Table (角色权限关联表)
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[RolePermissions]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE [dbo].[RolePermissions](
+        [RolePermissionId] [int] IDENTITY(1,1) NOT NULL,
+        [RoleId] [int] NOT NULL,
+        [PermissionId] [int] NOT NULL,
+        [CreatedBy] [int] NULL,
+        [CreatedTime] [datetime] NOT NULL DEFAULT GETUTCDATE(),
+        CONSTRAINT [PK_RolePermissions] PRIMARY KEY CLUSTERED ([RolePermissionId] ASC),
+        CONSTRAINT [UQ_RolePermissions_Role_Permission] UNIQUE NONCLUSTERED ([RoleId] ASC, [PermissionId] ASC)
+    );
+END
+
+-- DataSources Table (数据源表)
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[DataSources]') AND type in (N'U'))
 BEGIN
     CREATE TABLE [dbo].[DataSources](
         [DataSourceId] [int] IDENTITY(1,1) NOT NULL,
         [DataSourceName] [nvarchar](100) NOT NULL,
-        [DatabaseType] [nvarchar](50) NOT NULL,
-        [ConnectionString] [nvarchar](500) NOT NULL,
-        [Description] [nvarchar](500) NULL,
+        [DataSourceCode] [nvarchar](50) NOT NULL,
+        [DbType] [nvarchar](20) NOT NULL,
+        [ServerAddress] [nvarchar](200) NOT NULL,
+        [Port] [int] NULL,
+        [DatabaseName] [nvarchar](100) NULL,
+        [Username] [nvarchar](100) NULL,
+        [Password] [nvarchar](500) NULL,
+        [IsIntegratedSecurity] [bit] NOT NULL DEFAULT 0,
+        [ConnectionTimeout] [int] NOT NULL DEFAULT 30,
+        [CommandTimeout] [int] NOT NULL DEFAULT 60,
         [IsDefault] [bit] NOT NULL DEFAULT 0,
         [IsActive] [bit] NOT NULL DEFAULT 1,
+        [TestSql] [nvarchar](500) NULL,
+        [Remark] [nvarchar](500) NULL,
         [CreatedBy] [int] NULL,
         [CreatedTime] [datetime] NOT NULL DEFAULT GETUTCDATE(),
         [UpdatedBy] [int] NULL,
         [UpdatedTime] [datetime] NULL,
-        CONSTRAINT [PK_DataSources] PRIMARY KEY CLUSTERED ([DataSourceId] ASC)
+        [LastTestTime] [datetime] NULL,
+        [LastTestResult] [bit] NULL,
+        [LastTestMessage] [nvarchar](500) NULL,
+        CONSTRAINT [PK_DataSources] PRIMARY KEY CLUSTERED ([DataSourceId] ASC),
+        CONSTRAINT [UQ_DataSources_Code] UNIQUE NONCLUSTERED ([DataSourceCode] ASC)
     );
+    CREATE NONCLUSTERED INDEX [IX_DataSources_IsActive] ON [dbo].[DataSources] ([IsActive]);
+    CREATE NONCLUSTERED INDEX [IX_DataSources_IsDefault] ON [dbo].[DataSources] ([IsDefault]);
 END
 
--- Reports Table
+-- Reports Table (报表定义表)
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Reports]') AND type in (N'U'))
 BEGIN
     CREATE TABLE [dbo].[Reports](
         [ReportId] [int] IDENTITY(1,1) NOT NULL,
         [ReportName] [nvarchar](100) NOT NULL,
         [ReportCode] [nvarchar](50) NOT NULL,
-        [DataSourceId] [int] NULL,
-        [SqlText] [nvarchar](max) NOT NULL,
+        [ReportCategory] [nvarchar](50) NULL,
+        [DataSourceId] [int] NOT NULL,
+        [SqlStatement] [nvarchar](max) NOT NULL,
         [Description] [nvarchar](500) NULL,
-        [Category] [nvarchar](50) NULL,
-        [FieldConfig] [nvarchar](max) NULL,
-        [ParamConfig] [nvarchar](max) NULL,
+        [IsPaged] [bit] NOT NULL DEFAULT 1,
+        [PageSize] [int] NOT NULL DEFAULT 50,
         [CacheDuration] [int] NOT NULL DEFAULT 0,
-        [IsActive] [bit] NOT NULL DEFAULT 1,
+        [IsEnabled] [bit] NOT NULL DEFAULT 1,
+        [IsSystem] [bit] NOT NULL DEFAULT 0,
+        [ViewCount] [int] NOT NULL DEFAULT 0,
+        [LastViewTime] [datetime] NULL,
+        [Remark] [nvarchar](500) NULL,
+        [CreatedBy] [int] NULL,
+        [CreatedTime] [datetime] NOT NULL DEFAULT GETUTCDATE(),
+        [UpdatedBy] [int] NULL,
+        [UpdatedTime] [datetime] NULL,
+        [ChartConfig] [nvarchar](2000) NULL,
+        [EnableChart] [bit] NOT NULL DEFAULT 0,
+        [QueryConditions] [nvarchar](2000) NULL,
+        CONSTRAINT [PK_Reports] PRIMARY KEY CLUSTERED ([ReportId] ASC),
+        CONSTRAINT [UQ_Reports_Code] UNIQUE NONCLUSTERED ([ReportCode] ASC),
+        CONSTRAINT [CK_Reports_SqlStatement] CHECK ([SqlStatement] LIKE 'SELECT%' OR [SqlStatement] LIKE 'select%')
+    );
+    CREATE NONCLUSTERED INDEX [IX_Reports_IsEnabled] ON [dbo].[Reports] ([IsEnabled]);
+    CREATE NONCLUSTERED INDEX [IX_Reports_ReportCategory] ON [dbo].[Reports] ([ReportCategory]);
+    CREATE NONCLUSTERED INDEX [IX_Reports_DataSourceId] ON [dbo].[Reports] ([DataSourceId]);
+END
+
+-- ReportFields Table (报表字段配置表)
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[ReportFields]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE [dbo].[ReportFields](
+        [FieldId] [int] IDENTITY(1,1) NOT NULL,
+        [ReportId] [int] NOT NULL,
+        [FieldName] [nvarchar](100) NOT NULL,
+        [DisplayName] [nvarchar](100) NOT NULL,
+        [DataType] [nvarchar](20) NOT NULL,
+        [Width] [int] NOT NULL DEFAULT 100,
+        [IsVisible] [bit] NOT NULL DEFAULT 1,
+        [IsSortable] [bit] NOT NULL DEFAULT 1,
+        [SummaryType] [nvarchar](10) NULL,
+        [SummaryDecimals] [int] NULL,
+        [IsFilterable] [bit] NOT NULL DEFAULT 0,
+        [IsGroupable] [bit] NOT NULL DEFAULT 0,
+        [SortOrder] [int] NOT NULL DEFAULT 0,
+        [Align] [nvarchar](10) NOT NULL DEFAULT 'left',
+        [FormatString] [nvarchar](50) NULL,
+        [AggregateFunction] [nvarchar](20) NULL,
+        [CssClass] [nvarchar](100) NULL,
+        [Remark] [nvarchar](200) NULL,
+        [CreatedTime] [datetime] NOT NULL DEFAULT GETUTCDATE(),
+        CONSTRAINT [PK_ReportFields] PRIMARY KEY CLUSTERED ([FieldId] ASC)
+    );
+    CREATE NONCLUSTERED INDEX [IX_ReportFields_ReportId] ON [dbo].[ReportFields] ([ReportId]);
+END
+
+-- ReportParameters Table (报表参数配置表)
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[ReportParameters]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE [dbo].[ReportParameters](
+        [ParameterId] [int] IDENTITY(1,1) NOT NULL,
+        [ReportId] [int] NOT NULL,
+        [ParameterName] [nvarchar](50) NOT NULL,
+        [DisplayName] [nvarchar](100) NOT NULL,
+        [DataType] [nvarchar](20) NOT NULL,
+        [InputType] [nvarchar](20) NOT NULL,
+        [DefaultValue] [nvarchar](500) NULL,
+        [IsRequired] [bit] NOT NULL DEFAULT 1,
+        [SortOrder] [int] NOT NULL DEFAULT 0,
+        [Options] [nvarchar](max) NULL,
+        [QueryOptions] [nvarchar](max) NULL,
+        [Remark] [nvarchar](200) NULL,
+        [CreatedTime] [datetime] NOT NULL DEFAULT GETUTCDATE(),
+        CONSTRAINT [PK_ReportParameters] PRIMARY KEY CLUSTERED ([ParameterId] ASC)
+    );
+    CREATE NONCLUSTERED INDEX [IX_ReportParameters_ReportId] ON [dbo].[ReportParameters] ([ReportId]);
+END
+
+-- OperationLogs Table (操作日志表)
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[OperationLogs]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE [dbo].[OperationLogs](
+        [LogId] [int] IDENTITY(1,1) NOT NULL,
+        [UserId] [int] NULL,
+        [Username] [nvarchar](50) NULL,
+        [Module] [nvarchar](50) NOT NULL,
+        [Action] [nvarchar](50) NOT NULL,
+        [ActionType] [nvarchar](20) NULL,
+        [Description] [nvarchar](500) NULL,
+        [IpAddress] [nvarchar](50) NULL,
+        [UserAgent] [nvarchar](500) NULL,
+        [RequestUrl] [nvarchar](500) NULL,
+        [RequestMethod] [nvarchar](10) NULL,
+        [RequestData] [nvarchar](max) NULL,
+        [ResponseData] [nvarchar](max) NULL,
+        [Duration] [int] NULL,
+        [IsSuccess] [bit] NOT NULL DEFAULT 1,
+        [ErrorMessage] [nvarchar](max) NULL,
+        [CreatedTime] [datetime] NOT NULL DEFAULT GETUTCDATE(),
+        CONSTRAINT [PK_OperationLogs] PRIMARY KEY CLUSTERED ([LogId] ASC)
+    );
+    CREATE NONCLUSTERED INDEX [IX_OperationLogs_UserId] ON [dbo].[OperationLogs] ([UserId]);
+    CREATE NONCLUSTERED INDEX [IX_OperationLogs_Module] ON [dbo].[OperationLogs] ([Module]);
+    CREATE NONCLUSTERED INDEX [IX_OperationLogs_CreatedTime] ON [dbo].[OperationLogs] ([CreatedTime]);
+END
+
+-- LoginLogs Table (登录日志表)
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[LoginLogs]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE [dbo].[LoginLogs](
+        [LogId] [int] IDENTITY(1,1) NOT NULL,
+        [UserId] [int] NULL,
+        [Username] [nvarchar](50) NULL,
+        [LoginTime] [datetime] NOT NULL DEFAULT GETUTCDATE(),
+        [LogoutTime] [datetime] NULL,
+        [IpAddress] [nvarchar](50) NULL,
+        [UserAgent] [nvarchar](500) NULL,
+        [LoginStatus] [nvarchar](20) NULL,
+        [FailureReason] [nvarchar](200) NULL,
+        [SessionId] [nvarchar](100) NULL,
+        CONSTRAINT [PK_LoginLogs] PRIMARY KEY CLUSTERED ([LogId] ASC)
+    );
+    CREATE NONCLUSTERED INDEX [IX_LoginLogs_UserId] ON [dbo].[LoginLogs] ([UserId]);
+    CREATE NONCLUSTERED INDEX [IX_LoginLogs_LoginTime] ON [dbo].[LoginLogs] ([LoginTime]);
+END
+
+-- SystemConfigs Table (系统配置表)
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[SystemConfigs]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE [dbo].[SystemConfigs](
+        [ConfigId] [int] IDENTITY(1,1) NOT NULL,
+        [ConfigKey] [nvarchar](100) NOT NULL,
+        [ConfigValue] [nvarchar](max) NULL,
+        [ConfigType] [nvarchar](20) NOT NULL DEFAULT 'String',
+        [Description] [nvarchar](200) NULL,
+        [IsSystem] [bit] NOT NULL DEFAULT 0,
         [SortOrder] [int] NOT NULL DEFAULT 0,
         [CreatedBy] [int] NULL,
         [CreatedTime] [datetime] NOT NULL DEFAULT GETUTCDATE(),
         [UpdatedBy] [int] NULL,
         [UpdatedTime] [datetime] NULL,
-        CONSTRAINT [PK_Reports] PRIMARY KEY CLUSTERED ([ReportId] ASC),
-        CONSTRAINT [UQ_Reports_Code] UNIQUE NONCLUSTERED ([ReportCode] ASC)
+        CONSTRAINT [PK_SystemConfigs] PRIMARY KEY CLUSTERED ([ConfigId] ASC),
+        CONSTRAINT [UQ_SystemConfigs_Key] UNIQUE NONCLUSTERED ([ConfigKey] ASC)
     );
 END
 
--- Licenses Table
+-- BackupRecords Table (备份记录表)
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[BackupRecords]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE [dbo].[BackupRecords](
+        [BackupId] [int] IDENTITY(1,1) NOT NULL,
+        [BackupName] [nvarchar](200) NOT NULL,
+        [BackupType] [nvarchar](20) NOT NULL DEFAULT 'Manual',
+        [BackupPath] [nvarchar](500) NOT NULL,
+        [DatabaseName] [nvarchar](100) NULL,
+        [Description] [nvarchar](500) NULL,
+        [FileSize] [bigint] NULL,
+        [BackupTime] [datetime] NOT NULL DEFAULT GETUTCDATE(),
+        [IsSuccess] [bit] NOT NULL DEFAULT 1,
+        [ErrorMessage] [nvarchar](max) NULL,
+        [CreatedBy] [int] NULL,
+        [CreatedTime] [datetime] NOT NULL DEFAULT GETUTCDATE(),
+        CONSTRAINT [PK_BackupRecords] PRIMARY KEY CLUSTERED ([BackupId] ASC)
+    );
+    CREATE NONCLUSTERED INDEX [IX_BackupRecords_BackupTime] ON [dbo].[BackupRecords] ([BackupTime]);
+END
+
+-- BackupSchedules Table (备份计划表)
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[BackupSchedules]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE [dbo].[BackupSchedules](
+        [ScheduleId] [int] IDENTITY(1,1) NOT NULL,
+        [ScheduleName] [nvarchar](100) NOT NULL,
+        [ScheduleType] [nvarchar](20) NOT NULL DEFAULT 'Recurring',
+        [RecurringDays] [nvarchar](50) NULL,
+        [ScheduledTime] [nvarchar](10) NULL,
+        [OnceDate] [datetime] NULL,
+        [RetentionCount] [int] NOT NULL DEFAULT 10,
+        [IsEnabled] [bit] NOT NULL DEFAULT 1,
+        [LastRunTime] [datetime] NULL,
+        [NextRunTime] [datetime] NULL,
+        [CreatedTime] [datetime] NOT NULL DEFAULT GETUTCDATE(),
+        [UpdatedTime] [datetime] NULL,
+        CONSTRAINT [PK_BackupSchedules] PRIMARY KEY CLUSTERED ([ScheduleId] ASC)
+    );
+    CREATE NONCLUSTERED INDEX [IX_BackupSchedules_NextRunTime] ON [dbo].[BackupSchedules] ([NextRunTime]);
+    CREATE NONCLUSTERED INDEX [IX_BackupSchedules_IsEnabled] ON [dbo].[BackupSchedules] ([IsEnabled]);
+END
+
+-- Licenses Table (许可证表 - 零信任架构)
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Licenses]') AND type in (N'U'))
 BEGIN
     CREATE TABLE [dbo].[Licenses](
         [LicenseId] [int] IDENTITY(1,1) NOT NULL,
         [LicenseKey] [nvarchar](max) NOT NULL,
-        [MachineCode] [nvarchar](100) NULL,
-        [LicenseType] [nvarchar](50) NOT NULL,
-        [ProductName] [nvarchar](100) NOT NULL,
-        [LicensedTo] [nvarchar](200) NULL,
-        [MaxUsers] [int] NOT NULL DEFAULT 0,
-        [Features] [nvarchar](max) NULL,
-        [IssuedAt] [datetime] NOT NULL,
-        [ExpiresAt] [datetime] NULL,
-        [IsActive] [bit] NOT NULL DEFAULT 1,
-        [ActivatedAt] [datetime] NULL,
-        [CreatedAt] [datetime] NOT NULL DEFAULT GETUTCDATE(),
-        [UpdatedAt] [datetime] NULL,
+        [Signature] [nvarchar](512) NOT NULL,
+        [MachineCode] [nvarchar](64) NOT NULL,
+        [ActivatedTime] [datetime] NOT NULL DEFAULT GETUTCDATE(),
+        [ActivatedIP] [nvarchar](50) NULL,
+        [CreatedTime] [datetime] NOT NULL DEFAULT GETUTCDATE(),
         CONSTRAINT [PK_Licenses] PRIMARY KEY CLUSTERED ([LicenseId] ASC)
     );
-END
-
--- OperationLogs Table
-IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[OperationLogs]') AND type in (N'U'))
-BEGIN
-    CREATE TABLE [dbo].[OperationLogs](
-        [LogId] [bigint] IDENTITY(1,1) NOT NULL,
-        [UserId] [int] NULL,
-        [Username] [nvarchar](50) NULL,
-        [Operation] [nvarchar](100) NOT NULL,
-        [Module] [nvarchar](50) NULL,
-        [Target] [nvarchar](200) NULL,
-        [RequestMethod] [nvarchar](10) NULL,
-        [RequestPath] [nvarchar](500) NULL,
-        [RequestParams] [nvarchar](max) NULL,
-        [ResponseStatus] [int] NULL,
-        [IpAddress] [nvarchar](50) NULL,
-        [UserAgent] [nvarchar](500) NULL,
-        [Duration] [int] NULL,
-        [ErrorMessage] [nvarchar](max) NULL,
-        [CreatedTime] [datetime] NOT NULL DEFAULT GETUTCDATE(),
-        CONSTRAINT [PK_OperationLogs] PRIMARY KEY CLUSTERED ([LogId] ASC)
-    );
-END
-
--- TrialRecords Table
-IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[TrialRecords]') AND type in (N'U'))
-BEGIN
-    CREATE TABLE [dbo].[TrialRecords](
-        [TrialRecordId] [int] IDENTITY(1,1) NOT NULL,
-        [MachineCode] [nvarchar](100) NOT NULL,
-        [FirstRunTime] [datetime] NOT NULL,
-        [CreatedAt] [datetime] NOT NULL DEFAULT GETUTCDATE(),
-        CONSTRAINT [PK_TrialRecords] PRIMARY KEY CLUSTERED ([TrialRecordId] ASC),
-        CONSTRAINT [UQ_TrialRecords_MachineCode] UNIQUE NONCLUSTERED ([MachineCode] ASC)
-    );
+    CREATE NONCLUSTERED INDEX [IX_Licenses_MachineCode] ON [dbo].[Licenses] ([MachineCode]);
 END
 ";
     }
 
     static string GetSeedDataSql()
     {
+        // 注意: 此种子数据必须与 DbInitializer.CreateAllPermissionsAsync() 保持一致
+        // 实际运行时，DbInitializer 会创建完整的权限列表
+        // 这里的种子数据仅作为后备
         return @"
--- 插入默认权限
-INSERT INTO [Permissions] (PermissionName, PermissionCode, Category, Description, SortOrder) VALUES
-(N'用户管理', 'user:manage', N'用户权限', N'管理用户账户', 1),
-(N'角色管理', 'role:manage', N'用户权限', N'管理角色', 2),
-(N'报表管理', 'report:manage', N'报表权限', N'管理报表', 3),
-(N'报表查询', 'report:view', N'报表权限', N'查询报表', 4),
-(N'数据源管理', 'datasource:manage', N'系统设置', N'管理数据源', 5),
-(N'系统设置', 'system:settings', N'系统设置', N'系统设置', 6),
-(N'操作日志', 'log:view', N'系统设置', N'查看操作日志', 7),
-(N'许可证管理', 'license:manage', N'系统设置', N'管理许可证', 8);
+-- 插入默认权限 (与 DbInitializer.CreateAllPermissionsAsync 保持一致)
+INSERT INTO [Permissions] (PermissionCode, PermissionName, Module, Action, Description, SortOrder, IsSystem, CreatedTime) VALUES
+-- 用户管理权限
+('user:view', N'查看用户', N'User', N'View', N'查看用户列表', 1, 1, GETUTCDATE()),
+('user:create', N'创建用户', N'User', N'Create', N'创建新用户', 2, 1, GETUTCDATE()),
+('user:edit', N'编辑用户', N'User', N'Edit', N'编辑用户信息', 3, 1, GETUTCDATE()),
+('user:delete', N'删除用户', N'User', N'Delete', N'删除用户', 4, 1, GETUTCDATE()),
+('user:resetPassword', N'重置密码', N'User', N'ResetPassword', N'重置用户密码', 5, 1, GETUTCDATE()),
+-- 角色管理权限
+('role:view', N'查看角色', N'Role', N'View', N'查看角色列表', 6, 1, GETUTCDATE()),
+('role:create', N'创建角色', N'Role', N'Create', N'创建新角色', 7, 1, GETUTCDATE()),
+('role:edit', N'编辑角色', N'Role', N'Edit', N'编辑角色信息', 8, 1, GETUTCDATE()),
+('role:delete', N'删除角色', N'Role', N'Delete', N'删除角色', 9, 1, GETUTCDATE()),
+('role:assignPermissions', N'分配权限', N'Role', N'AssignPermissions', N'为角色分配权限', 10, 1, GETUTCDATE()),
+-- 报表查询权限
+('report:query', N'访问报表查询', N'Report', N'Query', N'访问报表查询页面', 11, 1, GETUTCDATE()),
+('report:execute', N'执行报表查询', N'Report', N'Execute', N'执行报表查询并查看结果', 12, 1, GETUTCDATE()),
+-- 报表设计权限
+('report:design', N'访问报表设计', N'Report', N'Design', N'访问报表设计管理页面', 13, 1, GETUTCDATE()),
+('report:create', N'创建报表', N'Report', N'Create', N'创建新报表', 14, 1, GETUTCDATE()),
+('report:edit', N'编辑报表', N'Report', N'Edit', N'编辑报表配置', 15, 1, GETUTCDATE()),
+('report:delete', N'删除报表', N'Report', N'Delete', N'删除报表', 16, 1, GETUTCDATE()),
+('report:toggle', N'停用启用报表', N'Report', N'Toggle', N'停用或启用报表', 17, 1, GETUTCDATE()),
+('report:export', N'导出报表', N'Report', N'Export', N'导出报表数据', 18, 1, GETUTCDATE()),
+-- 数据源管理权限
+('datasource:view', N'查看数据源', N'DataSource', N'View', N'查看数据源列表', 19, 1, GETUTCDATE()),
+('datasource:create', N'创建数据源', N'DataSource', N'Create', N'创建新数据源', 20, 1, GETUTCDATE()),
+('datasource:edit', N'编辑数据源', N'DataSource', N'Edit', N'编辑数据源', 21, 1, GETUTCDATE()),
+('datasource:delete', N'删除数据源', N'DataSource', N'Delete', N'删除数据源', 22, 1, GETUTCDATE()),
+('datasource:test', N'测试连接', N'DataSource', N'Test', N'测试数据源连接', 23, 1, GETUTCDATE()),
+-- 日志管理权限
+('log:view', N'查看日志', N'Log', N'View', N'查看操作日志', 24, 1, GETUTCDATE()),
+('log:clear', N'清空日志', N'Log', N'Clear', N'清空操作日志', 25, 1, GETUTCDATE()),
+('log:export', N'导出日志', N'Log', N'Export', N'导出操作日志', 26, 1, GETUTCDATE()),
+-- 备份管理权限
+('backup:view', N'查看备份', N'Backup', N'View', N'查看备份列表', 27, 1, GETUTCDATE()),
+('backup:create', N'创建备份', N'Backup', N'Create', N'创建数据备份', 28, 1, GETUTCDATE()),
+('backup:restore', N'恢复备份', N'Backup', N'Restore', N'恢复数据备份', 29, 1, GETUTCDATE()),
+('backup:delete', N'删除备份', N'Backup', N'Delete', N'删除备份', 30, 1, GETUTCDATE()),
+-- 许可管理权限
+('license:view', N'查看许可', N'License', N'View', N'查看许可证信息', 31, 1, GETUTCDATE()),
+('license:activate', N'激活许可', N'License', N'Activate', N'激活许可证', 32, 1, GETUTCDATE()),
+-- 系统设置权限
+('system:view', N'查看系统设置', N'System', N'View', N'查看系统配置', 33, 1, GETUTCDATE()),
+('system:edit', N'编辑系统设置', N'System', N'Edit', N'编辑系统配置', 34, 1, GETUTCDATE());
 
--- 插入超级管理员角色
-INSERT INTO [Roles] (RoleName, RoleCode, Description, IsSystem, SortOrder, IsActive) VALUES
-(N'超级管理员', 'admin', N'拥有所有权限', 1, 1, 1);
+-- 插入超级管理员角色 (使用 ROLE_SUPER_ADMIN 与 DbInitializer 一致)
+INSERT INTO [Roles] (RoleName, RoleCode, Description, IsSystem, SortOrder, IsActive, CreatedTime) VALUES
+(N'超级管理员', 'ROLE_SUPER_ADMIN', N'系统超级管理员，拥有所有权限', 1, 1, 1, GETUTCDATE());
 
 -- 为超级管理员分配所有权限
-INSERT INTO [RolePermissions] (RoleId, PermissionCode)
-SELECT r.RoleId, p.PermissionCode
+INSERT INTO [RolePermissions] (RoleId, PermissionId, CreatedTime)
+SELECT r.RoleId, p.PermissionId, GETUTCDATE()
 FROM [Roles] r, [Permissions] p
-WHERE r.RoleCode = 'admin';
+WHERE r.RoleCode = 'ROLE_SUPER_ADMIN';
 
--- 插入 root 用户 (默认密码: Admin@123，首次登录必须修改)
-INSERT INTO [Users] (Username, PasswordHash, RealName, IsActive, IsSystem, MustChangePassword) VALUES
-('root', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.VTtYA/7.J6LlZy', N'系统管理员', 1, 1, 1);
+-- 插入 root 用户 (密码将在 DbInitializer 中随机生成并打印到控制台)
+-- 这里仅作为占位符，实际密码由 DbInitializer 设置
+INSERT INTO [Users] (Username, PasswordHash, RealName, Email, IsActive, IsSystem, MustChangePassword, CreatedTime) VALUES
+('root', '$2a$12$PLACEHOLDER_WILL_BE_REPLACED_BY_DB_INITIALIZER', N'系统管理员', 'root@dataforge.com', 1, 1, 1, GETUTCDATE());
 
 -- 为 root 用户分配超级管理员角色
-INSERT INTO [UserRoles] (UserId, RoleId)
-SELECT u.UserId, r.RoleId
+INSERT INTO [UserRoles] (UserId, RoleId, CreatedTime)
+SELECT u.UserId, r.RoleId, GETUTCDATE()
 FROM [Users] u, [Roles] r
-WHERE u.Username = 'root' AND r.RoleCode = 'admin';
+WHERE u.Username = 'root' AND r.RoleCode = 'ROLE_SUPER_ADMIN';
 ";
     }
 
