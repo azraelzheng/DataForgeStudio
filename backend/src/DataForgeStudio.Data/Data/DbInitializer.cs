@@ -32,11 +32,11 @@ public static class DbInitializer
         var rootUser = await context.Users
             .FirstOrDefaultAsync(u => u.Username == "root");
 
+        // 固定的 root 用户密码
+        const string rootPassword = "Admin@123";
+
         if (rootUser == null)
         {
-            // 固定的 root 用户密码
-            const string rootPassword = "Admin@123";
-
             // 创建 root 用户
             rootUser = new User
             {
@@ -52,6 +52,15 @@ public static class DbInitializer
 
             context.Users.Add(rootUser);
             await context.SaveChangesAsync();
+            Console.WriteLine("✅ Root 用户已创建，密码: Admin@123");
+        }
+        else if (rootUser.PasswordHash.Contains("PLACEHOLDER"))
+        {
+            // 检测到 SQL 脚本创建的占位符密码，更新为实际密码
+            rootUser.PasswordHash = EncryptionHelper.HashPassword(rootPassword);
+            rootUser.MustChangePassword = false;
+            await context.SaveChangesAsync();
+            Console.WriteLine("✅ Root 用户密码已更新为: Admin@123");
         }
 
         // 创建权限（如果不存在）
