@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DeployManager.Models;
@@ -18,9 +19,12 @@ public partial class ServiceControlViewModel : ObservableObject, IDisposable
     private readonly IWebServiceManager _webServiceManager;
     private readonly IConfigService _configService;
     private System.Timers.Timer? _refreshTimer;
-    private DateTime? _appProcessStartTime;
-    private Process? _appServiceProcess;
     private bool _disposed = false;
+
+    /// <summary>
+    /// 进程信息结构
+    /// </summary>
+    private readonly record struct ProcessInfo(DateTime StartTime, double MemoryMB);
 
     #region AppService 属性（后端服务）
 
@@ -186,14 +190,17 @@ public partial class ServiceControlViewModel : ObservableObject, IDisposable
     {
         try
         {
-            await Task.Run(() =>
+            // 在后台线程获取状态
+            var (appStatus, webStatus) = await Task.Run(() =>
             {
-                // 刷新 AppService 状态
-                RefreshAppServiceStatus();
-
-                // 刷新 WebService 状态
-                RefreshWebServiceStatus();
+                var appStatus = GetAppServiceStatus();
+                var webStatus = GetWebServiceStatus();
+                return (appStatus, webStatus);
             });
+
+            // 在 UI 线程更新属性
+            UpdateAppServiceStatus(appStatus);
+            UpdateWebServiceStatus(webStatus);
         }
         catch (Exception)
         {
@@ -202,86 +209,93 @@ public partial class ServiceControlViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>
-    /// 刷新后端服务状态
+    /// 获取后端服务状态（可在后台线程调用）
     /// </summary>
-    private void RefreshAppServiceStatus()
+    private (ServiceStatus status, ProcessInfo? processInfo) GetAppServiceStatus()
     {
         try
         {
             var status = _appServiceManager.GetStatus();
-            IsAppRunning = status == ServiceStatus.Running;
-            AppStatusText = status switch
-            {
-                ServiceStatus.Running => "运行中",
-                ServiceStatus.Stopped => "已停止",
-                _ => "未知"
-            };
+            ProcessInfo? processInfo = null;
 
-            // 更新进程信息
-            UpdateAppProcessInfo();
+            if (status == ServiceStatus.Running)
+            {
+                var processes = Process.GetProcessesByName("DataForgeStudio.Api");
+                if (processes.Length > 0)
+                {
+                    try
+                    {
+                        processInfo = new ProcessInfo
+                        {
+                            StartTime = processes[0].StartTime,
+                            MemoryMB = processes[0].WorkingSet64 / 1024.0 / 1024.0
+                        };
+                    }
+                    catch { }
+                    foreach (var p in processes) p.Dispose();
+                }
+            }
+
+            return (status, processInfo);
         }
-        catch (Exception)
+        catch
         {
-            IsAppRunning = false;
-            AppStatusText = "无法获取状态";
+            return (ServiceStatus.Unknown, null);
         }
     }
 
     /// <summary>
-    /// 刷新前端服务状态
+    /// 获取前端服务状态（可在后台线程调用）
     /// </summary>
-    private void RefreshWebServiceStatus()
+    private ServiceStatus GetWebServiceStatus()
     {
         try
         {
-            var status = _webServiceManager.GetStatus();
-            IsWebRunning = status == ServiceStatus.Running;
-            WebStatusText = status switch
-            {
-                ServiceStatus.Running => "运行中",
-                ServiceStatus.Stopped => "已停止",
-                _ => "未知"
-            };
+            return _webServiceManager.GetStatus();
         }
-        catch (Exception)
+        catch
         {
-            IsWebRunning = false;
-            WebStatusText = "无法获取状态";
+            return ServiceStatus.Unknown;
         }
     }
 
     /// <summary>
-    /// 更新后端进程信息
+    /// 更新后端服务状态（必须在 UI 线程调用）
     /// </summary>
-    private void UpdateAppProcessInfo()
+    private void UpdateAppServiceStatus((ServiceStatus status, ProcessInfo? processInfo) data)
     {
-        try
+        IsAppRunning = data.status == ServiceStatus.Running;
+        AppStatusText = data.status switch
         {
-            var processName = "DataForgeStudio.Api";
+            ServiceStatus.Running => "运行中",
+            ServiceStatus.Stopped => "已停止",
+            _ => "未知"
+        };
 
-            var processes = Process.GetProcessesByName(processName);
-            if (processes.Length > 0)
-            {
-                _appServiceProcess = processes[0];
-                _appProcessStartTime = _appServiceProcess.StartTime;
-                AppStartTimeText = _appProcessStartTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "-";
-
-                var memoryMB = _appServiceProcess.WorkingSet64 / 1024.0 / 1024.0;
-                AppMemoryUsage = $"{memoryMB:F2} MB";
-            }
-            else
-            {
-                _appServiceProcess = null;
-                _appProcessStartTime = null;
-                AppStartTimeText = "-";
-                AppMemoryUsage = "-";
-            }
+        if (data.processInfo != null)
+        {
+            AppStartTimeText = data.processInfo.Value.StartTime.ToString("yyyy-MM-dd HH:mm:ss");
+            AppMemoryUsage = $"{data.processInfo.Value.MemoryMB:F2} MB";
         }
-        catch (Exception)
+        else
         {
             AppStartTimeText = "-";
             AppMemoryUsage = "-";
         }
+    }
+
+    /// <summary>
+    /// 更新前端服务状态（必须在 UI 线程调用）
+    /// </summary>
+    private void UpdateWebServiceStatus(ServiceStatus status)
+    {
+        IsWebRunning = status == ServiceStatus.Running;
+        WebStatusText = status switch
+        {
+            ServiceStatus.Running => "运行中",
+            ServiceStatus.Stopped => "已停止",
+            _ => "未知"
+        };
     }
 
     #region AppService 命令
@@ -300,7 +314,9 @@ public partial class ServiceControlViewModel : ObservableObject, IDisposable
         try
         {
             await _appServiceManager.StartAsync();
-            RefreshAppServiceStatus();
+            // 直接使用新方法更新状态（在 UI 线程）
+            var appStatus = GetAppServiceStatus();
+            UpdateAppServiceStatus(appStatus);
         }
         catch (Exception ex)
         {
@@ -309,6 +325,8 @@ public partial class ServiceControlViewModel : ObservableObject, IDisposable
         finally
         {
             IsAppOperating = false;
+            // 强制刷新 Command 状态，确保 UI 按钮正确更新
+            CommandManager.InvalidateRequerySuggested();
         }
     }
 
@@ -326,7 +344,9 @@ public partial class ServiceControlViewModel : ObservableObject, IDisposable
         try
         {
             await _appServiceManager.StopAsync();
-            RefreshAppServiceStatus();
+            // 直接使用新方法更新状态（在 UI 线程）
+            var appStatus = GetAppServiceStatus();
+            UpdateAppServiceStatus(appStatus);
         }
         catch (Exception ex)
         {
@@ -335,6 +355,8 @@ public partial class ServiceControlViewModel : ObservableObject, IDisposable
         finally
         {
             IsAppOperating = false;
+            // 强制刷新 Command 状态，确保 UI 按钮正确更新
+            CommandManager.InvalidateRequerySuggested();
         }
     }
 
@@ -352,7 +374,9 @@ public partial class ServiceControlViewModel : ObservableObject, IDisposable
         try
         {
             await _appServiceManager.RestartAsync();
-            RefreshAppServiceStatus();
+            // 直接使用新方法更新状态（在 UI 线程）
+            var appStatus = GetAppServiceStatus();
+            UpdateAppServiceStatus(appStatus);
         }
         catch (Exception ex)
         {
@@ -361,6 +385,8 @@ public partial class ServiceControlViewModel : ObservableObject, IDisposable
         finally
         {
             IsAppOperating = false;
+            // 强制刷新 Command 状态，确保 UI 按钮正确更新
+            CommandManager.InvalidateRequerySuggested();
         }
     }
 
@@ -387,7 +413,9 @@ public partial class ServiceControlViewModel : ObservableObject, IDisposable
         try
         {
             await _webServiceManager.StartAsync();
-            RefreshWebServiceStatus();
+            // 直接使用新方法更新状态（在 UI 线程）
+            var webStatus = GetWebServiceStatus();
+            UpdateWebServiceStatus(webStatus);
         }
         catch (Exception ex)
         {
@@ -396,6 +424,8 @@ public partial class ServiceControlViewModel : ObservableObject, IDisposable
         finally
         {
             IsWebOperating = false;
+            // 强制刷新 Command 状态，确保 UI 按钮正确更新
+            CommandManager.InvalidateRequerySuggested();
         }
     }
 
@@ -413,7 +443,9 @@ public partial class ServiceControlViewModel : ObservableObject, IDisposable
         try
         {
             await _webServiceManager.StopAsync();
-            RefreshWebServiceStatus();
+            // 直接使用新方法更新状态（在 UI 线程）
+            var webStatus = GetWebServiceStatus();
+            UpdateWebServiceStatus(webStatus);
         }
         catch (Exception ex)
         {
@@ -422,6 +454,8 @@ public partial class ServiceControlViewModel : ObservableObject, IDisposable
         finally
         {
             IsWebOperating = false;
+            // 强制刷新 Command 状态，确保 UI 按钮正确更新
+            CommandManager.InvalidateRequerySuggested();
         }
     }
 
@@ -439,7 +473,9 @@ public partial class ServiceControlViewModel : ObservableObject, IDisposable
         try
         {
             await _webServiceManager.RestartAsync();
-            RefreshWebServiceStatus();
+            // 直接使用新方法更新状态（在 UI 线程）
+            var webStatus = GetWebServiceStatus();
+            UpdateWebServiceStatus(webStatus);
         }
         catch (Exception ex)
         {
@@ -448,6 +484,8 @@ public partial class ServiceControlViewModel : ObservableObject, IDisposable
         finally
         {
             IsWebOperating = false;
+            // 强制刷新 Command 状态，确保 UI 按钮正确更新
+            CommandManager.InvalidateRequerySuggested();
         }
     }
 
@@ -504,9 +542,6 @@ public partial class ServiceControlViewModel : ObservableObject, IDisposable
             {
                 // 停止并释放 Timer
                 StopRefresh();
-                // 释放 Process 资源
-                _appServiceProcess?.Dispose();
-                _appServiceProcess = null;
                 // 释放服务管理器资源
                 _appServiceManager?.Dispose();
                 _webServiceManager?.Dispose();
