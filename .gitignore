@@ -44,6 +44,8 @@ backend/keys/
 *.key
 **/keys/
 *.lic
+secrets.production.json
+secrets.*.local.json
 
 # ------------- Logs -------------
 logs/
