@@ -18,7 +18,7 @@ using NetEscapades.AspNetCore.SecurityHeaders;
 var isTestingEnvironment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Testing" ||
                            (args != null && args.Contains("--testing"));
 
-var builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(args ?? Array.Empty<string>());
 
 // 添加 Windows 服务支持
 builder.Services.AddWindowsService();

@@ -43,8 +43,8 @@ public class KeyManagementService : IKeyManagementService
 
         // 优先从 Security:License 读取（Program.cs 可能已设置默认值）
         var securityLicenseSection = _configuration.GetSection("Security:License");
-        _aesKey = securityLicenseSection["AesKey"] ?? licenseSection["AesKey"];
-        _aesIv = securityLicenseSection["AesIv"] ?? licenseSection["AesIv"];
+        _aesKey = securityLicenseSection["AesKey"] ?? licenseSection["AesKey"] ?? string.Empty;
+        _aesIv = securityLicenseSection["AesIv"] ?? licenseSection["AesIv"] ?? string.Empty;
 
         // 如果仍然为空，使用硬编码的默认值（后备方案）
         if (string.IsNullOrEmpty(_aesKey))

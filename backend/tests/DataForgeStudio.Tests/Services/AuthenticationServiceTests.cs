@@ -215,6 +215,7 @@ public class AuthenticationServiceTests : IDisposable
         // Assert
         Assert.True(result.Success);
         Assert.Equal("首次登录必须修改密码", result.Message);
+        Assert.NotNull(result.Data);
         Assert.True(result.Data.RequiresPasswordChange);
         Assert.Empty(result.Data.Token);
     }

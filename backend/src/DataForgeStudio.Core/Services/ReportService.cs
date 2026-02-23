@@ -583,7 +583,7 @@ public class ReportService : IReportService
             }
 
             // 限制返回行数（测试时只返回前 100 行）
-            var limitedResult = result.Data.Take(100).ToList();
+            var limitedResult = result.Data?.Take(100).ToList() ?? new List<Dictionary<string, object>>();
             return ApiResponse<List<Dictionary<string, object>>>.Ok(limitedResult);
         }
         catch (Exception ex)
@@ -633,9 +633,9 @@ public class ReportService : IReportService
             // 执行查询
             var result = await _databaseService.ExecuteQueryDataTableAsync(report.DataSource, modifiedSql, sqlParameters);
 
-            if (!result.Success)
+            if (!result.Success || result.Data == null)
             {
-                return ApiResponse<byte[]>.Fail(result.Message, result.ErrorCode);
+                return ApiResponse<byte[]>.Fail(result.Message ?? "查询数据失败", result.ErrorCode ?? "QUERY_ERROR");
             }
 
             var dataTable = result.Data;
@@ -866,7 +866,7 @@ public class ReportService : IReportService
                                     .Padding(5)
                                     .Border(1)
                                     .Background("#E0E0E0"))
-                                .Text(displayName, headerStyle);
+                                .Text(displayName).Style(headerStyle);
                         }
                     });
 
@@ -881,7 +881,7 @@ public class ReportService : IReportService
                                     .Padding(5)
                                     .Border(1)
                                     .Background(rowIndex % 2 == 0 ? "#FFFFFF" : "#F5F5F5"))
-                                .Text(cellValue, dataStyle);
+                                .Text(cellValue).Style(dataStyle);
                         }
                     }
                 });
