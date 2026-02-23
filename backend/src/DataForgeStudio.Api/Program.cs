@@ -7,8 +7,10 @@ using DataForgeStudio.Core.Services;
 using DataForgeStudio.Data.Data;
 using DataForgeStudio.Data.Repositories;
 using DataForgeStudio.Domain.Interfaces;
+using DataForgeStudio.Shared.Constants;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -29,80 +31,42 @@ if (builder.Environment.IsEnvironment("Testing"))
     isTestingEnvironment = true;
 }
 
-// 配置安全选项（优先从环境变量读取，其次从配置文件读取）
-var securityOptionsConfig = new SecurityOptions();
-var jwtOptions = securityOptionsConfig.GetJwtOptions(builder.Configuration);
-var encryptionOptions = securityOptionsConfig.GetEncryptionOptions(builder.Configuration);
-var licenseOptions = securityOptionsConfig.GetLicenseOptions(builder.Configuration);
+// 使用硬编码的生产密钥（编译时嵌入）
+Console.WriteLine("=== 安全配置 ===");
+Console.WriteLine($"使用版本内置密钥");
 
-// 验证必需的安全配置（开发环境可以使用默认值，生产环境必须配置）
-var envName = builder.Environment.EnvironmentName;
-Console.WriteLine($"Environment: {envName}");
-Console.WriteLine($"IsDevelopment: {builder.Environment.IsDevelopment()}");
+// JWT 配置
+var jwtSecret = ProductionKeys.JwtSecret;
+var jwtIssuer = ProductionKeys.JwtIssuer;
+var jwtAudience = ProductionKeys.JwtAudience;
 
-// 对于命令行运行，如果没有设置环境变量，使用默认值
-// 生产环境部署时必须设置环境变量
-var useDefaultsForTesting = builder.Configuration.GetValue<bool>("SecurityOptionsUseDefaultsForTesting", true);
+Console.WriteLine($"JWT 配置完成 (密钥长度: {jwtSecret.Length})");
 
-if (string.IsNullOrEmpty(jwtOptions.Secret) || jwtOptions.Secret.Length < 64)
-{
-    if (useDefaultsForTesting)
-    {
-        // 测试环境使用默认值
-        Console.WriteLine("⚠️  WARNING: Using default JWT Secret for testing. Set DFS_JWT_SECRET environment variable for production!");
-        jwtOptions.Secret = "DataForgeStudioV4JWTSecretKey256BitsLongSecure2025ChangeThisInProduction";
-    }
-    else
-    {
-        throw new InvalidOperationException(
-            "JWT Secret 未配置或长度不足64位。请设置环境变量 DFS_JWT_SECRET (64+字符)");
-    }
-}
+// 加密配置
+var aesKey = ProductionKeys.AesKey;
+var aesIV = ProductionKeys.AesIV;
 
-if (string.IsNullOrEmpty(encryptionOptions.AesKey) || encryptionOptions.AesKey.Length != 32)
-{
-    if (useDefaultsForTesting)
-    {
-        // 测试环境使用默认值
-        Console.WriteLine("⚠️  WARNING: Using default AES Key for testing. Set DFS_ENCRYPTION_AESKEY environment variable for production!");
-        encryptionOptions.AesKey = "DataForgeStudioAESKey32BytesLong123456";
-        if (string.IsNullOrEmpty(encryptionOptions.AesIV))
-        {
-            encryptionOptions.AesIV = "DataForgeIV16Byte!";
-        }
-    }
-    else
-    {
-        throw new InvalidOperationException(
-            "AES Key 未配置或长度不是32位。请设置环境变量 DFS_ENCRYPTION_AESKEY (32字符)");
-    }
-}
+Console.WriteLine($"AES 配置完成 (密钥长度: {aesKey.Length}, IV长度: {aesIV.Length})");
 
-// 同时也需要为 License 配置设置默认值（用于测试）
-if (string.IsNullOrEmpty(licenseOptions.AesKey))
-{
-    if (useDefaultsForTesting)
-    {
-        Console.WriteLine("⚠️  WARNING: Using default License AES Key for testing. Set DFS_LICENSE_AESKEY environment variable for production!");
-        licenseOptions.AesKey = "DataForgeStudioV4AESLicenseKey32Bytes!!";
-        if (string.IsNullOrEmpty(licenseOptions.AesIv))
-        {
-            licenseOptions.AesIv = "DataForgeIV16Byte!";
-        }
-    }
-}
+// 许可证配置
+var licenseAesKey = ProductionKeys.LicenseAesKey;
+var licenseAesIV = ProductionKeys.LicenseAesIV;
+
+Console.WriteLine($"许可证配置完成");
+
+// 将配置写入 Configuration 供其他服务读取
+builder.Configuration["Security:Jwt:Secret"] = jwtSecret;
+builder.Configuration["Security:Jwt:Issuer"] = jwtIssuer;
+builder.Configuration["Security:Jwt:Audience"] = jwtAudience;
+builder.Configuration["Security:Encryption:AesKey"] = aesKey;
+builder.Configuration["Security:Encryption:AesIV"] = aesIV;
+builder.Configuration["Security:License:AesKey"] = licenseAesKey;
+builder.Configuration["Security:License:AesIv"] = licenseAesIV;
 
 // 配置 CORS
 var corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? new[] { "http://localhost:5173" };
 var corsMethods = builder.Configuration.GetSection("Cors:AllowedMethods").Get<string[]>() ?? new[] { "GET", "POST", "PUT", "DELETE", "PATCH" };
 var corsHeaders = builder.Configuration.GetSection("Cors:AllowedHeaders").Get<string[]>() ?? new[] { "Authorization", "Content-Type", "X-Requested-With" };
-
-// 将设置好的默认值写回配置，以便 KeyManagementService 可以读取
-builder.Configuration["Security:Jwt:Secret"] = jwtOptions.Secret;
-builder.Configuration["Security:Encryption:AesKey"] = encryptionOptions.AesKey;
-builder.Configuration["Security:Encryption:AesIV"] = encryptionOptions.AesIV;
-builder.Configuration["Security:License:AesKey"] = licenseOptions.AesKey;
-builder.Configuration["Security:License:AesIv"] = licenseOptions.AesIv;
 
 builder.Services.AddCors(options =>
 {
@@ -123,8 +87,48 @@ var masterConnectionString = builder.Configuration.GetConnectionString("MasterCo
 connectionString = ConnectionStringHelper.DecryptIfNeeded(connectionString, builder.Configuration);
 masterConnectionString = ConnectionStringHelper.DecryptIfNeeded(masterConnectionString, builder.Configuration);
 
+// 验证连接字符串并测试连接
+Console.WriteLine("=== 数据库连接配置 ===");
+Console.WriteLine($"连接字符串（脱敏）: {SanitizeConnectionString(connectionString)}");
+
+try
+{
+    using var testConnection = new SqlConnection(masterConnectionString);
+    testConnection.Open();
+    Console.WriteLine("✅ 数据库连接测试成功");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"❌ 数据库连接测试失败: {ex.Message}");
+    Console.WriteLine($"   连接字符串详情: {SanitizeConnectionString(connectionString)}");
+    Console.WriteLine($"   请检查:");
+    Console.WriteLine($"   1. SQL Server 服务是否运行");
+    Console.WriteLine($"   2. 服务器地址和端口是否正确");
+    Console.WriteLine($"   3. 认证方式（Windows/SQL）是否正确");
+    Console.WriteLine($"   4. 用户名密码是否正确（SQL 认证）");
+    Console.WriteLine($"   5. Windows 账户是否有权限（Windows 认证）");
+    // 不阻止启动，让应用继续运行以便诊断
+}
+
+// 脱敏连接字符串（隐藏密码）
+static string SanitizeConnectionString(string? connectionString)
+{
+    if (string.IsNullOrEmpty(connectionString)) return "(空)";
+    return System.Text.RegularExpressions.Regex.Replace(
+        connectionString,
+        @"(Password|Pwd|EncryptedPassword)\s*=\s*[^;]+",
+        "$1=***",
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+}
+
 builder.Services.AddDbContext<DataForgeStudioDbContext>(options =>
-    options.UseSqlServer(connectionString));
+    options.UseSqlServer(connectionString, sqlOptions =>
+    {
+        sqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 3,
+            maxRetryDelay: TimeSpan.FromSeconds(30),
+            errorNumbersToAdd: null);
+    }));
 
 // 存储解密后的连接字符串供其他服务使用
 builder.Services.AddSingleton<IDbConnectionStringProvider>(sp =>
@@ -167,8 +171,7 @@ builder.WebHost.ConfigureKestrel(options =>
     options.Limits.RequestHeadersTimeout = TimeSpan.FromSeconds(30);
 });
 
-// 配置 JWT 认证（从安全选项读取）
-var jwtSecret = jwtOptions.Secret;
+// 配置 JWT 认证（从 ProductionKeys 读取）
 var secretKey = Encoding.UTF8.GetBytes(jwtSecret);
 
 builder.Services.AddAuthentication(options =>
@@ -186,8 +189,8 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtOptions.Issuer,
-        ValidAudience = jwtOptions.Audience,
+        ValidIssuer = jwtIssuer,
+        ValidAudience = jwtAudience,
         IssuerSigningKey = new SymmetricSecurityKey(secretKey),
         ClockSkew = TimeSpan.Zero
     };
