@@ -24,6 +24,11 @@ public interface ILicenseService
     Task<ApiResponse<LicenseValidationResponse>> ValidateLicenseAsync(bool forceRefresh = false);
 
     /// <summary>
+    /// 生成试用许可证
+    /// </summary>
+    Task<ApiResponse<LicenseInfoDto>> GenerateTrialLicenseAsync();
+
+    /// <summary>
     /// 获取许可证使用统计（用户数、报表数、数据源数）
     /// </summary>
     Task<ApiResponse<LicenseUsageStatsDto>> GetUsageStatsAsync();

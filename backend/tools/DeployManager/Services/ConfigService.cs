@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using DeployManager.Models;
+using DataForgeStudio.Shared.Utils;
 
 namespace DeployManager.Services;
 
@@ -519,15 +520,87 @@ public class ConfigService : IConfigService
 
     /// <summary>
     /// 获取前端模式 (nginx/iis)
+    /// 优先级：用户保存的设置 > 自动检测
     /// </summary>
     public string GetFrontendMode()
     {
-        // 优先使用 Nginx（安装包自带）
+        // 1. 首先检查用户保存的设置
+        var savedMode = LoadSavedFrontendMode();
+        if (!string.IsNullOrEmpty(savedMode))
+        {
+            // 验证保存的模式是否仍然可用
+            if (savedMode == "iis" && _iisManager.IsIisInstalled())
+                return "iis";
+            if (savedMode == "nginx" && _nginxManager.IsNginxInstalled())
+                return "nginx";
+        }
+
+        // 2. 自动检测（优先使用 Nginx，因为安装包自带）
         if (_nginxManager.IsNginxInstalled())
             return "nginx";
         if (_iisManager.IsIisInstalled())
             return "iis";
         return "nginx";
+    }
+
+    /// <summary>
+    /// 保存前端模式
+    /// </summary>
+    /// <param name="mode">前端模式 ("nginx" 或 "iis")</param>
+    public void SaveFrontendMode(string mode)
+    {
+        if (mode != "nginx" && mode != "iis")
+        {
+            throw new ArgumentException("前端模式必须是 'nginx' 或 'iis'", nameof(mode));
+        }
+
+        try
+        {
+            var modeFilePath = GetFrontendModeFilePath();
+            File.WriteAllText(modeFilePath, mode, Encoding.UTF8);
+            FileLogger.Info($"前端模式已保存: {mode}");
+            Debug.WriteLine($"[ConfigService] 前端模式已保存: {mode} -> {modeFilePath}");
+        }
+        catch (Exception ex)
+        {
+            FileLogger.Error($"保存前端模式失败: {ex.Message}");
+            Debug.WriteLine($"[ConfigService] 保存前端模式失败: {ex.Message}");
+            // 不抛出异常，保存失败不应该阻止模式切换
+        }
+    }
+
+    /// <summary>
+    /// 加载保存的前端模式
+    /// </summary>
+    /// <returns>保存的模式，如果没有保存则返回 null</returns>
+    private string? LoadSavedFrontendMode()
+    {
+        try
+        {
+            var modeFilePath = GetFrontendModeFilePath();
+            if (File.Exists(modeFilePath))
+            {
+                var mode = File.ReadAllText(modeFilePath, Encoding.UTF8).Trim().ToLowerInvariant();
+                if (mode == "nginx" || mode == "iis")
+                {
+                    Debug.WriteLine($"[ConfigService] 从文件加载前端模式: {mode}");
+                    return mode;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ConfigService] 读取前端模式失败: {ex.Message}");
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// 获取前端模式配置文件路径
+    /// </summary>
+    private string GetFrontendModeFilePath()
+    {
+        return Path.Combine(_installPath, ".frontend_mode");
     }
 
     /// <summary>
@@ -601,7 +674,8 @@ public class ConfigService : IConfigService
                 @"proxy_pass\s+http://127\.0\.0\.1:\d+",
                 $"proxy_pass         http://127.0.0.1:{backendPort}");
 
-            File.WriteAllText(nginxConfPath, content);
+            // 使用 UTF-8 without BOM 编码，避免 Nginx 解析错误
+            File.WriteAllText(nginxConfPath, content, new System.Text.UTF8Encoding(false));
             FileLogger.Info($"前端端口已更新为 {port}");
         }
         catch (Exception ex)
@@ -613,6 +687,7 @@ public class ConfigService : IConfigService
 
     /// <summary>
     /// 保存数据库配置（更新 appsettings.json 连接字符串）
+    /// 密码会被加密存储（使用 EncryptedPassword= 格式）
     /// </summary>
     public void SaveDatabaseConfig(DatabaseConfig config)
     {
@@ -631,14 +706,98 @@ public class ConfigService : IConfigService
                 rootNode["ConnectionStrings"] = connectionStringsNode;
             }
 
-            var connectionString = config.GetConnectionString();
+            // 构建带加密密码的连接字符串
+            var connectionString = BuildEncryptedConnectionString(config);
             connectionStringsNode["DefaultConnection"] = connectionString;
 
             // 同时更新 MasterConnection
-            var masterConnectionString = BuildMasterConnectionString(config);
+            var masterConnectionString = BuildEncryptedMasterConnectionString(config);
             connectionStringsNode["MasterConnection"] = masterConnectionString;
         });
 
-        Debug.WriteLine($"[ConfigService] 数据库配置已更新");
+        Debug.WriteLine($"[ConfigService] 数据库配置已更新（密码已加密）");
+    }
+
+    /// <summary>
+    /// 获取加密密钥
+    /// </summary>
+    private static (string key, string iv) GetEncryptionKeys()
+    {
+        // 优先从环境变量读取
+        var key = Environment.GetEnvironmentVariable("DFS_ENCRYPTION_AESKEY");
+        var iv = Environment.GetEnvironmentVariable("DFS_ENCRYPTION_AESIV");
+
+        // 如果环境变量未设置，使用默认值（生产环境应该通过环境变量设置）
+        if (string.IsNullOrEmpty(key))
+        {
+            key = "DataForgeStudioV4AESKey32Bytes!!";
+            FileLogger.Warning("使用默认加密密钥（生产环境应设置 DFS_ENCRYPTION_AESKEY 环境变量）");
+        }
+        if (string.IsNullOrEmpty(iv))
+        {
+            iv = "DataForgeIV16Byte!";
+            FileLogger.Warning("使用默认加密IV（生产环境应设置 DFS_ENCRYPTION_AESIV 环境变量）");
+        }
+
+        return (key, iv);
+    }
+
+    /// <summary>
+    /// 构建带加密密码的连接字符串
+    /// </summary>
+    private string BuildEncryptedConnectionString(DatabaseConfig config)
+    {
+        var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder
+        {
+            DataSource = config.Port == 1433 ? $"tcp:{config.Server}" : $"tcp:{config.Server},{config.Port}",
+            InitialCatalog = config.Database,
+            TrustServerCertificate = true,
+            ConnectTimeout = 30
+        };
+
+        if (config.UseWindowsAuth)
+        {
+            builder.IntegratedSecurity = true;
+        }
+        else
+        {
+            builder.UserID = config.Username;
+            // 加密密码
+            var (key, iv) = GetEncryptionKeys();
+            var encryptedPassword = DataForgeStudio.Shared.Utils.EncryptionHelper.AesEncrypt(config.Password, key, iv);
+            // 使用 EncryptedPassword 替代 Password
+            // 注意：SqlConnectionStringBuilder 不支持 EncryptedPassword，所以手动构建
+            return $"Data Source={builder.DataSource};Initial Catalog={builder.InitialCatalog};User ID={config.Username};EncryptedPassword={encryptedPassword};Connect Timeout={builder.ConnectTimeout};Trust Server Certificate=True";
+        }
+
+        return builder.ConnectionString;
+    }
+
+    /// <summary>
+    /// 构建 master 数据库连接字符串（带加密密码）
+    /// </summary>
+    private string BuildEncryptedMasterConnectionString(DatabaseConfig config)
+    {
+        var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder
+        {
+            DataSource = config.Port == 1433 ? $"tcp:{config.Server}" : $"tcp:{config.Server},{config.Port}",
+            InitialCatalog = "master",
+            TrustServerCertificate = true,
+            ConnectTimeout = 30
+        };
+
+        if (config.UseWindowsAuth)
+        {
+            builder.IntegratedSecurity = true;
+        }
+        else
+        {
+            builder.UserID = config.Username;
+            var (key, iv) = GetEncryptionKeys();
+            var encryptedPassword = DataForgeStudio.Shared.Utils.EncryptionHelper.AesEncrypt(config.Password, key, iv);
+            return $"Data Source={builder.DataSource};Initial Catalog={builder.InitialCatalog};User ID={config.Username};EncryptedPassword={encryptedPassword};Connect Timeout={builder.ConnectTimeout};Trust Server Certificate=True";
+        }
+
+        return builder.ConnectionString;
     }
 }

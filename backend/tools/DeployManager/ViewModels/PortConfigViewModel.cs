@@ -1,8 +1,10 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DeployManager.Services;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 
 namespace DeployManager.ViewModels;
@@ -174,6 +176,7 @@ public partial class PortConfigViewModel : ObservableObject
 
         IsTesting = true;
         var messages = new List<string>();
+        var hasConflict = false;
 
         try
         {
@@ -196,7 +199,17 @@ public partial class PortConfigViewModel : ObservableObject
             var backendInUse = IsPortInUse(BackendPort);
             if (backendInUse)
             {
-                messages.Add($"后端端口 {BackendPort} 已被占用");
+                // 检查是否是本系统进程占用
+                if (IsPortUsedByOwnSystem(BackendPort))
+                {
+                    messages.Add($"后端端口 {BackendPort} 已被本系统占用（将自动重启服务）");
+                }
+                else
+                {
+                    var processName = GetProcessNameUsingPort(BackendPort);
+                    messages.Add($"后端端口 {BackendPort} 已被 {processName} 占用");
+                    hasConflict = true;
+                }
             }
             else
             {
@@ -207,7 +220,17 @@ public partial class PortConfigViewModel : ObservableObject
             var frontendInUse = IsPortInUse(FrontendPort);
             if (frontendInUse)
             {
-                messages.Add($"前端端口 {FrontendPort} 已被占用");
+                // 检查是否是本系统进程占用
+                if (IsPortUsedByOwnSystem(FrontendPort))
+                {
+                    messages.Add($"前端端口 {FrontendPort} 已被本系统占用（将自动重启服务）");
+                }
+                else
+                {
+                    var processName = GetProcessNameUsingPort(FrontendPort);
+                    messages.Add($"前端端口 {FrontendPort} 已被 {processName} 占用");
+                    hasConflict = true;
+                }
             }
             else
             {
@@ -215,7 +238,6 @@ public partial class PortConfigViewModel : ObservableObject
             }
 
             // 设置结果
-            var hasConflict = backendInUse || frontendInUse;
             TestResult = string.Join("，", messages);
             TestSuccess = !hasConflict;
 
@@ -254,6 +276,143 @@ public partial class PortConfigViewModel : ObservableObject
         catch
         {
             return true; // 其他错误也认为端口不可用
+        }
+    }
+
+    /// <summary>
+    /// 检测端口是否被本系统进程占用
+    /// 本系统进程包括：nginx.exe, DataForgeStudio.Api, w3wp.exe (IIS)
+    /// </summary>
+    /// <param name="port">端口号</param>
+    /// <returns>如果端口被本系统进程占用返回 true，否则返回 false</returns>
+    private static bool IsPortUsedByOwnSystem(int port)
+    {
+        try
+        {
+            // 获取占用指定端口的进程
+            var processes = GetProcessesUsingPort(port);
+
+            foreach (var process in processes)
+            {
+                try
+                {
+                    var processName = process.ProcessName.ToLowerInvariant();
+
+                    // 检查是否是本系统的进程
+                    if (processName == "nginx" ||
+                        processName == "dataforgestudio.api" ||
+                        processName == "dataforgestudio.api.exe" ||
+                        processName == "w3wp" ||  // IIS 工作进程
+                        processName == "iisexpress")
+                    {
+                        return true;
+                    }
+                }
+                catch
+                {
+                    // 某些进程可能无法访问，忽略
+                }
+            }
+
+            return false;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 获取占用指定端口的进程列表
+    /// </summary>
+    /// <param name="port">端口号</param>
+    /// <returns>占用端口的进程列表</returns>
+    private static List<Process> GetProcessesUsingPort(int port)
+    {
+        var result = new List<Process>();
+
+        try
+        {
+            // 使用 netstat 命令获取端口占用信息
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "netstat.exe",
+                Arguments = "-ano",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                StandardOutputEncoding = System.Text.Encoding.UTF8
+            };
+
+            using var process = Process.Start(startInfo);
+            if (process == null) return result;
+
+            var output = process.StandardOutput.ReadToEnd();
+            process.WaitForExit(5000);
+
+            // 解析输出，查找占用指定端口的进程
+            var lines = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (var line in lines)
+            {
+                // 格式：协议  本地地址          外部地址          状态           PID
+                // TCP    0.0.0.0:5000          0.0.0.0:0              LISTENING       1234
+                if (line.Contains($":{port}") && line.Contains("LISTENING"))
+                {
+                    var parts = line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length >= 5)
+                    {
+                        // 最后一个部分是 PID
+                        if (int.TryParse(parts[parts.Length - 1], out var pid))
+                        {
+                            try
+                            {
+                                var proc = Process.GetProcessById(pid);
+                                result.Add(proc);
+                            }
+                            catch
+                            {
+                                // 进程可能已经结束，忽略
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // 如果 netstat 失败，返回空列表
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// 获取占用端口的进程名称（用于显示）
+    /// </summary>
+    /// <param name="port">端口号</param>
+    /// <returns>进程名称字符串</returns>
+    private static string GetProcessNameUsingPort(int port)
+    {
+        try
+        {
+            var processes = GetProcessesUsingPort(port);
+            if (processes.Count == 0) return "未知进程";
+
+            var names = new HashSet<string>();
+            foreach (var process in processes)
+            {
+                try
+                {
+                    names.Add(process.ProcessName);
+                }
+                catch { }
+            }
+
+            return string.Join(", ", names);
+        }
+        catch
+        {
+            return "未知进程";
         }
     }
 

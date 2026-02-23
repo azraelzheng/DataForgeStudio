@@ -70,6 +70,19 @@ public partial class ServiceControlViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private string _webServiceType = "IIS";
 
+    /// <summary>
+    /// 是否是 IIS 模式
+    /// </summary>
+    [ObservableProperty]
+    private bool _isIisMode = true;
+
+    /// <summary>
+    /// 前端服务提示信息
+    /// </summary>
+    public string WebServiceHint => IsIisMode
+        ? "IIS 模式：站点由 IIS 服务管理，通常无需手动启停"
+        : "Nginx 模式：独立进程运行，可手动启停服务";
+
     #endregion
 
     #region 通用属性
@@ -154,11 +167,13 @@ public partial class ServiceControlViewModel : ObservableObject, IDisposable
         try
         {
             var frontendMode = _configService.GetFrontendMode();
-            WebServiceType = frontendMode.ToUpper() == "NGINX" ? "Nginx" : "IIS";
+            IsIisMode = frontendMode.Equals("iis", StringComparison.OrdinalIgnoreCase);
+            WebServiceType = IsIisMode ? "IIS" : "Nginx";
             AutoStart = false; // TODO: 从配置加载
         }
         catch (Exception)
         {
+            IsIisMode = true;
             WebServiceType = "IIS";
             AutoStart = false;
         }

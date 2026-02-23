@@ -192,6 +192,20 @@ public class WebServiceManager : IWebServiceManager
                 throw new InvalidOperationException($"Nginx 可执行文件不存在: {nginxExe}");
             }
 
+            // 检查是否已有 Nginx 进程在运行
+            if (IsNginxRunning())
+            {
+                Debug.WriteLine($"[WebServiceManager] Nginx 已在运行中");
+                return;
+            }
+
+            // 检查配置文件是否存在
+            var nginxConfPath = Path.Combine(_nginxPath, "conf", "nginx.conf");
+            if (!File.Exists(nginxConfPath))
+            {
+                throw new InvalidOperationException($"Nginx 配置文件不存在: {nginxConfPath}");
+            }
+
             Debug.WriteLine($"[WebServiceManager] 正在启动 Nginx...");
 
             var startInfo = new ProcessStartInfo
@@ -199,19 +213,95 @@ public class WebServiceManager : IWebServiceManager
                 FileName = nginxExe,
                 WorkingDirectory = _nginxPath,
                 UseShellExecute = false,
-                CreateNoWindow = true
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
             };
 
             var process = Process.Start(startInfo);
-            process?.WaitForExit(5000);
+            if (process == null)
+            {
+                throw new InvalidOperationException("无法启动 Nginx 进程");
+            }
 
-            await Task.Delay(1000); // 等待进程启动
-            Debug.WriteLine($"[WebServiceManager] Nginx 启动命令已执行");
+            // 等待进程完成（Nginx 主进程会快速退出，这是正常的）
+            process.WaitForExit(5000);
+
+            // 读取错误输出
+            var errorOutput = process.StandardError.ReadToEnd();
+
+            // 等待 Nginx 完全启动（master 和 worker 进程）
+            await Task.Delay(2000);
+
+            // 检查 Nginx 是否真正启动成功
+            int retryCount = 0;
+            const int maxRetries = 5;
+            while (retryCount < maxRetries)
+            {
+                if (IsNginxRunning())
+                {
+                    Debug.WriteLine($"[WebServiceManager] Nginx 启动成功");
+                    return;
+                }
+                retryCount++;
+                await Task.Delay(1000);
+            }
+
+            // 如果启动失败，尝试获取更详细的错误信息
+            if (!IsNginxRunning())
+            {
+                // 尝试读取 Nginx 错误日志
+                var errorLogPath = Path.Combine(_nginxPath, "logs", "error.log");
+                var errorLogContent = "";
+                if (File.Exists(errorLogPath))
+                {
+                    try
+                    {
+                        // 读取最后几行错误日志
+                        var lines = File.ReadAllLines(errorLogPath);
+                        var lastLines = lines.TakeLast(5).ToArray();
+                        errorLogContent = string.Join("\n", lastLines);
+                    }
+                    catch { }
+                }
+
+                var errorMessage = !string.IsNullOrEmpty(errorOutput)
+                    ? $"Nginx 启动失败: {errorOutput}"
+                    : !string.IsNullOrEmpty(errorLogContent)
+                        ? $"Nginx 启动失败，错误日志:\n{errorLogContent}"
+                        : "Nginx 启动失败，请检查配置文件";
+
+                throw new InvalidOperationException(errorMessage);
+            }
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"[WebServiceManager] 启动 Nginx 失败: {ex.Message}");
             throw;
+        }
+    }
+
+    /// <summary>
+    /// 检查 Nginx 进程是否正在运行
+    /// </summary>
+    private static bool IsNginxRunning()
+    {
+        try
+        {
+            var processes = Process.GetProcessesByName("nginx");
+            var isRunning = processes.Length > 0;
+
+            // 释放进程资源
+            foreach (var process in processes)
+            {
+                process.Dispose();
+            }
+
+            return isRunning;
+        }
+        catch
+        {
+            return false;
         }
     }
 

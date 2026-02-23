@@ -38,7 +38,7 @@ public class RateLimitMiddleware
             {
                 _logger.LogWarning("Rate limit blocked for {ClientIp} on {Path}", clientIp, path);
                 context.Response.StatusCode = 429; // Too Many Requests
-                context.Response.Headers.Add("Retry-After", ((int)(blockedUntil - DateTime.UtcNow).TotalSeconds).ToString());
+                context.Response.Headers["Retry-After"] = ((int)(blockedUntil - DateTime.UtcNow).TotalSeconds).ToString();
                 await context.Response.WriteAsync("Too many requests. Please try again later.");
                 return;
             }
@@ -75,7 +75,7 @@ public class RateLimitMiddleware
                         clientIp, path, blockDuration.TotalMinutes);
 
                     context.Response.StatusCode = 429;
-                    context.Response.Headers.Add("Retry-After", "900"); // 15 minutes
+                    context.Response.Headers["Retry-After"] = "900"; // 15 minutes
                     await context.Response.WriteAsync("Rate limit exceeded. Please try again later.");
                     return;
                 }

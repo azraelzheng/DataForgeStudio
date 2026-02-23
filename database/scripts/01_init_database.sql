@@ -1,17 +1,18 @@
 -- DataForgeStudio V4 Database Initialization Script
 -- Compatible with SQL Server 2005+
+-- Updated: 2026-02-23 - Sync with current entity definitions
 
 USE master;
 GO
 
 -- Create database if not exists
-IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'DataForgeStudio_V4')
+IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'DataForgeStudio')
 BEGIN
-    CREATE DATABASE DataForgeStudio_V4;
+    CREATE DATABASE DataForgeStudio;
 END
 GO
 
-USE DataForgeStudio_V4;
+USE DataForgeStudio;
 GO
 
 -- ============================================================================
@@ -86,17 +87,37 @@ BEGIN
 END
 GO
 
--- RolePermissions Table (if using detailed permissions)
+-- Permissions Table
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Permissions]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE [dbo].[Permissions](
+        [PermissionId] [int] IDENTITY(1,1) NOT NULL,
+        [PermissionCode] [nvarchar](100) NOT NULL,
+        [PermissionName] [nvarchar](100) NOT NULL,
+        [Module] [nvarchar](50) NOT NULL,
+        [Action] [nvarchar](50) NOT NULL,
+        [Description] [nvarchar](200) NULL,
+        [ParentId] [int] NULL,
+        [SortOrder] [int] NOT NULL DEFAULT 0,
+        [IsSystem] [bit] NOT NULL DEFAULT 0,
+        [CreatedTime] [datetime] NOT NULL DEFAULT GETUTCDATE(),
+        CONSTRAINT [PK_Permissions] PRIMARY KEY CLUSTERED ([PermissionId] ASC),
+        CONSTRAINT [UQ_Permissions_PermissionCode] UNIQUE NONCLUSTERED ([PermissionCode] ASC)
+    );
+END
+GO
+
+-- RolePermissions Table (Updated structure)
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[RolePermissions]') AND type in (N'U'))
 BEGIN
     CREATE TABLE [dbo].[RolePermissions](
-        [PermissionId] [int] IDENTITY(1,1) NOT NULL,
+        [RolePermissionId] [int] IDENTITY(1,1) NOT NULL,
         [RoleId] [int] NOT NULL,
-        [PermissionCode] [nvarchar](100) NOT NULL,
+        [PermissionId] [int] NOT NULL,
         [CreatedBy] [int] NULL,
         [CreatedTime] [datetime] NOT NULL DEFAULT GETUTCDATE(),
-        CONSTRAINT [PK_RolePermissions] PRIMARY KEY CLUSTERED ([PermissionId] ASC),
-        CONSTRAINT [UQ_RolePermissions_Role_Code] UNIQUE NONCLUSTERED ([RoleId] ASC, [PermissionCode] ASC)
+        CONSTRAINT [PK_RolePermissions] PRIMARY KEY CLUSTERED ([RolePermissionId] ASC),
+        CONSTRAINT [UQ_RolePermissions_Role_Permission] UNIQUE NONCLUSTERED ([RoleId] ASC, [PermissionId] ASC)
     );
 END
 GO
@@ -210,19 +231,26 @@ BEGIN
 END
 GO
 
--- OperationLogs Table
+-- OperationLogs Table (Updated structure - matches OperationLog entity)
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[OperationLogs]') AND type in (N'U'))
 BEGIN
     CREATE TABLE [dbo].[OperationLogs](
         [LogId] [int] IDENTITY(1,1) NOT NULL,
-        [Username] [nvarchar](50) NOT NULL,
-        [Action] [nvarchar](50) NOT NULL,
+        [UserId] [int] NULL,
+        [Username] [nvarchar](50) NULL,
         [Module] [nvarchar](50) NOT NULL,
+        [Action] [nvarchar](50) NOT NULL,
+        [ActionType] [nvarchar](20) NULL,
         [Description] [nvarchar](500) NULL,
         [IpAddress] [nvarchar](50) NULL,
-        [Browser] [nvarchar](200) NULL,
-        [Os] [nvarchar](100) NULL,
+        [UserAgent] [nvarchar](500) NULL,
+        [RequestUrl] [nvarchar](500) NULL,
+        [RequestMethod] [nvarchar](10) NULL,
         [RequestData] [nvarchar](max) NULL,
+        [ResponseData] [nvarchar](max) NULL,
+        [Duration] [int] NULL,
+        [IsSuccess] [bit] NOT NULL DEFAULT 1,
+        [ErrorMessage] [nvarchar](max) NULL,
         [CreatedTime] [datetime] NOT NULL DEFAULT GETUTCDATE(),
         CONSTRAINT [PK_OperationLogs] PRIMARY KEY CLUSTERED ([LogId] ASC)
     );
@@ -234,12 +262,15 @@ IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Lo
 BEGIN
     CREATE TABLE [dbo].[LoginLogs](
         [LogId] [int] IDENTITY(1,1) NOT NULL,
-        [Username] [nvarchar](50) NOT NULL,
+        [UserId] [int] NULL,
+        [Username] [nvarchar](50) NULL,
         [LoginTime] [datetime] NOT NULL DEFAULT GETUTCDATE(),
         [LogoutTime] [datetime] NULL,
         [IpAddress] [nvarchar](50) NULL,
-        [IsSuccess] [bit] NOT NULL DEFAULT 1,
-        [FailReason] [nvarchar](200) NULL,
+        [UserAgent] [nvarchar](500) NULL,
+        [LoginStatus] [nvarchar](20) NULL,
+        [FailureReason] [nvarchar](200) NULL,
+        [SessionId] [nvarchar](100) NULL,
         CONSTRAINT [PK_LoginLogs] PRIMARY KEY CLUSTERED ([LogId] ASC)
     );
 END
@@ -266,7 +297,7 @@ BEGIN
 END
 GO
 
--- BackupRecords Table
+-- BackupRecords Table (Updated - added Description field)
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[BackupRecords]') AND type in (N'U'))
 BEGIN
     CREATE TABLE [dbo].[BackupRecords](
@@ -275,6 +306,7 @@ BEGIN
         [BackupType] [nvarchar](20) NOT NULL DEFAULT 'Manual',
         [BackupPath] [nvarchar](500) NOT NULL,
         [DatabaseName] [nvarchar](100) NULL,
+        [Description] [nvarchar](500) NULL,
         [FileSize] [bigint] NULL,
         [BackupTime] [datetime] NOT NULL DEFAULT GETUTCDATE(),
         [IsSuccess] [bit] NOT NULL DEFAULT 1,
@@ -286,31 +318,53 @@ BEGIN
 END
 GO
 
--- Licenses Table
+-- BackupSchedules Table (New)
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[BackupSchedules]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE [dbo].[BackupSchedules](
+        [ScheduleId] [int] IDENTITY(1,1) NOT NULL,
+        [ScheduleName] [nvarchar](100) NOT NULL,
+        [ScheduleType] [nvarchar](20) NOT NULL DEFAULT 'Recurring',
+        [RecurringDays] [nvarchar](50) NULL,
+        [ScheduledTime] [nvarchar](10) NULL,
+        [OnceDate] [datetime] NULL,
+        [RetentionCount] [int] NOT NULL DEFAULT 10,
+        [IsEnabled] [bit] NOT NULL DEFAULT 1,
+        [LastRunTime] [datetime] NULL,
+        [NextRunTime] [datetime] NULL,
+        [CreatedTime] [datetime] NOT NULL DEFAULT GETUTCDATE(),
+        [UpdatedTime] [datetime] NULL,
+        CONSTRAINT [PK_BackupSchedules] PRIMARY KEY CLUSTERED ([ScheduleId] ASC)
+    );
+END
+GO
+
+-- Licenses Table (Updated - Zero Trust Architecture)
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Licenses]') AND type in (N'U'))
 BEGIN
     CREATE TABLE [dbo].[Licenses](
         [LicenseId] [int] IDENTITY(1,1) NOT NULL,
-        [LicenseKey] [nvarchar](500) NOT NULL,
-        [CompanyName] [nvarchar](200) NULL,
-        [ContactPerson] [nvarchar](50) NULL,
-        [Email] [nvarchar](100) NULL,
-        [Phone] [nvarchar](20) NULL,
-        [MaxUsers] [int] NULL,
-        [MaxReports] [int] NULL,
-        [MaxDataSources] [int] NULL,
-        [ExpiryDate] [datetime] NULL,
-        [Features] [nvarchar](max) NULL,
-        [IsActive] [bit] NOT NULL DEFAULT 1,
-        [ActivatedTime] [datetime] NULL,
+        [LicenseKey] [nvarchar](max) NOT NULL,
+        [Signature] [nvarchar](512) NOT NULL DEFAULT '',
+        [MachineCode] [nvarchar](64) NOT NULL,
+        [ActivatedTime] [datetime] NOT NULL DEFAULT GETUTCDATE(),
         [ActivatedIP] [nvarchar](50) NULL,
-        [MachineCode] [nvarchar](200) NULL,
-        [Remark] [nvarchar](500) NULL,
-        [CreatedBy] [int] NULL,
         [CreatedTime] [datetime] NOT NULL DEFAULT GETUTCDATE(),
-        [UpdatedBy] [int] NULL,
-        [UpdatedTime] [datetime] NULL,
         CONSTRAINT [PK_Licenses] PRIMARY KEY CLUSTERED ([LicenseId] ASC)
+    );
+END
+GO
+
+-- TrialRecords Table (New)
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[TrialRecords]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE [dbo].[TrialRecords](
+        [TrialRecordId] [int] IDENTITY(1,1) NOT NULL,
+        [MachineCode] [nvarchar](64) NOT NULL,
+        [FirstRunTime] [datetime] NOT NULL DEFAULT GETUTCDATE(),
+        [CreatedAt] [datetime] NOT NULL DEFAULT GETUTCDATE(),
+        CONSTRAINT [PK_TrialRecords] PRIMARY KEY CLUSTERED ([TrialRecordId] ASC),
+        CONSTRAINT [UQ_TrialRecords_MachineCode] UNIQUE NONCLUSTERED ([MachineCode] ASC)
     );
 END
 GO
@@ -331,6 +385,21 @@ IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_UserRoles_Roles')
 BEGIN
     ALTER TABLE [dbo].[UserRoles] ADD CONSTRAINT [FK_UserRoles_Roles]
     FOREIGN KEY ([RoleId]) REFERENCES [dbo].[Roles] ([RoleId]) ON DELETE CASCADE;
+END
+GO
+
+-- RolePermissions FKs
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_RolePermissions_Roles')
+BEGIN
+    ALTER TABLE [dbo].[RolePermissions] ADD CONSTRAINT [FK_RolePermissions_Roles]
+    FOREIGN KEY ([RoleId]) REFERENCES [dbo].[Roles] ([RoleId]) ON DELETE CASCADE;
+END
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_RolePermissions_Permissions')
+BEGIN
+    ALTER TABLE [dbo].[RolePermissions] ADD CONSTRAINT [FK_RolePermissions_Permissions']
+    FOREIGN KEY ([PermissionId]) REFERENCES [dbo].[Permissions] ([PermissionId]) ON DELETE CASCADE;
 END
 GO
 
@@ -355,6 +424,30 @@ IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_ReportParameters_
 BEGIN
     ALTER TABLE [dbo].[ReportParameters] ADD CONSTRAINT [FK_ReportParameters_Reports]
     FOREIGN KEY ([ReportId]) REFERENCES [dbo].[Reports] ([ReportId]) ON DELETE CASCADE;
+END
+GO
+
+-- OperationLogs FK
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_OperationLogs_Users')
+BEGIN
+    ALTER TABLE [dbo].[OperationLogs] ADD CONSTRAINT [FK_OperationLogs_Users]
+    FOREIGN KEY ([UserId]) REFERENCES [dbo].[Users] ([UserId]) ON DELETE SET NULL;
+END
+GO
+
+-- LoginLogs FK
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_LoginLogs_Users')
+BEGIN
+    ALTER TABLE [dbo].[LoginLogs] ADD CONSTRAINT [FK_LoginLogs_Users]
+    FOREIGN KEY ([UserId]) REFERENCES [dbo].[Users] ([UserId]) ON DELETE SET NULL;
+END
+GO
+
+-- Permissions Parent FK
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Permissions_Parent')
+BEGIN
+    ALTER TABLE [dbo].[Permissions] ADD CONSTRAINT [FK_Permissions_Parent]
+    FOREIGN KEY ([ParentId]) REFERENCES [dbo].[Permissions] ([PermissionId]);
 END
 GO
 
@@ -395,85 +488,23 @@ BEGIN
 END
 GO
 
--- ============================================================================
--- Initial Data
--- ============================================================================
-
--- Insert default root user (password: admin123, hashed with BCrypt)
-IF NOT EXISTS (SELECT * FROM [dbo].[Users] WHERE [Username] = 'root')
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_OperationLogs_Module' AND object_id = OBJECT_ID('OperationLogs'))
 BEGIN
-    INSERT INTO [dbo].[Users] ([Username], [PasswordHash], [RealName], [IsActive], [IsSystem], [CreatedTime])
-    VALUES ('root', '$2a$12$YourBCryptHashedPasswordHere', 'System Administrator', 1, 1, GETUTCDATE());
+    CREATE INDEX [IX_OperationLogs_Module] ON [dbo].[OperationLogs] ([Module] ASC);
 END
 GO
 
--- Note: The above hash is a placeholder. Replace with actual BCrypt hash for 'admin123'
--- To generate a BCrypt hash, use: BCrypt.Net.BCrypt.HashPassword("admin123", workFactor: 12)
-
--- Insert system roles
-IF NOT EXISTS (SELECT * FROM [dbo].[Roles] WHERE [RoleCode] = 'SUPER_ADMIN')
+-- LoginLogs Indexes
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_LoginLogs_LoginTime' AND object_id = OBJECT_ID('LoginLogs'))
 BEGIN
-    INSERT INTO [dbo].[Roles] ([RoleName], [RoleCode], [Description], [IsSystem], [SortOrder], [Permissions])
-    VALUES ('超级管理员', 'SUPER_ADMIN', '拥有所有权限', 1, 1, '*');
+    CREATE INDEX [IX_LoginLogs_LoginTime] ON [dbo].[LoginLogs] ([LoginTime] DESC);
 END
 GO
 
-IF NOT EXISTS (SELECT * FROM [dbo].[Roles] WHERE [RoleCode] = 'ADMIN')
+-- Licenses Index
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Licenses_MachineCode' AND object_id = OBJECT_ID('Licenses'))
 BEGIN
-    INSERT INTO [dbo].[Roles] ([RoleName], [RoleCode], [Description], [IsSystem], [SortOrder], [Permissions])
-    VALUES ('管理员', 'ADMIN', '系统管理员', 1, 2, '["report:*","system:*"]');
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM [dbo].[Roles] WHERE [RoleCode] = 'USER')
-BEGIN
-    INSERT INTO [dbo].[Roles] ([RoleName], [RoleCode], [Description], [IsSystem], [SortOrder], [Permissions])
-    VALUES ('普通用户', 'USER', '普通用户', 1, 3, '["report:view"]');
-END
-GO
-
--- Assign Super Admin role to root user
-IF NOT EXISTS (SELECT * FROM [dbo].[UserRoles] WHERE [UserId] = 1 AND [RoleId] = 1)
-BEGIN
-    INSERT INTO [dbo].[UserRoles] ([UserId], [RoleId])
-    SELECT [UserId], [RoleId] FROM [dbo].[Users] CROSS JOIN [dbo].[Roles]
-    WHERE [Users].[Username] = 'root' AND [Roles].[RoleCode] = 'SUPER_ADMIN';
-END
-GO
-
--- Insert default system configs
-IF NOT EXISTS (SELECT * FROM [dbo].[SystemConfigs] WHERE [ConfigKey] = 'System.Name')
-BEGIN
-    INSERT INTO [dbo].[SystemConfigs] ([ConfigKey], [ConfigValue], [ConfigType], [Description], [IsSystem], [SortOrder])
-    VALUES ('System.Name', 'DataForgeStudio V4', 'String', '系统名称', 1, 1);
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM [dbo].[SystemConfigs] WHERE [ConfigKey] = 'System.Version')
-BEGIN
-    INSERT INTO [dbo].[SystemConfigs] ([ConfigKey], [ConfigValue], [ConfigType], [Description], [IsSystem], [SortOrder])
-    VALUES ('System.Version', '1.0.0', 'String', '系统版本', 1, 2);
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM [dbo].[SystemConfigs] WHERE [ConfigKey] = 'Security.Password.MinLength')
-BEGIN
-    INSERT INTO [dbo].[SystemConfigs] ([ConfigKey], [ConfigValue], [ConfigType], [Description], [IsSystem], [SortOrder])
-    VALUES ('Security.Password.MinLength', '6', 'Integer', '密码最小长度', 1, 10);
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM [dbo].[SystemConfigs] WHERE [ConfigKey] = 'Security.Password.MaxFailCount')
-BEGIN
-    INSERT INTO [dbo].[SystemConfigs] ([ConfigKey], [ConfigValue], [ConfigType], [Description], [IsSystem], [SortOrder])
-    VALUES ('Security.Password.MaxFailCount', '5', 'Integer', '密码错误最大次数', 1, 11);
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM [dbo].[SystemConfigs] WHERE [ConfigKey] = 'Session.Timeout')
-BEGIN
-    INSERT INTO [dbo].[SystemConfigs] ([ConfigKey], [ConfigValue], [ConfigType], [Description], [IsSystem], [SortOrder])
-    VALUES ('Session.Timeout', '30', 'Integer', 'Session超时时间（分钟）', 1, 20);
+    CREATE INDEX [IX_Licenses_MachineCode] ON [dbo].[Licenses] ([MachineCode] ASC);
 END
 GO
 

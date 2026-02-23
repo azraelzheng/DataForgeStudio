@@ -351,7 +351,8 @@ public class NginxManager : INginxManager
                 @"proxy_pass\s+http://127\.0\.0\.1:\d+",
                 $"proxy_pass         {backendUrl}");
 
-            File.WriteAllText(configPath, content, Encoding.UTF8);
+            // 使用 UTF-8 without BOM 编码，避免 Nginx 解析错误
+            File.WriteAllText(configPath, content, new UTF8Encoding(false));
             FileLogger.Info($"Nginx 配置已更新: 端口={port}, 后端={backendUrl}");
             Debug.WriteLine($"[NginxManager] 配置文件已更新: {configPath}");
         }

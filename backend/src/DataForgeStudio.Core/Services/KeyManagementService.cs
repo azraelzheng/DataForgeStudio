@@ -30,8 +30,16 @@ public class KeyManagementService : IKeyManagementService
 
         // 从配置读取密钥路径
         var licenseSection = _configuration.GetSection("License");
-        _publicKeyPath = licenseSection["PublicKeyPath"] ?? "keys/public_key.pem";
-        _privateKeyPath = licenseSection["PrivateKeyPath"] ?? "keys/private_key.pem";
+        var configPublicKeyPath = licenseSection["PublicKeyPath"] ?? "keys/public_key.pem";
+        var configPrivateKeyPath = licenseSection["PrivateKeyPath"] ?? "keys/private_key.pem";
+
+        // 解析路径：如果是相对路径，则基于应用程序目录解析
+        // 这样无论从命令行运行还是作为 Windows 服务运行都能正确找到密钥文件
+        _publicKeyPath = ResolvePath(configPublicKeyPath);
+        _privateKeyPath = ResolvePath(configPrivateKeyPath);
+
+        _logger.LogInformation("密钥文件路径: 公钥={PublicKeyPath}, 私钥={PrivateKeyPath}",
+            _publicKeyPath, _privateKeyPath);
 
         // 优先从 Security:License 读取（Program.cs 可能已设置默认值）
         var securityLicenseSection = _configuration.GetSection("Security:License");
@@ -49,6 +57,28 @@ public class KeyManagementService : IKeyManagementService
             _aesIv = "DataForgeIV16Byte!";
             _logger.LogWarning("License AES IV 未配置，使用默认值（仅用于开发/测试）");
         }
+    }
+
+    /// <summary>
+    /// 解析路径：如果是相对路径，则基于应用程序目录解析
+    /// 这样无论从命令行运行还是作为 Windows 服务运行都能正确找到文件
+    /// </summary>
+    private static string ResolvePath(string path)
+    {
+        // 如果是绝对路径，直接返回
+        if (Path.IsPathRooted(path))
+        {
+            return path;
+        }
+
+        // 获取应用程序基目录（对于 Windows 服务，这是服务可执行文件所在目录）
+        var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+
+        // 组合路径
+        var fullPath = Path.Combine(baseDir, path);
+
+        // 规范化路径
+        return Path.GetFullPath(fullPath);
     }
 
     /// <summary>

@@ -70,7 +70,12 @@ public class TrialLicenseTracker : ITrialLicenseTracker
     /// <summary>
     /// 试用期天数
     /// </summary>
-    private const int TRIAL_DAYS = 15;
+    public const int TRIAL_DAYS = 15;
+
+    /// <summary>
+    /// 试用期天数（字符串形式，用于显示）
+    /// </summary>
+    public const string TRIAL_DAYS_STRING = "15";
 
     /// <summary>
     /// 数据版本

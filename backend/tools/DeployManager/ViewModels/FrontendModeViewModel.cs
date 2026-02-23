@@ -237,6 +237,10 @@ public partial class FrontendModeViewModel : ObservableObject
             }
 
             IsIisMode = targetMode == "iis";
+
+            // 保存用户选择的模式
+            _configService.SaveFrontendMode(targetMode);
+
             OperationResult = $"已成功切换到 {(IsIisMode ? "IIS" : "Nginx")} 模式";
             OperationSuccess = true;
         }

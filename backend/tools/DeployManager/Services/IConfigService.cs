@@ -47,6 +47,12 @@ public interface IConfigService
     string GetFrontendMode();
 
     /// <summary>
+    /// 保存前端模式 (nginx/iis)
+    /// </summary>
+    /// <param name="mode">前端模式 ("nginx" 或 "iis")</param>
+    void SaveFrontendMode(string mode);
+
+    /// <summary>
     /// 从 appsettings.json 读取数据库配置
     /// </summary>
     /// <returns>数据库配置对象</returns>

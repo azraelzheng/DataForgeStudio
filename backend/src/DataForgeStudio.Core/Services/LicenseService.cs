@@ -364,7 +364,7 @@ public class LicenseService : ILicenseService
     /// <summary>
     /// 生成试用许可证
     /// </summary>
-    private async Task<ApiResponse<LicenseInfoDto>> GenerateTrialLicenseAsync()
+    public async Task<ApiResponse<LicenseInfoDto>> GenerateTrialLicenseAsync()
     {
         try
         {

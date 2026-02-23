@@ -1,5 +1,6 @@
 using System.Text;
 using DataForgeStudio.Api.Middleware;
+using DataForgeStudio.Api.Services;
 using DataForgeStudio.Core.Configuration;
 using DataForgeStudio.Core.Interfaces;
 using DataForgeStudio.Core.Services;
@@ -114,9 +115,20 @@ builder.Services.AddCors(options =>
     });
 });
 
-// 配置数据库
+// 配置数据库 - 支持加密的连接字符串
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var masterConnectionString = builder.Configuration.GetConnectionString("MasterConnection");
+
+// 检查是否需要解密连接字符串（如果包含 EncryptedPassword= 则表示密码已加密）
+connectionString = ConnectionStringHelper.DecryptIfNeeded(connectionString, builder.Configuration);
+masterConnectionString = ConnectionStringHelper.DecryptIfNeeded(masterConnectionString, builder.Configuration);
+
 builder.Services.AddDbContext<DataForgeStudioDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(connectionString));
+
+// 存储解密后的连接字符串供其他服务使用
+builder.Services.AddSingleton<IDbConnectionStringProvider>(sp =>
+    new DbConnectionStringProvider(connectionString, masterConnectionString));
 
 // 注册仓储和服务
 builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -271,6 +283,40 @@ if (!isTestingEnvironment)
             var keyService = scope.ServiceProvider.GetRequiredService<IKeyManagementService>();
             keyService.EnsureKeyPairExistsAsync().GetAwaiter().GetResult();
             keyService.EnsureAesKeyExistsAsync().GetAwaiter().GetResult();
+        }
+
+        // 初始化试用期 - 记录首次运行时间并自动生成试用许可证（如果是首次运行）
+        using (var scope = app.Services.CreateScope())
+        {
+            var trialTracker = scope.ServiceProvider.GetRequiredService<ITrialLicenseTracker>();
+            var licenseService = scope.ServiceProvider.GetRequiredService<ILicenseService>();
+
+            var trialStatus = trialTracker.CheckTrialStatus();
+            if (trialStatus.IsFirstRun)
+            {
+                Console.WriteLine("🎉 检测到首次运行，正在初始化试用期...");
+                trialTracker.RecordFirstRun();
+                Console.WriteLine($"✅ 试用期已激活，有效期 {TrialLicenseTracker.TRIAL_DAYS_STRING} 天");
+
+                // 自动生成试用许可证
+                var trialResult = await licenseService.GenerateTrialLicenseAsync();
+                if (trialResult.Success)
+                {
+                    Console.WriteLine($"✅ 试用许可证已自动生成");
+                }
+                else
+                {
+                    Console.WriteLine($"⚠️ 试用许可证生成失败: {trialResult.Message}");
+                }
+            }
+            else if (trialStatus.IsValid)
+            {
+                Console.WriteLine($"📋 试用期剩余: {trialStatus.DaysRemaining} 天");
+            }
+            else
+            {
+                Console.WriteLine($"⚠️ 试用期状态: {trialStatus.ErrorMessage ?? "已过期"}");
+            }
         }
     }
     catch (Exception ex)
