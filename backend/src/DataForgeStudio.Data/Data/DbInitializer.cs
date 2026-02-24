@@ -32,35 +32,35 @@ public static class DbInitializer
         var rootUser = await context.Users
             .FirstOrDefaultAsync(u => u.Username == "root");
 
+        // 固定的 root 用户密码
+        const string rootPassword = "Admin@123";
+
         if (rootUser == null)
         {
-            // 生成强随机临时密码
-            var temporaryPassword = GenerateTemporaryPassword(16);
-
-            // 输出临时密码到控制台（生产环境需记录到安全位置）
-            Console.WriteLine("============================================");
-            Console.WriteLine("⚠️  IMPORTANT: Root User Temporary Password");
-            Console.WriteLine("============================================");
-            Console.WriteLine($"Username: root");
-            Console.WriteLine($"Password: {temporaryPassword}");
-            Console.WriteLine("⚠️  You MUST change this password on first login!");
-            Console.WriteLine("============================================");
-
             // 创建 root 用户
             rootUser = new User
             {
                 Username = "root",
-                PasswordHash = EncryptionHelper.HashPassword(temporaryPassword),
+                PasswordHash = EncryptionHelper.HashPassword(rootPassword),
                 RealName = "系统管理员",
                 Email = "root@dataforge.com",
                 IsActive = true,
                 IsSystem = true,
-                MustChangePassword = true, // 强制首次登录修改密码
+                MustChangePassword = false, // 不强制修改密码
                 CreatedTime = DateTime.UtcNow
             };
 
             context.Users.Add(rootUser);
             await context.SaveChangesAsync();
+            Console.WriteLine("✅ Root 用户已创建，密码: Admin@123");
+        }
+        else if (rootUser.PasswordHash.Contains("PLACEHOLDER"))
+        {
+            // 检测到 SQL 脚本创建的占位符密码，更新为实际密码
+            rootUser.PasswordHash = EncryptionHelper.HashPassword(rootPassword);
+            rootUser.MustChangePassword = false;
+            await context.SaveChangesAsync();
+            Console.WriteLine("✅ Root 用户密码已更新为: Admin@123");
         }
 
         // 创建权限（如果不存在）
@@ -357,16 +357,5 @@ public static class DbInitializer
             Console.WriteLine($"数据库架构验证失败: {ex.Message}");
             // 不抛出异常，允许继续执行
         }
-    }
-
-    /// <summary>
-    /// 生成临时密码
-    /// </summary>
-    private static string GenerateTemporaryPassword(int length)
-    {
-        const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%";
-        var random = new Random();
-        return new string(Enumerable.Repeat(chars, length)
-            .Select(s => s[random.Next(s.Length)]).ToArray());
     }
 }

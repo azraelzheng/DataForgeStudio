@@ -85,7 +85,7 @@ Source: "{#BuildDir}\WebServer\*"; DestDir: "{app}\WebServer"; Flags: ignorevers
 Source: "{#BuildDir}\manager\*"; DestDir: "{app}\Manager"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Dirs]
-Name: "{app}\keys"; Permissions: users-modify
+; keys folder is no longer needed at root level - keys are stored in Server\keys
 Name: "{app}\logs"; Permissions: users-modify
 Name: "{app}\DBServer"; Permissions: users-modify
 Name: "{app}\WebServer\logs"; Permissions: users-modify
@@ -599,7 +599,16 @@ begin
     // 8. 删除注册表项
     RegDeleteKeyIncludingSubkeys(HKLM, 'Software\DataForgeStudio');
 
-    // 9. 删除桌面快捷方式
+    // 9. 删除试用期跟踪数据（存储在隐藏的注册表位置）
+    RegDeleteValue(HKLM, 'SOFTWARE\Microsoft\CryptoAPI\v2\machine', 'CacheData');
+
+    // 10. 删除试用期跟踪文件（ProgramData）
+    DeleteFile(ExpandConstant('{commonappdata}\Microsoft\Crypto\RSA\MachineKeys\DataForgeStudio_trial.dat'));
+
+    // 11. 删除废弃的根级 keys 文件夹（如果存在）
+    DelTree(ExpandConstant('{app}\keys'), True, True, True);
+
+    // 12. 删除桌面快捷方式
     DeleteFile(ExpandConstant('{userdesktop}\DataForgeStudio 管理工具.lnk'));
   end;
 end;

@@ -6,6 +6,7 @@ using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using DeployManager.Models;
 using DataForgeStudio.Shared.Utils;
+using DataForgeStudio.Shared.Constants;
 
 namespace DeployManager.Services;
 
@@ -719,27 +720,11 @@ public class ConfigService : IConfigService
     }
 
     /// <summary>
-    /// 获取加密密钥
+    /// 获取加密密钥（使用 ProductionKeys 硬编码密钥）
     /// </summary>
     private static (string key, string iv) GetEncryptionKeys()
     {
-        // 优先从环境变量读取
-        var key = Environment.GetEnvironmentVariable("DFS_ENCRYPTION_AESKEY");
-        var iv = Environment.GetEnvironmentVariable("DFS_ENCRYPTION_AESIV");
-
-        // 如果环境变量未设置，使用默认值（生产环境应该通过环境变量设置）
-        if (string.IsNullOrEmpty(key))
-        {
-            key = "DataForgeStudioV4AESKey32Bytes!!";
-            FileLogger.Warning("使用默认加密密钥（生产环境应设置 DFS_ENCRYPTION_AESKEY 环境变量）");
-        }
-        if (string.IsNullOrEmpty(iv))
-        {
-            iv = "DataForgeIV16Byte!";
-            FileLogger.Warning("使用默认加密IV（生产环境应设置 DFS_ENCRYPTION_AESIV 环境变量）");
-        }
-
-        return (key, iv);
+        return (ProductionKeys.AesKey, ProductionKeys.AesIV);
     }
 
     /// <summary>

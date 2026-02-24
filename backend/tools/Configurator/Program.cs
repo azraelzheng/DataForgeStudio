@@ -488,17 +488,49 @@ class Program
     {
         var nginxConfPath = Path.Combine(config.InstallPath, "WebServer", "conf", "nginx.conf");
         var nginxConf = $$"""
-worker_processes  1;
-events { worker_connections  1024; }
+worker_processes  auto;
+error_log  logs/error.log warn;
+pid        logs/nginx.pid;
+
+events {
+    worker_connections  1024;
+    multi_accept on;
+}
+
 http {
     include       mime.types;
     default_type  application/octet-stream;
+
+    # 性能优化
     sendfile        on;
+    tcp_nopush      on;
+    tcp_nodelay     on;
     keepalive_timeout  65;
+    types_hash_max_size 2048;
+
+    # 日志格式
+    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for"';
+    access_log  logs/access.log  main;
+
+    # Gzip 压缩
+    gzip  on;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_types text/plain text/css text/xml application/json application/javascript application/rss+xml application/atom+xml image/svg+xml;
 
     server {
         listen       {{config.FrontendPort}};
         server_name  localhost;
+
+        # 静态文件缓存
+        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+            root   ../WebSite;
+            expires 1d;
+            add_header Cache-Control "public, immutable";
+        }
 
         location / {
             root   ../WebSite;
@@ -515,6 +547,11 @@ http {
             proxy_cache_bypass $http_upgrade;
             proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header   X-Forwarded-Proto $scheme;
+
+            # 代理超时设置
+            proxy_connect_timeout 60s;
+            proxy_send_timeout 60s;
+            proxy_read_timeout 60s;
         }
 
         error_page   500 502 503 504  /50x.html;
@@ -1057,10 +1094,10 @@ SELECT r.RoleId, p.PermissionId, GETUTCDATE()
 FROM [Roles] r, [Permissions] p
 WHERE r.RoleCode = 'ROLE_SUPER_ADMIN';
 
--- 插入 root 用户 (密码将在 DbInitializer 中随机生成并打印到控制台)
--- 这里仅作为占位符，实际密码由 DbInitializer 设置
+-- 插入 root 用户 (固定密码: Admin@123)
+-- BCrypt hash generated with work factor 12
 INSERT INTO [Users] (Username, PasswordHash, RealName, Email, IsActive, IsSystem, MustChangePassword, CreatedTime) VALUES
-('root', '$2a$12$PLACEHOLDER_WILL_BE_REPLACED_BY_DB_INITIALIZER', N'系统管理员', 'root@dataforge.com', 1, 1, 1, GETUTCDATE());
+('root', '$2a$12$w1KCXdjrxtSC5pdR5MCeQOxH1DvD/3q4Vu/KnJlvit0PuwC3YqZhO', N'系统管理员', 'root@dataforge.com', 1, 1, 0, GETUTCDATE());
 
 -- 为 root 用户分配超级管理员角色
 INSERT INTO [UserRoles] (UserId, RoleId, CreatedTime)
