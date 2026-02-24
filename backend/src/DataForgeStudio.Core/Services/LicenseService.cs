@@ -26,6 +26,9 @@ public class LicenseService : ILicenseService
     private const int CACHE_DURATION_MINUTES = 30;
     private const string LICENSE_TYPE_TRIAL = "Trial";
 
+    // 用于防止试用许可证生成的竞态条件
+    private static readonly SemaphoreSlim _trialLicenseLock = new(1, 1);
+
     public LicenseService(
         DataForgeStudioDbContext context,
         ILogger<LicenseService> logger,
@@ -213,38 +216,53 @@ public class LicenseService : ILicenseService
             return cachedResponse;
         }
 
-        var machineCode = EncryptionHelper.GetMachineCode();
-        var license = await _context.Licenses
-            .Where(l => l.MachineCode == machineCode)
-            .OrderByDescending(l => l.ActivatedTime)
-            .FirstOrDefaultAsync();
-
-        if (license == null)
+        // 使用信号量防止竞态条件：确保试用许可证生成是线程安全的
+        await _trialLicenseLock.WaitAsync();
+        try
         {
-            // 自动生成试用许可证
-            _logger.LogInformation("未找到许可证，自动生成试用许可证");
-            var trialResult = await GenerateTrialLicenseAsync();
-
-            if (!trialResult.Success)
+            // 双重检查：在获取锁后再次检查缓存，避免重复生成
+            if (!forceRefresh && _memoryCache.TryGetValue<ApiResponse<LicenseValidationResponse>>(CACHE_KEY, out var doubleCheckResponse))
             {
-                var response = ApiResponse<LicenseValidationResponse>.Ok(new LicenseValidationResponse
-                {
-                    Valid = false,
-                    Message = $"未激活许可证，且试用许可证生成失败: {trialResult.Message}"
-                });
-                _memoryCache.Set(CACHE_KEY, response, TimeSpan.FromMinutes(CACHE_DURATION_MINUTES));
-                return response;
+                _logger.LogDebug("双重检查命中缓存，返回许可证验证结果");
+                return doubleCheckResponse;
             }
 
-            var trialValidationResponse = ApiResponse<LicenseValidationResponse>.Ok(new LicenseValidationResponse
+            var machineCode = EncryptionHelper.GetMachineCode();
+
+            // 刷新 DbContext 以确保获取最新数据（防止并发请求看到旧数据）
+            _context.ChangeTracker.Clear();
+
+            var license = await _context.Licenses
+                .Where(l => l.MachineCode == machineCode)
+                .OrderByDescending(l => l.ActivatedTime)
+                .FirstOrDefaultAsync();
+
+            if (license == null)
             {
-                Valid = true,
-                Message = "试用许可证已自动生成",
-                LicenseInfo = trialResult.Data
-            });
-            _memoryCache.Set(CACHE_KEY, trialValidationResponse, TimeSpan.FromMinutes(CACHE_DURATION_MINUTES));
-            return trialValidationResponse;
-        }
+                // 自动生成试用许可证
+                _logger.LogInformation("未找到许可证，自动生成试用许可证");
+                var trialResult = await GenerateTrialLicenseAsync();
+
+                if (!trialResult.Success)
+                {
+                    var response = ApiResponse<LicenseValidationResponse>.Ok(new LicenseValidationResponse
+                    {
+                        Valid = false,
+                        Message = $"未激活许可证，且试用许可证生成失败: {trialResult.Message}"
+                    });
+                    _memoryCache.Set(CACHE_KEY, response, TimeSpan.FromMinutes(CACHE_DURATION_MINUTES));
+                    return response;
+                }
+
+                var trialValidationResponse = ApiResponse<LicenseValidationResponse>.Ok(new LicenseValidationResponse
+                {
+                    Valid = true,
+                    Message = "试用许可证已自动生成",
+                    LicenseInfo = trialResult.Data
+                });
+                _memoryCache.Set(CACHE_KEY, trialValidationResponse, TimeSpan.FromMinutes(CACHE_DURATION_MINUTES));
+                return trialValidationResponse;
+            }
 
         // 解密并验证许可证
         var licenseData = await DecryptLicenseAsync(license.LicenseKey);
@@ -303,6 +321,11 @@ public class LicenseService : ILicenseService
         _memoryCache.Set(CACHE_KEY, validationResponse, TimeSpan.FromMinutes(CACHE_DURATION_MINUTES));
 
         return validationResponse;
+        }
+        finally
+        {
+            _trialLicenseLock.Release();
+        }
     }
 
     /// <summary>
