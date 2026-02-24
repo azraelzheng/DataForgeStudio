@@ -141,6 +141,9 @@
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource WarningButton}">
                                 <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsAppRunning}" Value="False">
+                                        <Setter Property="IsEnabled" Value="False"/>
+                                    </DataTrigger>
                                     <DataTrigger Binding="{Binding IsAppOperating}" Value="True">
                                         <Setter Property="IsEnabled" Value="False"/>
                                     </DataTrigger>
@@ -276,6 +279,9 @@
                             <Button.Style>
                                 <Style TargetType="Button" BasedOn="{StaticResource WarningButton}">
                                     <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsWebRunning}" Value="False">
+                                            <Setter Property="IsEnabled" Value="False"/>
+                                        </DataTrigger>
                                         <DataTrigger Binding="{Binding IsWebOperating}" Value="True">
                                             <Setter Property="IsEnabled" Value="False"/>
                                         </DataTrigger>

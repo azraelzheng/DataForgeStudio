@@ -141,6 +141,21 @@ public partial class ServiceControlViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>
+    /// 在 UI 线程上执行操作
+    /// </summary>
+    private void RunOnUIThread(Action action)
+    {
+        if (System.Windows.Application.Current?.Dispatcher?.CheckAccess() == false)
+        {
+            System.Windows.Application.Current.Dispatcher.Invoke(action);
+        }
+        else
+        {
+            action();
+        }
+    }
+
+    /// <summary>
     /// 启动定时刷新
     /// </summary>
     public void StartRefresh()
@@ -199,8 +214,11 @@ public partial class ServiceControlViewModel : ObservableObject, IDisposable
             });
 
             // 在 UI 线程更新属性
-            UpdateAppServiceStatus(appStatus);
-            UpdateWebServiceStatus(webStatus);
+            RunOnUIThread(() =>
+            {
+                UpdateAppServiceStatus(appStatus);
+                UpdateWebServiceStatus(webStatus);
+            });
         }
         catch (Exception)
         {
