@@ -212,7 +212,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, reactive, onMounted, onActivated, onUnmounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { userApi, roleApi } from '../../api/request'
 
@@ -279,6 +279,11 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', updateTableHeight)
+})
+
+// 当组件被激活时（从其他页面返回），重新加载角色列表以确保显示最新的权限组
+onActivated(() => {
+  loadRoles()
 })
 
 // 更新表格高度
