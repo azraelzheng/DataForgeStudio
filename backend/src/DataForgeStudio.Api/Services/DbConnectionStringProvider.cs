@@ -86,6 +86,10 @@ public static class ConnectionStringHelper
         catch (Exception ex)
         {
             Console.WriteLine($"⚠️ 解密连接字符串失败: {ex.Message}");
+            Console.WriteLine($"   可能原因:");
+            Console.WriteLine($"   1. 环境变量 DFS_ENCRYPTION_AESKEY 未设置");
+            Console.WriteLine($"   2. 环境变量 DFS_ENCRYPTION_AESIV 未设置");
+            Console.WriteLine($"   3. 密钥与加密时使用的密钥不匹配");
             throw new InvalidOperationException($"解密数据库连接字符串失败: {ex.Message}", ex);
         }
     }

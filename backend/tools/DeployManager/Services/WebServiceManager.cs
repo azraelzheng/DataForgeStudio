@@ -85,7 +85,9 @@ public class WebServiceManager : IWebServiceManager
             return state switch
             {
                 ObjectState.Started => ServiceStatus.Running,
+                ObjectState.Starting => ServiceStatus.Running,  // Starting 状态也视为运行中
                 ObjectState.Stopped => ServiceStatus.Stopped,
+                ObjectState.Stopping => ServiceStatus.Stopped,  // Stopping 状态视为已停止
                 _ => ServiceStatus.Unknown
             };
         }
@@ -164,8 +166,27 @@ public class WebServiceManager : IWebServiceManager
             site.Start();
             serverManager.CommitChanges();
 
-            await Task.CompletedTask;
-            Debug.WriteLine($"[WebServiceManager] IIS 站点 '{_iisSiteName}' 启动成功");
+            // 等待站点完全启动
+            int retryCount = 0;
+            const int maxRetries = 10;
+            while (retryCount < maxRetries)
+            {
+                // 重新获取站点状态（需要新的 ServerManager 实例）
+                using var checkManager = new ServerManager();
+                var checkSite = checkManager.Sites.FirstOrDefault(s =>
+                    s.Name.Equals(_iisSiteName, StringComparison.OrdinalIgnoreCase));
+
+                if (checkSite != null && checkSite.State == ObjectState.Started)
+                {
+                    Debug.WriteLine($"[WebServiceManager] IIS 站点 '{_iisSiteName}' 启动成功");
+                    return;
+                }
+
+                retryCount++;
+                await Task.Delay(500);
+            }
+
+            Debug.WriteLine($"[WebServiceManager] IIS 站点 '{_iisSiteName}' 启动命令已发送，等待状态同步");
         }
         catch (Exception ex)
         {
@@ -234,7 +255,7 @@ public class WebServiceManager : IWebServiceManager
             var errorOutput = await stderrTask;
 
             // 等待 Nginx 完全启动（master 和 worker 进程）
-            await Task.Delay(2000);
+            await Task.Delay(500);  // 从 2000ms 减少到 500ms
 
             // 检查 Nginx 是否真正启动成功
             int retryCount = 0;
@@ -247,7 +268,7 @@ public class WebServiceManager : IWebServiceManager
                     return;
                 }
                 retryCount++;
-                await Task.Delay(1000);
+                await Task.Delay(300);  // 从 1000ms 减少到 300ms
             }
 
             // 如果启动失败，尝试获取更详细的错误信息
@@ -349,8 +370,27 @@ public class WebServiceManager : IWebServiceManager
             site.Stop();
             serverManager.CommitChanges();
 
-            await Task.CompletedTask;
-            Debug.WriteLine($"[WebServiceManager] IIS 站点 '{_iisSiteName}' 停止成功");
+            // 等待站点完全停止
+            int retryCount = 0;
+            const int maxRetries = 10;
+            while (retryCount < maxRetries)
+            {
+                // 重新获取站点状态（需要新的 ServerManager 实例）
+                using var checkManager = new ServerManager();
+                var checkSite = checkManager.Sites.FirstOrDefault(s =>
+                    s.Name.Equals(_iisSiteName, StringComparison.OrdinalIgnoreCase));
+
+                if (checkSite != null && checkSite.State == ObjectState.Stopped)
+                {
+                    Debug.WriteLine($"[WebServiceManager] IIS 站点 '{_iisSiteName}' 停止成功");
+                    return;
+                }
+
+                retryCount++;
+                await Task.Delay(500);
+            }
+
+            Debug.WriteLine($"[WebServiceManager] IIS 站点 '{_iisSiteName}' 停止命令已发送，等待状态同步");
         }
         catch (Exception ex)
         {
