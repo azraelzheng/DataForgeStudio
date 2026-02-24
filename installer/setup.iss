@@ -83,6 +83,8 @@ Source: "{#BuildDir}\Server\*"; DestDir: "{app}\Server"; Flags: ignoreversion re
 Source: "{#BuildDir}\WebSite\*"; DestDir: "{app}\WebSite"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#BuildDir}\WebServer\*"; DestDir: "{app}\WebServer"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#BuildDir}\manager\*"; DestDir: "{app}\Manager"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#BuildDir}\tools\nssm\nssm.exe"; DestDir: "{app}\tools\nssm"; Flags: ignoreversion
+Source: "{#BuildDir}\tools\scripts\*.ps1"; DestDir: "{app}\tools\scripts"; Flags: ignoreversion
 
 [Dirs]
 ; keys folder is no longer needed at root level - keys are stored in Server\keys
@@ -570,20 +572,39 @@ begin
     // 1. 停止 Nginx 进程（如果运行中）
     Exec('taskkill.exe', '/F /IM nginx.exe', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 
-    // 2. 检查服务是否存在
+    // 2. 检查并删除 DFWebService (Nginx Windows 服务)
+    if ServiceExists('DFWebService') then
+    begin
+      // 停止服务
+      Exec('sc.exe', 'stop DFWebService', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+      WaitForServiceStatus('DFWebService', 'STOPPED', 10000);
+      Sleep(1000);
+
+      // 删除服务（带重试机制）
+      for RetryCount := 1 to 3 do
+      begin
+        Exec('sc.exe', 'delete DFWebService', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+        if not ServiceExists('DFWebService') then
+          Break;
+        Sleep(2000);
+      end;
+      Sleep(1000);
+    end;
+
+    // 3. 检查服务是否存在
     if ServiceExists('DFAppService') then
     begin
-      // 3. 发送停止命令
+      // 4. 发送停止命令
       Exec('sc.exe', 'stop DFAppService', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 
-      // 4. 等待服务停止（最多等待 10 秒）
+      // 5. 等待服务停止（最多等待 10 秒）
       WaitForServiceStatus('DFAppService', 'STOPPED', 10000);
 
-      // 5. 强制终止服务进程（确保进程完全退出）
+      // 6. 强制终止服务进程（确保进程完全退出）
       KillServiceProcess('DFAppService');
       Sleep(1000);
 
-      // 6. 删除 Windows 服务（带重试机制）
+      // 7. 删除 Windows 服务（带重试机制）
       for RetryCount := 1 to 3 do
       begin
         Exec('sc.exe', 'delete DFAppService', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
@@ -592,23 +613,23 @@ begin
         Sleep(2000);
       end;
 
-      // 7. 再等待一下确保服务删除生效
+      // 8. 再等待一下确保服务删除生效
       Sleep(1000);
     end;
 
-    // 8. 删除注册表项
+    // 9. 删除注册表项
     RegDeleteKeyIncludingSubkeys(HKLM, 'Software\DataForgeStudio');
 
-    // 9. 删除试用期跟踪数据（存储在隐藏的注册表位置）
+    // 10. 删除试用期跟踪数据（存储在隐藏的注册表位置）
     RegDeleteValue(HKLM, 'SOFTWARE\Microsoft\CryptoAPI\v2\machine', 'CacheData');
 
-    // 10. 删除试用期跟踪文件（ProgramData）
+    // 11. 删除试用期跟踪文件（ProgramData）
     DeleteFile(ExpandConstant('{commonappdata}\Microsoft\Crypto\RSA\MachineKeys\DataForgeStudio_trial.dat'));
 
-    // 11. 删除废弃的根级 keys 文件夹（如果存在）
+    // 12. 删除废弃的根级 keys 文件夹（如果存在）
     DelTree(ExpandConstant('{app}\keys'), True, True, True);
 
-    // 12. 删除桌面快捷方式
+    // 13. 删除桌面快捷方式
     DeleteFile(ExpandConstant('{userdesktop}\DataForgeStudio 管理工具.lnk'));
   end;
 end;
