@@ -32,12 +32,12 @@
           <span>首页</span>
         </el-menu-item>
 
-        <el-sub-menu index="report" v-if="userStore.hasAnyPermission(['report:view', 'report:design'])">
+        <el-sub-menu index="report" v-if="userStore.hasAnyPermission(['report:query', 'report:design'])">
           <template #title>
             <el-icon><Document /></el-icon>
             <span>报表管理</span>
           </template>
-          <el-menu-item index="/report/list" v-if="userStore.hasPermission('report:view')">
+          <el-menu-item index="/report/list" v-if="userStore.hasPermission('report:query')">
             <el-icon><List /></el-icon>
             <span>报表查询</span>
           </el-menu-item>
