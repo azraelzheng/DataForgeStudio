@@ -648,6 +648,74 @@ LOG ON
         await ExecuteSqlScriptAsync(masterConnection, GetSeedDataSql());
 
         Console.WriteLine("  数据库初始化完成");
+
+        // 如果是 Windows 认证，授权服务账户
+        if (config.DbAuth.Equals("windows", StringComparison.OrdinalIgnoreCase))
+        {
+            Console.WriteLine("  授权服务账户...");
+            await GrantSystemServicePermissions(masterConnection);
+        }
+    }
+
+    /// <summary>
+    /// 授予 NT AUTHORITY\SYSTEM SQL Server 权限
+    /// 使 Windows 服务能够使用 Windows 认证连接数据库
+    /// </summary>
+    static async Task GrantSystemServicePermissions(SqlConnection connection)
+    {
+        const string serviceAccount = "NT AUTHORITY\\SYSTEM";
+
+        try
+        {
+            // 1. 检查登录是否存在
+            var checkLoginCmd = new SqlCommand(
+                "SELECT 1 FROM sys.server_principals WHERE name = @name",
+                connection);
+            checkLoginCmd.Parameters.AddWithValue("@name", serviceAccount);
+
+            var loginExists = await checkLoginCmd.ExecuteScalarAsync();
+
+            if (loginExists == null)
+            {
+                // 2. 创建 Windows 登录
+                var createLoginCmd = new SqlCommand(
+                    $"CREATE LOGIN [{serviceAccount}] FROM WINDOWS",
+                    connection);
+                await createLoginCmd.ExecuteNonQueryAsync();
+                Console.WriteLine($"  创建登录: {serviceAccount}");
+            }
+
+            // 3. 检查是否已在 sysadmin 角色中
+            var checkRoleCmd = new SqlCommand(
+                @"SELECT 1 FROM sys.server_role_members rm
+              JOIN sys.server_principals p ON rm.member_principal_id = p.principal_id
+              JOIN sys.server_principals r ON rm.role_principal_id = r.principal_id
+              WHERE p.name = @name AND r.name = 'sysadmin'",
+                connection);
+            checkRoleCmd.Parameters.AddWithValue("@name", serviceAccount);
+
+            var inRole = await checkRoleCmd.ExecuteScalarAsync();
+
+            if (inRole == null)
+            {
+                // 4. 添加到 sysadmin 角色
+                var addRoleCmd = new SqlCommand(
+                    $"ALTER SERVER ROLE sysadmin ADD MEMBER [{serviceAccount}]",
+                    connection);
+                await addRoleCmd.ExecuteNonQueryAsync();
+                Console.WriteLine($"  授予 sysadmin 权限: {serviceAccount}");
+            }
+            else
+            {
+                Console.WriteLine($"  {serviceAccount} 已拥有 sysadmin 权限");
+            }
+        }
+        catch (Exception ex)
+        {
+            // 授权失败不中断安装，仅记录警告
+            Console.WriteLine($"  ⚠️ 授权服务账户失败: {ex.Message}");
+            Console.WriteLine($"     服务启动时可能无法连接数据库，请手动授权");
+        }
     }
 
     static async Task ExecuteSqlScriptAsync(SqlConnection connection, string script)
