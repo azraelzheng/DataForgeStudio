@@ -9,6 +9,7 @@ namespace DeployManager.Services;
 /// <summary>
 /// 前端服务管理器实现
 /// 支持 IIS 和 Nginx 两种模式
+/// Nginx 模式使用 Windows 服务 (DFWebService) 管理
 /// </summary>
 public class WebServiceManager : IWebServiceManager
 {
@@ -16,6 +17,7 @@ public class WebServiceManager : IWebServiceManager
     private readonly string _mode;
     private readonly string _iisSiteName;
     private readonly string _nginxPath;
+    private ServiceController? _webServiceController;
     private bool _disposed = false;
 
     /// <summary>
@@ -34,6 +36,16 @@ public class WebServiceManager : IWebServiceManager
         _mode = _configService.GetFrontendMode();
         _iisSiteName = "DataForgeStudio";  // IIS 站点名称硬编码
         _nginxPath = _configService.GetNginxPath();
+
+        // 初始化 Web 服务控制器（用于 Nginx 模式）
+        try
+        {
+            _webServiceController = new ServiceController(_configService.WebServiceName);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[WebServiceManager] 初始化 Web 服务控制器失败: {ex.Message}");
+        }
 
         Debug.WriteLine($"[WebServiceManager] 初始化，模式: {_mode}, IIS站点: {_iisSiteName}, Nginx路径: {_nginxPath}");
     }
@@ -99,28 +111,62 @@ public class WebServiceManager : IWebServiceManager
     }
 
     /// <summary>
-    /// 获取 Nginx 进程状态
+    /// 获取 Nginx Windows 服务状态
     /// </summary>
     private ServiceStatus GetNginxStatus()
     {
         try
         {
-            // 检查 nginx 进程是否存在
+            if (_webServiceController == null)
+            {
+                return ServiceStatus.Unknown;
+            }
+
+            _webServiceController.Refresh();
+            var status = _webServiceController.Status;
+
+            Debug.WriteLine($"[WebServiceManager] Nginx 服务状态: {status}");
+            return status switch
+            {
+                ServiceControllerStatus.Running => ServiceStatus.Running,
+                ServiceControllerStatus.Stopped => ServiceStatus.Stopped,
+                ServiceControllerStatus.StartPending => ServiceStatus.Running,
+                ServiceControllerStatus.StopPending => ServiceStatus.Stopped,
+                _ => ServiceStatus.Unknown
+            };
+        }
+        catch (InvalidOperationException ex)
+        {
+            // 服务未安装，回退到进程检测
+            Debug.WriteLine($"[WebServiceManager] Nginx 服务未安装，使用进程检测: {ex.Message}");
+            return GetNginxProcessStatus();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[WebServiceManager] 获取 Nginx 服务状态失败: {ex.Message}");
+            return ServiceStatus.Unknown;
+        }
+    }
+
+    /// <summary>
+    /// 获取 Nginx 进程状态（回退方法）
+    /// </summary>
+    private static ServiceStatus GetNginxProcessStatus()
+    {
+        try
+        {
             var processes = Process.GetProcessesByName("nginx");
             var isRunning = processes.Length > 0;
 
-            // 释放进程资源
             foreach (var process in processes)
             {
                 process.Dispose();
             }
 
-            Debug.WriteLine($"[WebServiceManager] Nginx 进程数: {processes.Length}, 运行中: {isRunning}");
             return isRunning ? ServiceStatus.Running : ServiceStatus.Stopped;
         }
-        catch (Exception ex)
+        catch
         {
-            Debug.WriteLine($"[WebServiceManager] 获取 Nginx 状态失败: {ex.Message}");
             return ServiceStatus.Unknown;
         }
     }
@@ -196,9 +242,55 @@ public class WebServiceManager : IWebServiceManager
     }
 
     /// <summary>
-    /// 启动 Nginx
+    /// 启动 Nginx Windows 服务
     /// </summary>
     private async Task StartNginxAsync()
+    {
+        try
+        {
+            // 首先尝试使用 Windows 服务
+            if (_webServiceController != null)
+            {
+                try
+                {
+                    _webServiceController.Refresh();
+
+                    if (_webServiceController.Status == ServiceControllerStatus.Running)
+                    {
+                        Debug.WriteLine($"[WebServiceManager] Nginx 服务已在运行中");
+                        return;
+                    }
+
+                    Debug.WriteLine($"[WebServiceManager] 正在启动 Nginx 服务...");
+                    _webServiceController.Start();
+
+                    // 等待服务启动完成
+                    await Task.Run(() => _webServiceController.WaitForStatus(ServiceControllerStatus.Running, TimeSpan.FromSeconds(30)));
+
+                    Debug.WriteLine($"[WebServiceManager] Nginx 服务启动成功");
+                    return;
+                }
+                catch (InvalidOperationException)
+                {
+                    // 服务未安装，回退到进程启动
+                    Debug.WriteLine($"[WebServiceManager] Nginx 服务未安装，使用进程启动");
+                }
+            }
+
+            // 回退到进程启动方式
+            await StartNginxProcessAsync();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[WebServiceManager] 启动 Nginx 失败: {ex.Message}");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// 启动 Nginx 进程（回退方法）
+    /// </summary>
+    private async Task StartNginxProcessAsync()
     {
         try
         {
@@ -213,21 +305,19 @@ public class WebServiceManager : IWebServiceManager
                 throw new InvalidOperationException($"Nginx 可执行文件不存在: {nginxExe}");
             }
 
-            // 检查是否已有 Nginx 进程在运行
-            if (IsNginxRunning())
+            if (IsNginxProcessRunning())
             {
-                Debug.WriteLine($"[WebServiceManager] Nginx 已在运行中");
+                Debug.WriteLine($"[WebServiceManager] Nginx 进程已在运行中");
                 return;
             }
 
-            // 检查配置文件是否存在
             var nginxConfPath = Path.Combine(_nginxPath, "conf", "nginx.conf");
             if (!File.Exists(nginxConfPath))
             {
                 throw new InvalidOperationException($"Nginx 配置文件不存在: {nginxConfPath}");
             }
 
-            Debug.WriteLine($"[WebServiceManager] 正在启动 Nginx...");
+            Debug.WriteLine($"[WebServiceManager] 正在启动 Nginx 进程...");
 
             var startInfo = new ProcessStartInfo
             {
@@ -245,62 +335,19 @@ public class WebServiceManager : IWebServiceManager
                 throw new InvalidOperationException("无法启动 Nginx 进程");
             }
 
-            // 异步读取输出流，避免死锁
-            var stderrTask = process.StandardError.ReadToEndAsync();
-
-            // 等待进程完成（Nginx 主进程会快速退出，这是正常的）
             process.WaitForExit(5000);
+            await Task.Delay(500);
 
-            // 获取错误输出
-            var errorOutput = await stderrTask;
-
-            // 等待 Nginx 完全启动（master 和 worker 进程）
-            await Task.Delay(500);  // 从 2000ms 减少到 500ms
-
-            // 检查 Nginx 是否真正启动成功
-            int retryCount = 0;
-            const int maxRetries = 5;
-            while (retryCount < maxRetries)
+            if (!IsNginxProcessRunning())
             {
-                if (IsNginxRunning())
-                {
-                    Debug.WriteLine($"[WebServiceManager] Nginx 启动成功");
-                    return;
-                }
-                retryCount++;
-                await Task.Delay(300);  // 从 1000ms 减少到 300ms
+                throw new InvalidOperationException("Nginx 进程启动失败");
             }
 
-            // 如果启动失败，尝试获取更详细的错误信息
-            if (!IsNginxRunning())
-            {
-                // 尝试读取 Nginx 错误日志
-                var errorLogPath = Path.Combine(_nginxPath, "logs", "error.log");
-                var errorLogContent = "";
-                if (File.Exists(errorLogPath))
-                {
-                    try
-                    {
-                        // 读取最后几行错误日志
-                        var lines = File.ReadAllLines(errorLogPath);
-                        var lastLines = lines.TakeLast(5).ToArray();
-                        errorLogContent = string.Join("\n", lastLines);
-                    }
-                    catch { }
-                }
-
-                var errorMessage = !string.IsNullOrEmpty(errorOutput)
-                    ? $"Nginx 启动失败: {errorOutput}"
-                    : !string.IsNullOrEmpty(errorLogContent)
-                        ? $"Nginx 启动失败，错误日志:\n{errorLogContent}"
-                        : "Nginx 启动失败，请检查配置文件";
-
-                throw new InvalidOperationException(errorMessage);
-            }
+            Debug.WriteLine($"[WebServiceManager] Nginx 进程启动成功");
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[WebServiceManager] 启动 Nginx 失败: {ex.Message}");
+            Debug.WriteLine($"[WebServiceManager] 启动 Nginx 进程失败: {ex.Message}");
             throw;
         }
     }
@@ -308,14 +355,13 @@ public class WebServiceManager : IWebServiceManager
     /// <summary>
     /// 检查 Nginx 进程是否正在运行
     /// </summary>
-    private static bool IsNginxRunning()
+    private static bool IsNginxProcessRunning()
     {
         try
         {
             var processes = Process.GetProcessesByName("nginx");
             var isRunning = processes.Length > 0;
 
-            // 释放进程资源
             foreach (var process in processes)
             {
                 process.Dispose();
@@ -400,26 +446,76 @@ public class WebServiceManager : IWebServiceManager
     }
 
     /// <summary>
-    /// 停止 Nginx
+    /// 停止 Nginx Windows 服务
     /// </summary>
     private async Task StopNginxAsync()
     {
         try
         {
+            // 首先尝试使用 Windows 服务
+            if (_webServiceController != null)
+            {
+                try
+                {
+                    _webServiceController.Refresh();
+
+                    if (_webServiceController.Status == ServiceControllerStatus.Stopped)
+                    {
+                        Debug.WriteLine($"[WebServiceManager] Nginx 服务已停止");
+                        return;
+                    }
+
+                    if (!_webServiceController.CanStop)
+                    {
+                        throw new InvalidOperationException("Nginx 服务无法停止");
+                    }
+
+                    Debug.WriteLine($"[WebServiceManager] 正在停止 Nginx 服务...");
+                    _webServiceController.Stop();
+
+                    // 等待服务停止完成
+                    await Task.Run(() => _webServiceController.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(30)));
+
+                    Debug.WriteLine($"[WebServiceManager] Nginx 服务停止成功");
+                    return;
+                }
+                catch (InvalidOperationException)
+                {
+                    // 服务未安装，回退到进程停止
+                    Debug.WriteLine($"[WebServiceManager] Nginx 服务未安装，使用进程停止");
+                }
+            }
+
+            // 回退到进程停止方式
+            await StopNginxProcessAsync();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[WebServiceManager] 停止 Nginx 失败: {ex.Message}");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// 停止 Nginx 进程（回退方法）
+    /// </summary>
+    private async Task StopNginxProcessAsync()
+    {
+        try
+        {
             if (string.IsNullOrEmpty(_nginxPath) || !Directory.Exists(_nginxPath))
             {
-                throw new InvalidOperationException("Nginx 路径未配置或不存在");
+                return;
             }
 
             var nginxExe = Path.Combine(_nginxPath, "nginx.exe");
             if (!File.Exists(nginxExe))
             {
-                throw new InvalidOperationException($"Nginx 可执行文件不存在: {nginxExe}");
+                return;
             }
 
-            Debug.WriteLine($"[WebServiceManager] 正在停止 Nginx...");
+            Debug.WriteLine($"[WebServiceManager] 正在停止 Nginx 进程...");
 
-            // 使用 nginx -s quit 优雅停止
             var startInfo = new ProcessStartInfo
             {
                 FileName = nginxExe,
@@ -432,7 +528,7 @@ public class WebServiceManager : IWebServiceManager
             var process = Process.Start(startInfo);
             process?.WaitForExit(5000);
 
-            await Task.Delay(1000); // 等待进程停止
+            await Task.Delay(1000);
 
             // 如果还有进程在运行，强制终止
             var remainingProcesses = Process.GetProcessesByName("nginx");
@@ -441,21 +537,16 @@ public class WebServiceManager : IWebServiceManager
                 Debug.WriteLine($"[WebServiceManager] 还有 {remainingProcesses.Length} 个 Nginx 进程，强制终止...");
                 foreach (var p in remainingProcesses)
                 {
-                    try
-                    {
-                        p.Kill();
-                    }
-                    catch { }
+                    try { p.Kill(); } catch { }
                     p.Dispose();
                 }
             }
 
-            Debug.WriteLine($"[WebServiceManager] Nginx 停止成功");
+            Debug.WriteLine($"[WebServiceManager] Nginx 进程停止成功");
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[WebServiceManager] 停止 Nginx 失败: {ex.Message}");
-            throw;
+            Debug.WriteLine($"[WebServiceManager] 停止 Nginx 进程失败: {ex.Message}");
         }
     }
 
@@ -511,21 +602,21 @@ public class WebServiceManager : IWebServiceManager
     }
 
     /// <summary>
-    /// 重启 Nginx
+    /// 重启 Nginx Windows 服务
     /// </summary>
     private async Task RestartNginxAsync()
     {
         try
         {
-            Debug.WriteLine($"[WebServiceManager] 正在重启 Nginx...");
+            Debug.WriteLine($"[WebServiceManager] 正在重启 Nginx 服务...");
             await StopNginxAsync();
             await Task.Delay(1000);
             await StartNginxAsync();
-            Debug.WriteLine($"[WebServiceManager] Nginx 重启成功");
+            Debug.WriteLine($"[WebServiceManager] Nginx 服务重启成功");
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[WebServiceManager] 重启 Nginx 失败: {ex.Message}");
+            Debug.WriteLine($"[WebServiceManager] 重启 Nginx 服务失败: {ex.Message}");
             throw;
         }
     }
@@ -539,6 +630,21 @@ public class WebServiceManager : IWebServiceManager
         {
             if (_mode.Equals("nginx", StringComparison.OrdinalIgnoreCase))
             {
+                // 优先检查 Windows 服务是否已安装
+                try
+                {
+                    var services = ServiceController.GetServices();
+                    var webServiceInstalled = services.Any(s =>
+                        s.ServiceName.Equals(_configService.WebServiceName, StringComparison.OrdinalIgnoreCase));
+
+                    if (webServiceInstalled)
+                    {
+                        return true;
+                    }
+                }
+                catch { }
+
+                // 回退检查 Nginx 目录是否存在
                 return !string.IsNullOrEmpty(_nginxPath) && Directory.Exists(_nginxPath);
             }
             else
@@ -575,7 +681,9 @@ public class WebServiceManager : IWebServiceManager
         {
             if (disposing)
             {
-                // 释放托管资源
+                // 释放服务控制器
+                _webServiceController?.Dispose();
+                _webServiceController = null;
             }
             _disposed = true;
         }
