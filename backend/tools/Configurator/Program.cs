@@ -413,6 +413,7 @@ class Program
             // 步骤4: 注册 Windows 服务
             Log("[4/5] 注册 Windows 服务...");
             RegisterWindowsService(config);
+            RegisterWebService(config);
             Log("✓ Windows 服务注册完成");
 
             // 步骤5: 创建桌面快捷方式
@@ -1173,6 +1174,126 @@ WHERE u.Username = 'root' AND r.RoleCode = 'ROLE_SUPER_ADMIN';
 
         using var descProcess = System.Diagnostics.Process.Start(descInfo);
         descProcess?.WaitForExit();
+    }
+
+    static void RegisterWebService(Configuration config)
+    {
+        var serviceName = "DFWebService";
+        var nginxExePath = Path.Combine(config.InstallPath, "WebServer", "nginx.exe");
+        var nssmPath = Path.Combine(config.InstallPath, "tools", "nssm", "nssm.exe");
+
+        // 检查 NSSM 是否存在
+        if (!File.Exists(nssmPath))
+        {
+            Console.WriteLine("  警告: NSSM 未找到，跳过 Web 服务注册");
+            return;
+        }
+
+        // 检查 Nginx 是否存在
+        if (!File.Exists(nginxExePath))
+        {
+            Console.WriteLine("  警告: Nginx 未找到，跳过 Web 服务注册");
+            return;
+        }
+
+        // 检查服务是否已存在
+        var checkInfo = new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = "sc.exe",
+            Arguments = $"query \"{serviceName}\"",
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true
+        };
+
+        using (var checkProcess = System.Diagnostics.Process.Start(checkInfo))
+        {
+            if (checkProcess != null)
+            {
+                checkProcess.WaitForExit();
+                if (checkProcess.ExitCode == 0)
+                {
+                    Console.WriteLine("  Web 服务已存在，跳过注册");
+                    return;
+                }
+            }
+        }
+
+        Console.WriteLine("  正在注册 Web 服务 (DFWebService)...");
+
+        // 使用 NSSM 创建服务
+        var startInfo = new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = nssmPath,
+            Arguments = $"install \"{serviceName}\" \"{nginxExePath}\"",
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            WorkingDirectory = Path.Combine(config.InstallPath, "WebServer")
+        };
+
+        using (var process = System.Diagnostics.Process.Start(startInfo))
+        {
+            if (process == null)
+            {
+                Console.WriteLine("  警告: 无法启动 NSSM 进程");
+                return;
+            }
+            process.WaitForExit();
+
+            if (process.ExitCode != 0)
+            {
+                var error = process.StandardError.ReadToEnd();
+                Console.WriteLine($"  警告: 创建 Web 服务失败: {error}");
+                return;
+            }
+        }
+
+        // 设置服务显示名称
+        RunCommand(nssmPath, $"set \"{serviceName}\" DisplayName \"DataForge Studio Web Service\"");
+
+        // 设置服务描述
+        RunCommand(nssmPath, $"set \"{serviceName}\" Description \"DataForgeStudio 前端服务 (Nginx)\"");
+
+        // 设置服务启动类型为自动
+        RunCommand(nssmPath, $"set \"{serviceName}\" Start SERVICE_AUTO_START");
+
+        // 设置工作目录
+        RunCommand(nssmPath, $"set \"{serviceName}\" AppDirectory \"{Path.Combine(config.InstallPath, "WebServer")}\"");
+
+        // 设置日志输出
+        var logPath = Path.Combine(config.InstallPath, "WebServer", "logs");
+        RunCommand(nssmPath, $"set \"{serviceName}\" AppStdout \"{Path.Combine(logPath, "service-out.log")}\"");
+        RunCommand(nssmPath, $"set \"{serviceName}\" AppStderr \"{Path.Combine(logPath, "service-err.log")}\"");
+
+        // 设置日志轮转
+        RunCommand(nssmPath, $"set \"{serviceName}\" AppRotateFiles 1");
+        RunCommand(nssmPath, $"set \"{serviceName}\" AppRotateBytes 1048576");
+
+        Console.WriteLine("  Web 服务注册完成 (DFWebService)");
+    }
+
+    static void RunCommand(string fileName, string arguments)
+    {
+        try
+        {
+            var startInfo = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = fileName,
+                Arguments = arguments,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using var process = System.Diagnostics.Process.Start(startInfo);
+            process?.WaitForExit();
+        }
+        catch
+        {
+            // 忽略错误，继续执行
+        }
     }
 
     static void CreateDesktopShortcut(Configuration config)
