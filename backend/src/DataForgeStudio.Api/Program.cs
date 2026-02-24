@@ -278,18 +278,28 @@ if (!isTestingEnvironment)
         {
             using var scope = app.Services.CreateScope();
 
-            // 应用待处理的数据库迁移
-            var dbContext = scope.ServiceProvider.GetRequiredService<DataForgeStudioDbContext>();
-            var pendingMigrations = await dbContext.Database.GetPendingMigrationsAsync();
-            if (pendingMigrations.Any())
-            {
-                Console.WriteLine($"📦 发现 {pendingMigrations.Count()} 个待处理的数据库迁移，正在应用...");
-                await dbContext.Database.MigrateAsync();
-                Console.WriteLine("✅ 数据库迁移已完成");
-            }
-
             // 初始化数据库 - 创建 root 用户和默认权限
+            var dbContext = scope.ServiceProvider.GetRequiredService<DataForgeStudioDbContext>();
             await DbInitializer.InitializeAsync(dbContext, forceResetPermissions: false);
+
+            // 应用待处理的数据库迁移（仅在数据库已存在时）
+            try
+            {
+                if (await dbContext.Database.CanConnectAsync())
+                {
+                    var pendingMigrations = (await dbContext.Database.GetPendingMigrationsAsync()).ToList();
+                    if (pendingMigrations.Any())
+                    {
+                        Console.WriteLine($"📦 发现 {pendingMigrations.Count} 个待处理的数据库迁移，正在应用...");
+                        await dbContext.Database.MigrateAsync();
+                        Console.WriteLine("✅ 数据库迁移已完成");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠️ 数据库迁移检查失败（非致命错误）: {ex.Message}");
+            }
 
             // 初始化密钥 - 生成 RSA 密钥对（如果不存在）
             var keyService = scope.ServiceProvider.GetRequiredService<IKeyManagementService>();
