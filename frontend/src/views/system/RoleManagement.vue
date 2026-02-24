@@ -179,12 +179,13 @@ const permissionTree = ref([
     key: 'report',
     label: '报表管理',
     children: [
-      { key: 'report:view', label: '查看报表' },
+      { key: 'report:query', label: '访问报表查询' },
+      { key: 'report:execute', label: '执行报表查询' },
+      { key: 'report:design', label: '访问报表设计' },
       { key: 'report:create', label: '创建报表' },
       { key: 'report:edit', label: '编辑报表' },
       { key: 'report:delete', label: '删除报表' },
-      { key: 'report:design', label: '报表设计' },
-      { key: 'report:execute', label: '执行报表' },
+      { key: 'report:toggle', label: '停用启用报表' },
       { key: 'report:export', label: '导出报表' }
     ]
   },
