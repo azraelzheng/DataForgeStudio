@@ -18,6 +18,11 @@ public interface IConfigService
     string ServiceName { get; }
 
     /// <summary>
+    /// Web 服务名称常量
+    /// </summary>
+    string WebServiceName { get; }
+
+    /// <summary>
     /// 安装路径
     /// </summary>
     string InstallPath { get; }

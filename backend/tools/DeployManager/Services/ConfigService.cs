@@ -32,6 +32,11 @@ public class ConfigService : IConfigService
     public const string ServiceName = "DFAppService";
 
     /// <summary>
+    /// Web 服务名称常量
+    /// </summary>
+    public const string WebServiceName = "DFWebService";
+
+    /// <summary>
     /// 默认后端端口
     /// </summary>
     private const int DefaultBackendPort = 5000;
@@ -72,6 +77,11 @@ public class ConfigService : IConfigService
     /// 服务名称（接口实现）
     /// </summary>
     string IConfigService.ServiceName => ServiceName;
+
+    /// <summary>
+    /// Web 服务名称（接口实现）
+    /// </summary>
+    string IConfigService.WebServiceName => WebServiceName;
 
     /// <summary>
     /// 获取安装路径
