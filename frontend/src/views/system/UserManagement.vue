@@ -333,16 +333,20 @@ const handleReset = () => {
   handleSearch()
 }
 
-const handleAdd = () => {
+const handleAdd = async () => {
+  // 刷新角色列表以确保显示最新创建的角色
+  await loadRoles()
   isEdit.value = false
   dialogVisible.value = true
 }
 
-const handleEdit = (row) => {
+const handleEdit = async (row) => {
   if (row.username === 'root') {
     ElMessage.warning('root 用户是系统管理员，不能被修改')
     return
   }
+  // 刷新角色列表以确保显示最新创建的角色
+  await loadRoles()
   isEdit.value = true
   Object.assign(form, row)
   // 转换角色数据
