@@ -151,7 +151,8 @@ router.beforeEach(async (to, from, next) => {
   if (LICENSE_REQUIRED_ROUTES.some(route => to.path.startsWith(route))) {
     const licenseStore = useLicenseStore()
 
-    if (!licenseStore.license && !licenseStore.licenseStatus) {
+    // 确保许可证已加载（等待异步操作完成）
+    if (!licenseStore.license) {
       await licenseStore.loadLicense()
     }
 
@@ -161,7 +162,8 @@ router.beforeEach(async (to, from, next) => {
       return
     }
 
-    if (licenseStore.licenseStatus === 'invalid' || !licenseStore.license) {
+    // 只有当许可证确实无效时才阻止访问
+    if (licenseStore.licenseStatus === 'invalid') {
       ElMessage.error('许可证无效，请先激活许可证。')
       next('/license')
       return
