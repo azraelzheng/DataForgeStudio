@@ -13,6 +13,7 @@ public partial class FrontendModeViewModel : ObservableObject
     private readonly IIisManager _iisManager;
     private readonly INginxManager _nginxManager;
     private readonly IConfigService _configService;
+    private readonly IWebServiceManager _webServiceManager;
 
     /// <summary>
     /// 是否使用 IIS 模式
@@ -63,11 +64,17 @@ public partial class FrontendModeViewModel : ObservableObject
     /// <param name="iisManager">IIS 管理器</param>
     /// <param name="nginxManager">Nginx 管理器</param>
     /// <param name="configService">配置服务</param>
-    public FrontendModeViewModel(IIisManager iisManager, INginxManager nginxManager, IConfigService configService)
+    /// <param name="webServiceManager">Web 服务管理器</param>
+    public FrontendModeViewModel(
+        IIisManager iisManager,
+        INginxManager nginxManager,
+        IConfigService configService,
+        IWebServiceManager webServiceManager)
     {
         _iisManager = iisManager;
         _nginxManager = nginxManager;
         _configService = configService;
+        _webServiceManager = webServiceManager;
 
         // 检查安装状态
         CheckInstallationStatus();
@@ -183,7 +190,7 @@ public partial class FrontendModeViewModel : ObservableObject
 
         try
         {
-            // 停止当前服务（仅在已安装时）
+            // 停止当前服务
             if (IsIisMode && IisInstalled)
             {
                 try
@@ -205,19 +212,29 @@ public partial class FrontendModeViewModel : ObservableObject
             {
                 try
                 {
-                    await _nginxManager.StopAsync();
+                    // 使用 WebServiceManager 停止 Nginx Windows 服务
+                    await _webServiceManager.StopAsync();
                 }
                 catch (Exception ex)
                 {
                     // 忽略停止失败，继续切换
-                    System.Diagnostics.Debug.WriteLine($"[FrontendModeViewModel] 停止 Nginx 失败: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"[FrontendModeViewModel] 停止 Nginx 服务失败: {ex.Message}");
                 }
             }
 
             // 启动新服务
-            // 注意：模式现在是通过运行时检测确定的，不再保存到 config.json
             if (targetMode == "iis")
             {
+                // IIS 模式：确保 Web 服务已停止，然后启动 IIS 站点
+                try
+                {
+                    await _webServiceManager.StopAsync();
+                }
+                catch
+                {
+                    // 忽略停止失败
+                }
+
                 const string siteName = "DataForgeStudio";
                 var port = _configService.GetFrontendPort();
                 var physicalPath = _configService.GetWebSitePath();
@@ -227,13 +244,22 @@ public partial class FrontendModeViewModel : ObservableObject
             }
             else
             {
+                // Nginx 模式：停止 IIS 站点，然后启动 Web 服务
+                const string iisSiteName = "DataForgeStudio";
+                if (_iisManager.IsSiteExists(iisSiteName))
+                {
+                    _iisManager.StopSite(iisSiteName);
+                }
+
                 var nginxConfigPath = System.IO.Path.Combine(_configService.InstallPath, "WebServer", "conf", "nginx.conf");
                 var backendPort = _configService.GetBackendPort();
                 var frontendPort = _configService.GetFrontendPort();
                 var backendUrl = $"http://localhost:{backendPort}";
 
                 _nginxManager.UpdateConfig(nginxConfigPath, frontendPort, backendUrl);
-                await _nginxManager.StartAsync(nginxConfigPath);
+
+                // 使用 WebServiceManager 启动 Nginx Windows 服务
+                await _webServiceManager.StartAsync();
             }
 
             IsIisMode = targetMode == "iis";
