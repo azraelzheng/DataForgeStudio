@@ -1072,6 +1072,7 @@ BEGIN
         [ScheduledTime] [nvarchar](10) NULL,
         [OnceDate] [datetime] NULL,
         [RetentionCount] [int] NOT NULL DEFAULT 10,
+        [BackupPath] [nvarchar](500) NULL,
         [IsEnabled] [bit] NOT NULL DEFAULT 1,
         [LastRunTime] [datetime] NULL,
         [NextRunTime] [datetime] NULL,

@@ -341,6 +341,7 @@ public static class DbInitializer
                         ScheduledTime NVARCHAR(10) NULL,
                         OnceDate DATETIME2 NULL,
                         RetentionCount INT NOT NULL DEFAULT 10,
+                        BackupPath NVARCHAR(500) NULL,
                         IsEnabled BIT NOT NULL DEFAULT 1,
                         LastRunTime DATETIME2 NULL,
                         NextRunTime DATETIME2 NULL,
@@ -350,6 +351,24 @@ public static class DbInitializer
                 await command.ExecuteNonQueryAsync();
 
                 Console.WriteLine("✓ BackupSchedules 表已创建");
+            }
+            else
+            {
+                // 表已存在，检查是否有 BackupPath 列
+                command.CommandText = @"
+                    SELECT COUNT(*)
+                    FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_NAME = 'BackupSchedules' AND COLUMN_NAME = 'BackupPath'";
+
+                var columnExists = Convert.ToInt32(await command.ExecuteScalarAsync()) > 0;
+
+                if (!columnExists)
+                {
+                    Console.WriteLine("检测到 BackupSchedules 表缺少 BackupPath 列，正在添加...");
+                    command.CommandText = "ALTER TABLE BackupSchedules ADD BackupPath NVARCHAR(500) NULL";
+                    await command.ExecuteNonQueryAsync();
+                    Console.WriteLine("✓ BackupPath 列已添加");
+                }
             }
         }
         catch (Exception ex)
