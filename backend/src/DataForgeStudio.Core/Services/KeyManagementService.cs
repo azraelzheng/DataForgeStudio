@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using System.Security.Cryptography;
 using DataForgeStudio.Core.Interfaces;
 using DataForgeStudio.Core.Configuration;
+using DataForgeStudio.Shared.Constants;
 
 namespace DataForgeStudio.Core.Services;
 
@@ -46,16 +47,16 @@ public class KeyManagementService : IKeyManagementService
         _aesKey = securityLicenseSection["AesKey"] ?? licenseSection["AesKey"] ?? string.Empty;
         _aesIv = securityLicenseSection["AesIv"] ?? licenseSection["AesIv"] ?? string.Empty;
 
-        // 如果仍然为空，使用硬编码的默认值（后备方案）
+        // 如果仍然为空，使用 ProductionKeys 中的默认值（后备方案）
         if (string.IsNullOrEmpty(_aesKey))
         {
-            _aesKey = "DataForgeStudioV4AESLicenseKey32Bytes!!";
-            _logger.LogWarning("License AES Key 未配置，使用默认值（仅用于开发/测试）");
+            _aesKey = ProductionKeys.LicenseAesKey;
+            _logger.LogWarning("License AES Key 未配置，使用 ProductionKeys 默认值");
         }
         if (string.IsNullOrEmpty(_aesIv))
         {
-            _aesIv = "DataForgeIV16Byte!";
-            _logger.LogWarning("License AES IV 未配置，使用默认值（仅用于开发/测试）");
+            _aesIv = ProductionKeys.LicenseAesIV;
+            _logger.LogWarning("License AES IV 未配置，使用 ProductionKeys 默认值");
         }
     }
 
