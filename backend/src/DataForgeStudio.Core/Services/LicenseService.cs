@@ -124,24 +124,8 @@ public class LicenseService : ILicenseService
             }
 
             // 3. 使用 KeyManagementService 获取公钥验证签名
-            // 重新构建不含 Signature 的 JSON（与 LicenseGenerator 签名时的格式一致）
-            var jsonForVerification = JsonSerializer.Serialize(new
-            {
-                LicenseId = licenseData.LicenseId,
-                CustomerName = licenseData.CustomerName,
-                ExpiryDate = licenseData.ExpiryDate.ToString("yyyy-MM-ddTHH:mm:ssZ"),
-                MaxUsers = licenseData.MaxUsers,
-                MaxReports = licenseData.MaxReports,
-                MaxDataSources = licenseData.MaxDataSources,
-                Features = licenseData.Features,
-                MachineCode = licenseData.MachineCode,
-                IssuedDate = licenseData.IssuedDate,
-                LicenseType = licenseData.LicenseType
-            }, new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                WriteIndented = false
-            });
+            // 使用与生成时相同的序列化格式
+            var jsonForVerification = SerializeForSignature(licenseData);
 
             var publicKey = await _keyManagementService.GetPublicKeyAsync();
             bool isValid = EncryptionHelper.RsaVerifyData(
@@ -275,24 +259,8 @@ public class LicenseService : ILicenseService
             return response;
         }
 
-        // 验证签名 - 重新构建不含 Signature 的 JSON（与 LicenseGenerator 签名时的格式一致）
-        var jsonForVerification = JsonSerializer.Serialize(new
-        {
-            LicenseId = licenseData.LicenseId,
-            CustomerName = licenseData.CustomerName,
-            ExpiryDate = licenseData.ExpiryDate.ToString("yyyy-MM-ddTHH:mm:ssZ"),
-            MaxUsers = licenseData.MaxUsers,
-            MaxReports = licenseData.MaxReports,
-            MaxDataSources = licenseData.MaxDataSources,
-            Features = licenseData.Features,
-            MachineCode = licenseData.MachineCode,
-            IssuedDate = licenseData.IssuedDate,
-            LicenseType = licenseData.LicenseType
-        }, new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = false
-        });
+        // 验证签名 - 使用与生成时相同的序列化格式
+        var jsonForVerification = SerializeForSignature(licenseData);
 
         var publicKey = await _keyManagementService.GetPublicKeyAsync();
         bool isValid = EncryptionHelper.RsaVerifyData(
@@ -434,8 +402,8 @@ public class LicenseService : ILicenseService
                 Signature = "" // 稍后生成签名
             };
 
-            // 序列化为 JSON（不包含 Signature）
-            var licenseJson = JsonSerializer.Serialize(licenseData);
+            // 序列化为 JSON（不包含 Signature）- 使用一致的格式
+            var licenseJson = SerializeForSignature(licenseData);
 
             // 使用私钥签名
             using var rsa = await _keyManagementService.GetRsaWithPrivateKeyAsync();
@@ -654,5 +622,37 @@ public class LicenseService : ILicenseService
             _logger.LogError(ex, "检查数据源数量限制失败");
             return ApiResponse.Fail($"检查数据源限制失败: {ex.Message}", "CHECK_LIMIT_FAILED");
         }
+    }
+
+    /// <summary>
+    /// 用于签名/验证的 JSON 序列化选项（确保一致性）
+    /// </summary>
+    private static readonly JsonSerializerOptions SignatureJsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        WriteIndented = false
+    };
+
+    /// <summary>
+    /// 序列化许可证数据用于签名（不包含 Signature 字段）
+    /// 签名生成和验证必须使用完全相同的格式
+    /// </summary>
+    private static string SerializeForSignature(LicenseData data)
+    {
+        // 创建不包含 Signature 的匿名对象，确保格式一致
+        var dataForSignature = new
+        {
+            licenseId = data.LicenseId,
+            customerName = data.CustomerName,
+            expiryDate = data.ExpiryDate.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+            maxUsers = data.MaxUsers,
+            maxReports = data.MaxReports,
+            maxDataSources = data.MaxDataSources,
+            features = data.Features,
+            machineCode = data.MachineCode,
+            issuedDate = data.IssuedDate,
+            licenseType = data.LicenseType
+        };
+        return JsonSerializer.Serialize(dataForSignature, SignatureJsonOptions);
     }
 }
