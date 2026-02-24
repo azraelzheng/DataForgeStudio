@@ -50,7 +50,20 @@ public class LicenseService : ILicenseService
 
         if (license == null)
         {
-            return ApiResponse<LicenseInfoDto>.Fail("未激活许可证", "NO_LICENSE");
+            // 自动生成试用许可证（如果试用期有效）
+            _logger.LogInformation("未找到许可证，尝试自动生成试用许可证");
+            var trialResult = await GenerateTrialLicenseAsync();
+
+            if (trialResult.Success && trialResult.Data != null)
+            {
+                return trialResult;
+            }
+
+            // 试用许可证生成失败（可能已过期）
+            var errorMessage = trialResult.ErrorCode == "TRIAL_EXPIRED"
+                ? trialResult.Message
+                : "未激活许可证";
+            return ApiResponse<LicenseInfoDto>.Fail(errorMessage, trialResult.ErrorCode ?? "NO_LICENSE");
         }
 
         // 解密许可证数据
