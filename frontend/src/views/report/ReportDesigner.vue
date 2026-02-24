@@ -242,7 +242,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed, h } from 'vue'
+import { ref, reactive, onMounted, onActivated, computed, h } from 'vue'
 import { ElInput, ElSelect, ElInputNumber, ElSwitch, ElButton } from 'element-plus'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
@@ -494,16 +494,26 @@ const formatSQL = () => {
   }
 }
 
-onMounted(async () => {
+// 加载数据源列表
+const loadDataSources = async () => {
   const res = await dataSourceApi.getActiveDataSources()
   if (res.success) {
     dataSources.value = res.data || []
   }
+}
+
+onMounted(async () => {
+  await loadDataSources()
 
   const reportId = route.query.id
   if (reportId) {
     loadReport(reportId)
   }
+})
+
+// 当组件被激活时（从其他页面返回），重新加载数据源
+onActivated(async () => {
+  await loadDataSources()
 })
 
 const loadReport = async (id) => {
