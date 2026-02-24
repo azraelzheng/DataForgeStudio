@@ -106,6 +106,7 @@
         node-key="key"
         show-checkbox
         default-expand-all
+        :check-strictly="true"
       />
       <template #footer>
         <el-button @click="permissionDialogVisible = false">取消</el-button>
@@ -341,26 +342,31 @@ const handleAssignPermissions = async (row) => {
 
   await nextTick()
 
-  if (!row.permissions || row.permissions.length === 0) {
-    try {
-      const res = await roleApi.getRoles({ page: 1, pageSize: 1000 })
-      if (res.success) {
-        const roles = res.data.Items || res.data.items || []
-        const fullRole = roles.find(r => r.roleId === row.roleId)
-        if (fullRole && fullRole.permissions) {
-          row.permissions = fullRole.permissions
-        }
+  // 始终从服务器获取最新的权限数据，确保数据准确
+  try {
+    const res = await roleApi.getRoles({ page: 1, pageSize: 1000 })
+    if (res.success) {
+      const roles = res.data.Items || res.data.items || []
+      const fullRole = roles.find(r => r.roleId === row.roleId)
+      if (fullRole && fullRole.permissions) {
+        // 更新当前角色的权限列表
+        currentRole.value.permissions = fullRole.permissions
       }
-    } catch {
-      // 获取失败
     }
+  } catch {
+    // 获取失败，使用现有数据
   }
 
   await nextTick()
 
-  const checkedKeys = row.permissions || []
+  // 只设置叶子节点的选中状态（权限代码格式为 "module:action"）
+  const checkedKeys = currentRole.value.permissions || []
   if (permissionTreeRef.value) {
-    permissionTreeRef.value.setCheckedKeys(checkedKeys)
+    // 先清空所有选中状态，再设置
+    permissionTreeRef.value.setCheckedKeys([])
+    // 只设置叶子节点（包含 ':' 的 key）
+    const leafKeys = checkedKeys.filter(key => key.includes(':'))
+    permissionTreeRef.value.setCheckedKeys(leafKeys)
   }
 }
 
@@ -368,11 +374,16 @@ const handleSavePermissions = async () => {
   savingPermissions.value = true
   try {
     const checkedKeys = permissionTreeRef.value.getCheckedKeys()
+    // 只保留叶子节点（权限代码格式为 "module:action"）
     const permissionKeys = checkedKeys.filter(key => key.includes(':'))
 
     await roleApi.assignPermissions(currentRole.value.roleId, {
       permissions: permissionKeys
     })
+
+    // 更新当前角色的权限缓存，确保下次打开时显示正确的数据
+    currentRole.value.permissions = permissionKeys
+
     ElMessage.success('权限配置成功')
     permissionDialogVisible.value = false
     loadData()
