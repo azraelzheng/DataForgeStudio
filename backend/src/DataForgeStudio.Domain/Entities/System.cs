@@ -173,6 +173,12 @@ public class BackupSchedule
     /// </summary>
     public int RetentionCount { get; set; } = 10;
 
+    /// <summary>
+    /// 备份文件存放路径（为空则使用默认路径）
+    /// </summary>
+    [MaxLength(500)]
+    public string? BackupPath { get; set; }
+
     public bool IsEnabled { get; set; } = true;
 
     public DateTime? LastRunTime { get; set; }

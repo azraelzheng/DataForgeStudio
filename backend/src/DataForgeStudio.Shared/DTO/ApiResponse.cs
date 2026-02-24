@@ -679,6 +679,10 @@ public class CreateBackupRequest
 {
     public string? BackupName { get; set; }
     public string? Description { get; set; }
+    /// <summary>
+    /// 备份文件存放路径（为空则使用默认路径）
+    /// </summary>
+    public string? BackupPath { get; set; }
 }
 
 /// <summary>
@@ -766,6 +770,10 @@ public class BackupScheduleDto
     public string? ScheduledTime { get; set; }
     public DateTime? OnceDate { get; set; }
     public int RetentionCount { get; set; }
+    /// <summary>
+    /// 备份文件存放路径
+    /// </summary>
+    public string? BackupPath { get; set; }
     public bool IsEnabled { get; set; }
     public DateTime? LastRunTime { get; set; }
     public DateTime? NextRunTime { get; set; }
@@ -783,6 +791,10 @@ public class CreateBackupScheduleRequest
     public string? ScheduledTime { get; set; }
     public DateTime? OnceDate { get; set; }
     public int RetentionCount { get; set; } = 10;
+    /// <summary>
+    /// 备份文件存放路径（为空则使用默认路径）
+    /// </summary>
+    public string? BackupPath { get; set; }
     public bool IsEnabled { get; set; } = true;
 }
 

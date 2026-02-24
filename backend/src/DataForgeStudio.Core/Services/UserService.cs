@@ -224,6 +224,10 @@ public class UserService : IUserService
             return ApiResponse.Fail("该用户有操作记录，不能删除，只能停用", "FORBIDDEN");
         }
 
+        // 删除用户角色关联（解决全局 Restrict 删除行为导致的问题）
+        var userRoles = await _context.UserRoles.Where(ur => ur.UserId == userId).ToListAsync();
+        _context.UserRoles.RemoveRange(userRoles);
+
         _context.Users.Remove(user);
         await _context.SaveChangesAsync();
         return ApiResponse.Ok("用户删除成功");

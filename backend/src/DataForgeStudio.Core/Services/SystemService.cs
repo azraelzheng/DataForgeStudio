@@ -327,11 +327,25 @@ public class SystemService : ISystemService
                 return ApiResponse<BackupRecordDto>.Fail("无法获取数据库名称", "DATABASE_NAME_ERROR");
             }
 
-            // 创建备份目录
-            var backupDir = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Backups");
-            if (!System.IO.Directory.Exists(backupDir))
+            // 创建备份目录（支持自定义路径）
+            string backupDir;
+            if (!string.IsNullOrWhiteSpace(request.BackupPath))
             {
-                System.IO.Directory.CreateDirectory(backupDir);
+                // 使用用户指定的路径
+                backupDir = request.BackupPath;
+                if (!System.IO.Directory.Exists(backupDir))
+                {
+                    System.IO.Directory.CreateDirectory(backupDir);
+                }
+            }
+            else
+            {
+                // 使用默认路径
+                backupDir = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Backups");
+                if (!System.IO.Directory.Exists(backupDir))
+                {
+                    System.IO.Directory.CreateDirectory(backupDir);
+                }
             }
 
             // 自动生成备份名称和文件名
@@ -341,7 +355,7 @@ public class SystemService : ISystemService
             var backupPath = System.IO.Path.Combine(backupDir, fileName);
 
             // 执行备份命令
-            var backupSuccess = await ExecuteBackupCommand(connectionString, databaseName, backupPath);
+            var (backupSuccess, backupError) = await ExecuteBackupCommandAsync(connectionString, databaseName, backupPath);
 
             if (!backupSuccess)
             {
@@ -360,7 +374,7 @@ public class SystemService : ISystemService
                 _context.BackupRecords.Add(failedBackup);
                 await _context.SaveChangesAsync();
 
-                return ApiResponse<BackupRecordDto>.Fail("数据库备份失败", "BACKUP_FAILED");
+                return ApiResponse<BackupRecordDto>.Fail($"数据库备份失败: {backupError}", "BACKUP_FAILED");
             }
 
             // 获取文件大小
@@ -425,7 +439,7 @@ public class SystemService : ISystemService
         return string.Empty;
     }
 
-    private async Task<bool> ExecuteBackupCommand(string connectionString, string databaseName, string backupPath)
+    private async Task<(bool Success, string ErrorMessage)> ExecuteBackupCommandAsync(string connectionString, string databaseName, string backupPath)
     {
         try
         {
@@ -450,12 +464,20 @@ public class SystemService : ISystemService
             };
 
             await command.ExecuteNonQueryAsync();
-            return true;
+            return (true, string.Empty);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "执行备份命令失败: {Database}", databaseName);
-            return false;
+            _logger.LogError(ex, "执行备份命令失败: {Database}, 路径: {Path}", databaseName, backupPath);
+
+            // 返回详细的错误信息
+            var errorMessage = ex.Message;
+            if (ex is Microsoft.Data.SqlClient.SqlException sqlEx)
+            {
+                errorMessage = $"SQL错误 {sqlEx.Number}: {sqlEx.Message}";
+            }
+
+            return (false, errorMessage);
         }
     }
 
@@ -542,12 +564,12 @@ public class SystemService : ISystemService
             }
 
             // 执行恢复命令
-            var restoreSuccess = await ExecuteRestoreCommand(connectionString, databaseName, backup.BackupPath);
+            var (restoreSuccess, restoreError) = await ExecuteRestoreCommandAsync(connectionString, databaseName, backup.BackupPath);
 
             if (!restoreSuccess)
             {
                 _logger.LogError($"数据库恢复失败: {backup.BackupPath}");
-                return ApiResponse.Fail("数据库恢复失败", "RESTORE_FAILED");
+                return ApiResponse.Fail($"数据库恢复失败: {restoreError}", "RESTORE_FAILED");
             }
 
             _logger.LogInformation($"数据库恢复成功: {backup.BackupPath}");
@@ -560,7 +582,7 @@ public class SystemService : ISystemService
         }
     }
 
-    private async Task<bool> ExecuteRestoreCommand(string connectionString, string databaseName, string backupPath)
+    private async Task<(bool Success, string ErrorMessage)> ExecuteRestoreCommandAsync(string connectionString, string databaseName, string backupPath)
     {
         try
         {
@@ -586,7 +608,7 @@ public class SystemService : ISystemService
             };
 
             await command.ExecuteNonQueryAsync();
-            return true;
+            return (true, string.Empty);
         }
         catch (Exception ex)
         {
@@ -606,7 +628,14 @@ public class SystemService : ISystemService
                 // 忽略恢复模式的错误
             }
 
-            return false;
+            // 返回详细的错误信息
+            var errorMessage = ex.Message;
+            if (ex is Microsoft.Data.SqlClient.SqlException sqlEx)
+            {
+                errorMessage = $"SQL错误 {sqlEx.Number}: {sqlEx.Message}";
+            }
+
+            return (false, errorMessage);
         }
     }
 
@@ -629,6 +658,7 @@ public class SystemService : ISystemService
             ScheduledTime = s.ScheduledTime,
             OnceDate = s.OnceDate,
             RetentionCount = s.RetentionCount,
+            BackupPath = s.BackupPath,
             IsEnabled = s.IsEnabled,
             LastRunTime = s.LastRunTime,
             NextRunTime = s.NextRunTime,
@@ -648,6 +678,7 @@ public class SystemService : ISystemService
             ScheduledTime = request.ScheduledTime,
             OnceDate = request.OnceDate,
             RetentionCount = request.RetentionCount,
+            BackupPath = request.BackupPath,
             IsEnabled = request.IsEnabled,
             CreatedTime = DateTime.UtcNow,
             NextRunTime = CalculateNextRunTime(request.ScheduleType,
@@ -674,6 +705,7 @@ public class SystemService : ISystemService
         schedule.ScheduledTime = request.ScheduledTime;
         schedule.OnceDate = request.OnceDate;
         schedule.RetentionCount = request.RetentionCount;
+        schedule.BackupPath = request.BackupPath;
         schedule.IsEnabled = request.IsEnabled;
         schedule.UpdatedTime = DateTime.UtcNow;
         schedule.NextRunTime = CalculateNextRunTime(request.ScheduleType,
@@ -742,6 +774,7 @@ public class SystemService : ISystemService
             ScheduledTime = schedule.ScheduledTime,
             OnceDate = schedule.OnceDate,
             RetentionCount = schedule.RetentionCount,
+            BackupPath = schedule.BackupPath,
             IsEnabled = schedule.IsEnabled,
             LastRunTime = schedule.LastRunTime,
             NextRunTime = schedule.NextRunTime,

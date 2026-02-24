@@ -6,7 +6,13 @@
         <el-input
           v-model="backupForm.description"
           placeholder="备份备注（可选）"
-          style="width: 240px;"
+          style="width: 200px;"
+          clearable
+        />
+        <el-input
+          v-model="backupForm.backupPath"
+          placeholder="备份路径（可选，留空使用默认）"
+          style="width: 280px;"
           clearable
         />
         <el-button type="primary" @click="handleCreateBackup" :loading="creating">
@@ -208,6 +214,9 @@
           <el-input-number v-model="scheduleForm.retentionCount" :min="1" :max="100" />
           <span style="margin-left: 10px; color: #909399;">个备份</span>
         </el-form-item>
+        <el-form-item label="备份路径">
+          <el-input v-model="scheduleForm.backupPath" placeholder="留空使用默认路径" clearable />
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="scheduleDialogVisible = false">取消</el-button>
@@ -234,7 +243,8 @@ const creating = ref(false)
 const tableData = ref([])
 
 const backupForm = reactive({
-  description: ''
+  description: '',
+  backupPath: ''
 })
 
 const searchForm = reactive({
@@ -260,7 +270,8 @@ const scheduleForm = reactive({
   recurringDays: [1, 2, 3, 4, 5],
   scheduledTime: '02:00',
   onceDate: null,
-  retentionCount: 10
+  retentionCount: 10,
+  backupPath: ''
 })
 
 // 更新表格高度
@@ -331,11 +342,13 @@ const handleCreateBackup = async () => {
     const backupName = `backup_${new Date().toISOString().replace(/[-:T]/g, '').slice(0, 15)}`
     const res = await systemApi.createBackup({
       backupName,
-      description: backupForm.description
+      description: backupForm.description,
+      backupPath: backupForm.backupPath || null
     })
     if (res.success) {
       ElMessage.success('备份创建成功')
       backupForm.description = ''
+      backupForm.backupPath = ''
       loadData()
     }
   } catch {
@@ -419,7 +432,8 @@ const handleAddSchedule = () => {
     recurringDays: [1, 2, 3, 4, 5],
     scheduledTime: '02:00',
     onceDate: null,
-    retentionCount: 10
+    retentionCount: 10,
+    backupPath: ''
   })
   scheduleDialogVisible.value = true
 }
@@ -432,7 +446,8 @@ const handleEditSchedule = (row) => {
     recurringDays: row.recurringDays || [],
     scheduledTime: row.scheduledTime,
     onceDate: row.onceDate,
-    retentionCount: row.retentionCount
+    retentionCount: row.retentionCount,
+    backupPath: row.backupPath || ''
   })
   scheduleDialogVisible.value = true
 }

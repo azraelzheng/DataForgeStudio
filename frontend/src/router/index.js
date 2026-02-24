@@ -32,7 +32,7 @@ const routes = [
     path: '/report/list',
     name: 'ReportQuery',
     component: () => import('../views/report/ReportQuery.vue'),
-    meta: { title: '报表查询', requiresAuth: true, permission: 'report:execute' }
+    meta: { title: '报表查询', requiresAuth: true, permission: 'report:query' }
   },
   // 报表设计列表 - 设计管理页面
   {
