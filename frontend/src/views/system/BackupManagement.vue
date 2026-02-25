@@ -320,7 +320,12 @@ const loadData = async () => {
     })
     if (res.success) {
       const data = res.data
-      tableData.value = data.Items || data.items || []
+      // 去重：确保不会有重复的备份记录
+      const items = data.Items || data.items || []
+      const uniqueItems = items.filter((item, index, self) =>
+        index === self.findIndex(t => t.backupId === item.backupId)
+      )
+      tableData.value = uniqueItems
       pagination.total = data.TotalCount || data.total || 0
     }
   } catch {
