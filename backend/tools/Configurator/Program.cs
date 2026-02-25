@@ -1249,7 +1249,7 @@ WHERE u.Username = 'root' AND r.RoleCode = 'ROLE_SUPER_ADMIN';
     {
         var serviceName = "DFWebService";
         var nginxExePath = Path.Combine(config.InstallPath, "WebServer", "nginx.exe");
-        var nssmPath = Path.Combine(config.InstallPath, "tools", "nssm", "nssm.exe");
+        var nssmPath = Path.Combine(config.InstallPath, "Manager", "nssm.exe");
 
         // 检查 NSSM 是否存在
         if (!File.Exists(nssmPath))
