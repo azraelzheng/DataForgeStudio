@@ -79,3 +79,13 @@ temp/
 
 # Test screenshots
 test_screenshots/
+
+# Temporary test files
+test_*.py
+*.png
+
+# License keys (sensitive)
+license-keys.json
+
+# Claude config backup
+backup-claude-config.ps1

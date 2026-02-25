@@ -34,6 +34,26 @@ if errorlevel 1 (
     exit /b 1
 )
 echo API 构建完成
+
+echo 复制许可证验证公钥...
+if not exist "%BUILD_DIR%\Server\keys" mkdir "%BUILD_DIR%\Server\keys"
+if exist "%PROJECT_ROOT%\backend\src\DataForgeStudio.Api\keys\public_key.pem" (
+    copy /y "%PROJECT_ROOT%\backend\src\DataForgeStudio.Api\keys\public_key.pem" "%BUILD_DIR%\Server\keys\"
+    echo public_key.pem 已复制
+) else (
+    echo.
+    echo ========================================
+    echo 警告: 许可证密钥不存在！
+    echo ========================================
+    echo 请先运行一次 API 以生成密钥对：
+    echo   cd backend\src\DataForgeStudio.Api
+    echo   dotnet run
+    echo 然后重新运行此构建脚本。
+    echo.
+    echo 或者手动生成密钥后重新构建。
+    echo ========================================
+    exit /b 1
+)
 echo.
 
 echo [2/7] 构建前端...

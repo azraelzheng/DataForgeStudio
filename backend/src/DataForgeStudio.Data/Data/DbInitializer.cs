@@ -125,6 +125,12 @@ public static class DbInitializer
 
             await context.SaveChangesAsync();
         }
+
+        // 创建默认角色（管理员、开发者、查看者）
+        await CreateDefaultRolesAsync(context);
+
+        // 创建默认管理员用户
+        await CreateDefaultAdminUserAsync(context);
     }
 
     /// <summary>
@@ -375,6 +381,160 @@ public static class DbInitializer
         {
             Console.WriteLine($"数据库架构验证失败: {ex.Message}");
             // 不抛出异常，允许继续执行
+        }
+    }
+
+    /// <summary>
+    /// 默认角色配置
+    /// </summary>
+    private static readonly (string RoleName, string RoleCode, string Description, string[] Permissions)[] DefaultRoles =
+    {
+        ("管理员", "ROLE_ADMIN", "系统管理员，拥有大部分管理权限", new[]
+        {
+            "user:view", "user:create", "user:edit", "user:delete", "user:resetPassword",
+            "role:view", "role:edit", "role:assignPermissions",
+            "report:query", "report:execute", "report:design", "report:create", "report:edit", "report:delete", "report:toggle", "report:export",
+            "datasource:view", "datasource:create", "datasource:edit", "datasource:delete", "datasource:test",
+            "log:view", "log:export",
+            "backup:view", "backup:create", "backup:restore",
+            "license:view",
+            "system:view", "system:edit"
+        }),
+        ("开发者", "ROLE_DEVELOPER", "报表开发者，可以设计报表和管理数据源", new[]
+        {
+            "report:query", "report:execute", "report:design", "report:create", "report:edit", "report:delete", "report:toggle", "report:export",
+            "datasource:view", "datasource:create", "datasource:edit", "datasource:delete", "datasource:test",
+            "log:view"
+        }),
+        ("查看者", "ROLE_VIEWER", "普通用户，只能查看和执行报表", new[]
+        {
+            "report:query", "report:execute", "report:export"
+        })
+    };
+
+    /// <summary>
+    /// 创建默认角色（管理员、开发者、查看者）
+    /// </summary>
+    private static async Task CreateDefaultRolesAsync(DataForgeStudioDbContext context)
+    {
+        foreach (var (roleName, roleCode, description, permissions) in DefaultRoles)
+        {
+            // 检查角色是否已存在
+            var existingRole = await context.Roles
+                .FirstOrDefaultAsync(r => r.RoleCode == roleCode);
+
+            if (existingRole == null)
+            {
+                // 创建新角色
+                var role = new Role
+                {
+                    RoleName = roleName,
+                    RoleCode = roleCode,
+                    Description = description,
+                    IsSystem = false, // 非系统角色，可以被删除
+                    IsActive = true,
+                    CreatedTime = DateTime.UtcNow
+                };
+
+                context.Roles.Add(role);
+                await context.SaveChangesAsync();
+
+                // 获取权限并关联
+                var permissionEntities = await context.Permissions
+                    .Where(p => permissions.Contains(p.PermissionCode))
+                    .ToListAsync();
+
+                foreach (var permission in permissionEntities)
+                {
+                    context.RolePermissions.Add(new RolePermission
+                    {
+                        RoleId = role.RoleId,
+                        PermissionId = permission.PermissionId
+                    });
+                }
+
+                await context.SaveChangesAsync();
+                Console.WriteLine($"✅ 默认角色已创建: {roleName}");
+            }
+            else
+            {
+                // 更新现有角色的权限
+                var existingPermissions = await context.RolePermissions
+                    .Where(rp => rp.RoleId == existingRole.RoleId)
+                    .ToListAsync();
+                context.RolePermissions.RemoveRange(existingPermissions);
+                await context.SaveChangesAsync();
+
+                var permissionEntities = await context.Permissions
+                    .Where(p => permissions.Contains(p.PermissionCode))
+                    .ToListAsync();
+
+                foreach (var permission in permissionEntities)
+                {
+                    context.RolePermissions.Add(new RolePermission
+                    {
+                        RoleId = existingRole.RoleId,
+                        PermissionId = permission.PermissionId
+                    });
+                }
+
+                await context.SaveChangesAsync();
+                Console.WriteLine($"✓ 默认角色权限已更新: {roleName}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// 创建默认管理员用户（admin）
+    /// </summary>
+    private static async Task CreateDefaultAdminUserAsync(DataForgeStudioDbContext context)
+    {
+        const string adminUsername = "admin";
+        const string adminPassword = "Admin@123";
+
+        // 检查 admin 用户是否已存在
+        var existingAdmin = await context.Users
+            .FirstOrDefaultAsync(u => u.Username == adminUsername);
+
+        if (existingAdmin == null)
+        {
+            // 创建 admin 用户
+            var adminUser = new User
+            {
+                Username = adminUsername,
+                PasswordHash = EncryptionHelper.HashPassword(adminPassword),
+                RealName = "管理员",
+                Email = "admin@dataforge.com",
+                IsActive = true,
+                IsSystem = false, // 非系统用户，可以修改/删除
+                MustChangePassword = true, // 首次登录需要修改密码
+                CreatedTime = DateTime.UtcNow
+            };
+
+            context.Users.Add(adminUser);
+            await context.SaveChangesAsync();
+
+            // 获取"管理员"角色
+            var adminRole = await context.Roles
+                .FirstOrDefaultAsync(r => r.RoleCode == "ROLE_ADMIN");
+
+            if (adminRole != null)
+            {
+                // 为 admin 用户分配管理员角色
+                context.UserRoles.Add(new UserRole
+                {
+                    UserId = adminUser.UserId,
+                    RoleId = adminRole.RoleId
+                });
+
+                await context.SaveChangesAsync();
+            }
+
+            Console.WriteLine($"✅ 默认管理员用户已创建: {adminUsername} / {adminPassword}");
+        }
+        else
+        {
+            Console.WriteLine("✓ 默认管理员用户已存在，跳过创建");
         }
     }
 }

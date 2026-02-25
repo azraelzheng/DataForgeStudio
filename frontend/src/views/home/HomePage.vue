@@ -104,7 +104,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onActivated } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../../stores/user'
 import { licenseApi, reportApi } from '../../api/request'
@@ -168,6 +168,12 @@ const getSystemStartDate = () => {
 
 onMounted(async () => {
   // 加载统计数据
+  await loadStats()
+  await loadRecentReports()
+})
+
+// 当页面被激活时（从其他页面返回），刷新统计数据以确保数据实时性
+onActivated(async () => {
   await loadStats()
   await loadRecentReports()
 })

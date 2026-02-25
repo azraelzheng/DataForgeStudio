@@ -280,7 +280,18 @@ const handleAdd = () => {
 
 const handleEdit = (row) => {
   isEdit.value = true
-  Object.assign(form, row)
+  // 正确映射所有字段（后端字段名可能与表单字段名不同）
+  Object.assign(form, {
+    dataSourceId: row.dataSourceId,
+    dataSourceName: row.dataSourceName || '',
+    dbType: row.dbType || 'SqlServer',
+    server: row.serverAddress || row.server || 'localhost',
+    port: row.port || 1433,
+    database: row.databaseName || row.database || '',
+    username: row.username || '',
+    password: '', // 密码不回显，需要重新输入
+    description: row.description || ''
+  })
   dialogVisible.value = true
 }
 

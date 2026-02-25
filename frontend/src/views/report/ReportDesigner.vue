@@ -242,7 +242,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onActivated, computed, h } from 'vue'
+import { ref, reactive, onMounted, onActivated, computed, h, watch } from 'vue'
 import { ElInput, ElSelect, ElInputNumber, ElSwitch, ElButton } from 'element-plus'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
@@ -507,13 +507,48 @@ onMounted(async () => {
 
   const reportId = route.query.id
   if (reportId) {
+    // 编辑模式：加载报表数据
     loadReport(reportId)
+  } else {
+    // 新建模式：重置表单
+    resetForm()
   }
 })
 
 // 当组件被激活时（从其他页面返回），重新加载数据源
 onActivated(async () => {
   await loadDataSources()
+})
+
+// 重置表单到初始状态
+const resetForm = () => {
+  form.reportId = null
+  form.reportName = ''
+  form.reportCategory = ''
+  form.description = ''
+  form.dataSourceId = null
+  form.sqlQuery = ''
+  form.columns = []
+  form.parameters = []
+  form.queryConditions = []
+  form.enableChart = false
+  form.chartConfig = {
+    chartType: 'bar',
+    xField: '',
+    yFields: [],
+    title: ''
+  }
+  availableFields.value = []
+  formRef.value?.resetFields()
+}
+
+// 监听路由变化，处理从编辑页面跳转到新建页面的情况
+watch(() => route.query.id, (newId) => {
+  if (newId) {
+    loadReport(newId)
+  } else {
+    resetForm()
+  }
 })
 
 const loadReport = async (id) => {

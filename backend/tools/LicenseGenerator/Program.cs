@@ -21,12 +21,69 @@ class Program
         "数据源管理", "用户管理", "角色管理"
     };
 
-    // AES 加密配置
-    private const string AesKey = "DataForgeStudioV4AESLicenseKey32Bytes!!";
-    private const string AesIv = "DataForgeIV16Byte!";
+    // 密钥配置（从外部文件读取）
+    private static LicenseKeyConfig? _keyConfig;
 
-    // 私钥路径（相对于工具运行位置）
-    private static string PrivateKeyPath => Path.Combine("..", "..", "..", "..", "..", "src", "DataForgeStudio.Api", "keys", "private_key.pem");
+    /// <summary>
+    /// 加载密钥配置
+    /// </summary>
+    private static void LoadKeyConfig()
+    {
+        var configPath = "license-keys.json";
+
+        if (File.Exists(configPath))
+        {
+            var json = File.ReadAllText(configPath);
+            _keyConfig = JsonSerializer.Deserialize<LicenseKeyConfig>(json);
+            Console.WriteLine($"已加载密钥配置: {Path.GetFullPath(configPath)}");
+        }
+        else
+        {
+            // 使用 ProductionKeys 默认值
+            _keyConfig = new LicenseKeyConfig
+            {
+                AesKey = "DataForgeStudioV4LicenseAES32!!!",
+                AesIV = "LicenseIV16Bytes"
+            };
+            Console.WriteLine("使用内置默认密钥配置");
+            Console.WriteLine($"提示: 可创建 {Path.GetFullPath(configPath)} 文件自定义密钥");
+        }
+    }
+
+    // 私钥路径（优先从命令行参数读取，否则使用默认路径）
+    private static string GetPrivateKeyPath(string[] args)
+    {
+        // 如果提供了命令行参数，使用参数指定的路径
+        if (args.Length > 0 && File.Exists(args[0]))
+        {
+            return args[0];
+        }
+
+        // 1. 优先：exe 同目录下的 private_key.pem
+        var exeDir = AppDomain.CurrentDomain.BaseDirectory;
+        var sameDirPath = Path.Combine(exeDir, "private_key.pem");
+        if (File.Exists(sameDirPath))
+        {
+            return sameDirPath;
+        }
+
+        // 2. 当前工作目录下的 keys 文件夹（与 API 服务共用）
+        var keysPath = Path.Combine("keys", "private_key.pem");
+        if (File.Exists(keysPath))
+        {
+            return keysPath;
+        }
+
+        // 3. 开发环境路径：相对于工具项目目录
+        var devPath = Path.Combine("..", "..", "..", "..", "..", "src", "DataForgeStudio.Api", "keys", "private_key.pem");
+        if (File.Exists(devPath))
+        {
+            return devPath;
+        }
+
+        // 返回默认路径（会在后续报错）
+        return sameDirPath;
+    }
 
     static async Task Main(string[] args)
     {
@@ -35,11 +92,16 @@ class Program
         Console.WriteLine("====================================================");
         Console.WriteLine();
 
+        // 加载密钥配置
+        LoadKeyConfig();
+        Console.WriteLine();
+
         try
         {
             // 1. 读取私钥
-            var privateKey = await ReadPrivateKeyAsync();
-            Console.WriteLine($"已成功加载私钥文件");
+            var privateKeyPath = GetPrivateKeyPath(args);
+            var privateKey = await ReadPrivateKeyAsync(privateKeyPath);
+            Console.WriteLine($"已成功加载私钥文件: {Path.GetFullPath(privateKeyPath)}");
             Console.WriteLine();
 
             // 2. 收集许可证信息
@@ -66,16 +128,15 @@ class Program
     /// <summary>
     /// 读取私钥文件
     /// </summary>
-    private static async Task<string> ReadPrivateKeyAsync()
+    private static async Task<string> ReadPrivateKeyAsync(string keyPath)
     {
-        var keyPath = Path.GetFullPath(PrivateKeyPath);
-
         if (!File.Exists(keyPath))
         {
             Console.WriteLine($"错误: 私钥文件不存在");
-            Console.WriteLine($"期望路径: {keyPath}");
+            Console.WriteLine($"期望路径: {Path.GetFullPath(keyPath)}");
             Console.WriteLine();
             Console.WriteLine("提示: 请先运行 DataForgeStudio.Api 项目，系统会自动生成密钥对");
+            Console.WriteLine("     或者通过命令行参数指定私钥路径: LicenseGenerator.exe <private_key_path>");
             throw new FileNotFoundException("私钥文件不存在", keyPath);
         }
 
@@ -341,9 +402,9 @@ class Program
             WriteIndented = false
         });
 
-        // 6. 使用 AES 加密
+        // 6. 使用 AES 加密（使用配置文件或内置密钥）
         Console.WriteLine("正在加密许可证...");
-        var encryptedData = EncryptionHelper.AesEncrypt(finalJson, AesKey, AesIv);
+        var encryptedData = EncryptionHelper.AesEncrypt(finalJson, _keyConfig!.AesKey, _keyConfig.AesIV);
 
         // 7. 生成输出文件名
         var timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
@@ -380,5 +441,14 @@ class Program
         public int MaxDataSources { get; set; }
         public List<string> Features { get; set; } = new();
         public string MachineCode { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// 密钥配置类
+    /// </summary>
+    private class LicenseKeyConfig
+    {
+        public string AesKey { get; set; } = string.Empty;
+        public string AesIV { get; set; } = string.Empty;
     }
 }

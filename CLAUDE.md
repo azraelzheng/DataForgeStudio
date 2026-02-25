@@ -31,7 +31,7 @@ dotnet run --project backend/tools/LicenseGenerator/LicenseGenerator.csproj
 
 ### Frontend Development
 ```bash
-# Run dev server
+# Run dev server (port 9999, proxies /api to localhost:5000)
 cd frontend && npm run dev
 
 # Install dependencies
@@ -40,6 +40,61 @@ cd frontend && npm install
 # Build for production
 cd frontend && npm run build
 ```
+
+### Running Tests
+
+**Backend (xUnit + Moq):**
+```bash
+# Run all backend tests
+dotnet test backend/DataForgeStudio.sln
+
+# Run with coverage
+dotnet test backend/DataForgeStudio.sln /p:CollectCoverage=true
+
+# Run specific test project
+dotnet test backend/tests/DataForgeStudio.Tests
+```
+
+**Frontend (Vitest + Playwright):**
+```bash
+cd frontend
+
+# Run unit tests
+npm run test
+
+# Run unit tests with coverage
+npm run test:coverage
+
+# Run E2E tests (requires running dev server)
+npm run test:e2e
+```
+
+### Code Formatting
+
+```bash
+# Format backend code
+dotnet format backend/DataForgeStudio.sln
+```
+
+### Building Installer
+
+```bash
+# PowerShell (recommended)
+cd scripts
+./build-installer.ps1
+
+# With options
+./build-installer.ps1 -Configuration Release -Runtime win-x64
+./build-installer.ps1 -SkipBackend    # Skip backend build
+./build-installer.ps1 -SkipFrontend   # Skip frontend build
+
+# Batch file
+cd scripts && build-installer.bat
+```
+
+Output: `dist/DataForgeStudio-Setup.exe`
+
+Prerequisites: Inno Setup 6 (`winget install JRSoftware.InnoSetup`)
 
 ### Database Operations
 ```sql
@@ -227,8 +282,37 @@ Server=localhost;Database=DataForgeStudio_V4;User Id=sa;Password=your_password;T
 
 ---
 
+## Backend Tools
+
+| Tool | Location | Purpose |
+|------|----------|---------|
+| LicenseGenerator | `backend/tools/LicenseGenerator/` | Generate license files for customers |
+| DeployManager | `backend/tools/DeployManager/` | WPF app for Windows service/IIS management |
+| Configurator | `backend/tools/Configurator/` | CLI for installation configuration |
+| TestService | `backend/tools/TestService/` | Service testing utility |
+
+```bash
+# License Generator - generates customer license files
+dotnet run --project backend/tools/LicenseGenerator
+
+# Configurator - CLI for installation setup
+dotnet run --project backend/tools/Configurator -- install --install-path "C:\Program Files\DataForgeStudio" --db-server localhost --db-port 1433
+```
+
+## Windows Services (Production)
+
+| Service Name | Description | Port |
+|--------------|-------------|------|
+| DFAppService | ASP.NET Core API backend | 5000 (configurable) |
+| DFWebService | Nginx frontend server | 80 (configurable) |
+
+---
+
 ## Documentation
 
 - `docs/PROJECT_STATUS.md` - Current project status
 - `docs/database-design.md` - Complete database schema with SQL Server 2005 compatibility notes
+- `docs/license-generation-guide.md` - How to generate customer licenses
+- `backend/docs/api-documentation.md` - REST API endpoints reference
+- `database/README.md` - Database initialization guide
 - `docs/archive/` - Historical documents (completed plans, test reports)

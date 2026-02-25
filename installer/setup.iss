@@ -83,8 +83,8 @@ Source: "{#BuildDir}\Server\*"; DestDir: "{app}\Server"; Flags: ignoreversion re
 Source: "{#BuildDir}\WebSite\*"; DestDir: "{app}\WebSite"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#BuildDir}\WebServer\*"; DestDir: "{app}\WebServer"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#BuildDir}\manager\*"; DestDir: "{app}\Manager"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "{#BuildDir}\tools\nssm\nssm.exe"; DestDir: "{app}\tools\nssm"; Flags: ignoreversion
-Source: "{#BuildDir}\tools\scripts\*.ps1"; DestDir: "{app}\tools\scripts"; Flags: ignoreversion
+; nssm.exe 已经包含在 manager 目录中（由 build-installer.ps1 复制）
+; tools\scripts 目录已移除（不再需要）
 
 [Dirs]
 ; keys folder is no longer needed at root level - keys are stored in Server\keys
@@ -100,6 +100,10 @@ Root: HKLM; Subkey: "Software\{#AppName}"; ValueType: string; ValueName: "Versio
 [Run]
 ; 安装完成后运行配置器
 Filename: "{tmp}\configurator\Configurator.exe"; Parameters: "install --install-path ""{app}"" --db-server ""{code:GetDbServer}"" --db-port {code:GetDbPort} --db-auth ""{code:GetDbAuth}"" --db-user ""{code:GetDbUser}"" --db-password ""{code:GetDbPassword}"" --backend-port {code:GetBackendPort} --frontend-port {code:GetFrontendPort}"; Flags: waituntilterminated; StatusMsg: "正在配置系统..."
+; 安装完成后自动启动服务
+Filename: "{app}\Manager\nssm.exe"; Parameters: "start DFAppService"; Flags: runhidden waituntilterminated; StatusMsg: "正在启动 DataForgeStudio 服务..."
+; 可选：打开管理界面
+Filename: "http://localhost:{code:GetFrontendPort}"; Flags: shellexec postinstall skipifsilent nowaituntilidle; Description: "打开 DataForgeStudio 管理界面"
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}\logs"

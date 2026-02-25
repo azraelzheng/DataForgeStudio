@@ -95,6 +95,17 @@ try {
         throw "Microsoft.Data.SqlClient.SNI.runtime package not found"
     }
 
+    # Copy nssm.exe to manager directory (for service management)
+    $NssmSourceDir = Join-Path $ProjectRoot "resources\nssm"
+    $NssmSourceExe = Join-Path $NssmSourceDir "nssm.exe"
+    if (Test-Path $NssmSourceExe) {
+        Copy-Item $NssmSourceExe $ManagerDir -Force
+        Write-Host "      NSSM copied to manager directory" -ForegroundColor Green
+    } else {
+        Write-Host "      WARNING: NSSM not found in resources\nssm" -ForegroundColor Yellow
+        Write-Host "      Download from: https://nssm.cc/download" -ForegroundColor Yellow
+    }
+
     Write-Host "      DeployManager built" -ForegroundColor Green
 }
 finally { Pop-Location }
@@ -115,23 +126,10 @@ try {
 }
 finally { Pop-Location }
 
-# Step 5: Ensure tools directory exists
+# Step 5: Ensure tools directory exists (no longer creating tools\scripts, nssm is now in manager)
 Write-Host "[5/5] Checking tools directory..." -ForegroundColor Yellow
-
-$NssmDir = Join-Path $BuildDir "tools\nssm"
-$NssmExe = Join-Path $NssmDir "nssm.exe"
-if (-not (Test-Path $NssmExe)) {
-    Write-Host "      WARNING: NSSM not found, please download to $NssmDir" -ForegroundColor Yellow
-    Write-Host "      Download: https://nssm.cc/download" -ForegroundColor Yellow
-}
-
-$ScriptsDir = Join-Path $BuildDir "tools\scripts"
-Ensure-Directory $ScriptsDir
-$SourceScriptsDir = Join-Path $ProjectRoot "backend\tools\scripts"
-if (Test-Path $SourceScriptsDir) {
-    Copy-Item "$SourceScriptsDir\*.ps1" $ScriptsDir -Force
-    Write-Host "      Service scripts copied" -ForegroundColor Green
-}
+Write-Host "      NSSM has been moved to manager directory (see Step 3)" -ForegroundColor Green
+Write-Host "      tools\scripts directory is no longer needed" -ForegroundColor Green
 
 # Build Inno Setup installer
 Write-Host ""
