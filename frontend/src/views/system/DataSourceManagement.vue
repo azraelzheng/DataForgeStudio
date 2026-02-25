@@ -55,7 +55,11 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="createdTime" label="创建时间" width="180" />
+          <el-table-column label="创建时间" width="180">
+            <template #default="{ row }">
+              {{ formatDateTime(row.createdTime) }}
+            </template>
+          </el-table-column>
           <el-table-column label="操作" width="300" fixed="right">
             <template #default="{ row }">
               <el-button type="primary" link size="small" @click="handleTest(row)" :loading="row.testing">
@@ -414,6 +418,11 @@ const getDbTypeText = (type) => {
     'PostgreSQL': 'PostgreSQL'
   }
   return map[type] || type
+}
+
+const formatDateTime = (date) => {
+  if (!date) return '-'
+  return new Date(date).toLocaleString('zh-CN')
 }
 </script>
 
