@@ -245,6 +245,15 @@ const passwordForm = reactive({
   confirmPassword: ''
 })
 
+// 验证确认密码 - 使用函数确保获取最新值
+const validateConfirmPassword = (rule, value, callback) => {
+  if (value !== passwordForm.newPassword) {
+    callback(new Error('两次输入的密码不一致'))
+  } else {
+    callback()
+  }
+}
+
 const passwordRules = {
   oldPassword: [{ required: true, message: '请输入旧密码', trigger: 'blur' }],
   newPassword: [
@@ -254,16 +263,7 @@ const passwordRules = {
   ],
   confirmPassword: [
     { required: true, message: '请确认新密码', trigger: 'blur' },
-    {
-      validator: (rule, value, callback) => {
-        if (value !== passwordForm.newPassword) {
-          callback(new Error('两次输入的密码不一致'))
-        } else {
-          callback()
-        }
-      },
-      trigger: 'blur'
-    }
+    { validator: validateConfirmPassword, trigger: ['blur', 'change'] }
   ]
 }
 
