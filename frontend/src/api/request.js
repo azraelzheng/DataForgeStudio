@@ -288,5 +288,9 @@ export const systemApi = {
   createBackupSchedule: (data) => request.post('/system/backup-schedules', data),
   updateBackupSchedule: (id, data) => request.put(`/system/backup-schedules/${id}`, data),
   deleteBackupSchedule: (id) => request.delete(`/system/backup-schedules/${id}`),
-  toggleBackupSchedule: (id) => request.post(`/system/backup-schedules/${id}/toggle`)
+  toggleBackupSchedule: (id) => request.post(`/system/backup-schedules/${id}/toggle`),
+
+  // 获取目录列表（用于备份路径选择）
+  getDirectories: (path = null) =>
+    request.get('/system/directories', { params: { path } })
 }
