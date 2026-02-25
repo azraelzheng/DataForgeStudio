@@ -68,7 +68,7 @@ public class ReportService : IReportService
                 ReportName = r.ReportName,
                 ReportCategory = r.ReportCategory,
                 DataSourceId = r.DataSourceId,
-                DataSourceName = r.DataSource != null ? r.DataSource.Name : null,
+                DataSourceName = r.DataSource != null ? r.DataSource.DataSourceName : null,
                 Description = r.Description,
                 ViewCount = r.ViewCount,
                 LastViewTime = r.LastViewTime,
