@@ -86,11 +86,23 @@ public class BackupBackgroundService : BackgroundService
                 return;
             }
 
-            // 创建备份
-            var backupDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Backups");
-            if (!Directory.Exists(backupDir))
+            // 使用计划配置的备份路径，若未配置则使用默认路径
+            string backupDir;
+            if (!string.IsNullOrWhiteSpace(schedule.BackupPath))
             {
-                Directory.CreateDirectory(backupDir);
+                backupDir = schedule.BackupPath;
+                if (!Directory.Exists(backupDir))
+                {
+                    Directory.CreateDirectory(backupDir);
+                }
+            }
+            else
+            {
+                backupDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Backups");
+                if (!Directory.Exists(backupDir))
+                {
+                    Directory.CreateDirectory(backupDir);
+                }
             }
 
             var timestamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss");
