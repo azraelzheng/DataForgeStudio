@@ -11,10 +11,16 @@
         />
         <el-input
           v-model="backupForm.backupPath"
-          placeholder="备份路径（可选，留空使用默认）"
+          placeholder="备份路径，如 D:\Backups"
           style="width: 280px;"
           clearable
-        />
+        >
+          <template #append>
+            <el-tooltip content="请输入 SQL Server 服务账户有写入权限的路径&#10;例如: D:\Backups 或 C:\Program Files\Microsoft SQL Server\MSSQL\Backup" placement="top">
+              <el-button :icon="QuestionFilled" />
+            </el-tooltip>
+          </template>
+        </el-input>
         <el-button type="primary" @click="handleCreateBackup" :loading="creating">
           <el-icon><Plus /></el-icon>
           创建备份
@@ -214,8 +220,14 @@
           <el-input-number v-model="scheduleForm.retentionCount" :min="1" :max="100" />
           <span style="margin-left: 10px; color: #909399;">个备份</span>
         </el-form-item>
-        <el-form-item label="备份路径">
-          <el-input v-model="scheduleForm.backupPath" placeholder="留空使用默认路径" clearable />
+        <el-form-item label="备份路径" required>
+          <el-input v-model="scheduleForm.backupPath" placeholder="如 D:\Backups（SQL Server 需有写入权限）" clearable>
+            <template #append>
+              <el-tooltip content="请输入 SQL Server 服务账户有写入权限的路径" placement="top">
+                <el-button :icon="QuestionFilled" />
+              </el-tooltip>
+            </template>
+          </el-input>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -229,6 +241,7 @@
 <script setup>
 import { ref, reactive, onMounted, onUnmounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { QuestionFilled } from '@element-plus/icons-vue'
 import { systemApi } from '../../api/request'
 
 // 动态表格高度相关
@@ -337,13 +350,19 @@ const handleSearch = () => {
 }
 
 const handleCreateBackup = async () => {
+  // 验证备份路径
+  if (!backupForm.backupPath || !backupForm.backupPath.trim()) {
+    ElMessage.warning('请输入备份路径，确保 SQL Server 服务有写入权限')
+    return
+  }
+
   creating.value = true
   try {
     const backupName = `backup_${new Date().toISOString().replace(/[-:T]/g, '').slice(0, 15)}`
     const res = await systemApi.createBackup({
       backupName,
       description: backupForm.description,
-      backupPath: backupForm.backupPath || null
+      backupPath: backupForm.backupPath.trim()
     })
     if (res.success) {
       ElMessage.success('备份创建成功')
@@ -455,6 +474,11 @@ const handleEditSchedule = (row) => {
 const handleSaveSchedule = async () => {
   if (!scheduleForm.scheduleName) {
     ElMessage.warning('请输入计划名称')
+    return
+  }
+
+  if (!scheduleForm.backupPath || !scheduleForm.backupPath.trim()) {
+    ElMessage.warning('请输入备份路径，确保 SQL Server 服务有写入权限')
     return
   }
 
