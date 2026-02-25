@@ -103,7 +103,7 @@ Filename: "{tmp}\configurator\Configurator.exe"; Parameters: "install --install-
 ; 安装完成后自动启动服务
 Filename: "{app}\Manager\nssm.exe"; Parameters: "start DFAppService"; Flags: runhidden waituntilterminated; StatusMsg: "正在启动 DataForgeStudio 服务..."
 ; 可选：打开管理界面
-Filename: "http://localhost:{code:GetFrontendPort}"; Flags: shellexec postinstall skipifsilent nowaituntilidle; Description: "打开 DataForgeStudio 管理界面"
+Filename: "http://localhost:{code:GetFrontendPort}"; Flags: shellexec postinstall skipifsilent nowait; Description: "打开 DataForgeStudio 管理界面"
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}\logs"
