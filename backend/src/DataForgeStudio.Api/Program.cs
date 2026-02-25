@@ -15,12 +15,29 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using NetEscapades.AspNetCore.SecurityHeaders;
+using Serilog;
+using Serilog.Events;
 
 // 在创建 builder 之前检测测试环境
 var isTestingEnvironment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Testing" ||
                            (args != null && args.Contains("--testing"));
 
 var builder = WebApplication.CreateBuilder(args ?? Array.Empty<string>());
+
+// 配置 Serilog 日志
+var logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "logs", "api-.log");
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
+    .Enrich.FromLogContext()
+    .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
+    .WriteTo.File(logPath, rollingInterval: RollingInterval.Day, retainedFileCountLimit: 30,
+        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
+    .CreateLogger();
+
+builder.Host.UseSerilog();
+Console.WriteLine($"日志文件路径: {Path.GetFullPath(logPath)}");
 
 // 添加 Windows 服务支持
 builder.Services.AddWindowsService();
@@ -417,7 +434,18 @@ app.MapGet("/api", () => new
 .ExcludeFromDescription()
 .AllowAnonymous();
 
-app.Run();
+// 确保应用退出时刷新日志
+var host = app;
+AppDomain.CurrentDomain.ProcessExit += (s, e) => Log.CloseAndFlush();
+
+try
+{
+    app.Run();
+}
+finally
+{
+    Log.CloseAndFlush();
+}
 
 // 集成测试需要公开的 Program 类
 public partial class Program { }
