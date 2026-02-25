@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using DataForgeStudio.Core.Interfaces;
+using DataForgeStudio.Domain.DTOs;
 using DataForgeStudio.Shared.DTO;
 using DataForgeStudio.Shared.Utils;
 
@@ -15,11 +16,16 @@ namespace DataForgeStudio.Api.Controllers;
 public class SystemController : ControllerBase
 {
     private readonly ISystemService _systemService;
+    private readonly IDirectoryService _directoryService;
     private readonly ILogger<SystemController> _logger;
 
-    public SystemController(ISystemService systemService, ILogger<SystemController> logger)
+    public SystemController(
+        ISystemService systemService,
+        IDirectoryService directoryService,
+        ILogger<SystemController> logger)
     {
         _systemService = systemService;
+        _directoryService = directoryService;
         _logger = logger;
     }
 
@@ -233,6 +239,29 @@ public class SystemController : ControllerBase
     public async Task<ApiResponse> ToggleBackupSchedule(int id)
     {
         return await _systemService.ToggleBackupScheduleAsync(id);
+    }
+
+    #endregion
+
+    #region 目录浏览
+
+    /// <summary>
+    /// 获取目录列表（用于备份路径选择）
+    /// </summary>
+    /// <param name="path">父目录路径，为空则返回驱动器列表</param>
+    [HttpGet("directories")]
+    public async Task<ApiResponse<List<DirectoryInfoDto>>> GetDirectories([FromQuery] string? path = null)
+    {
+        try
+        {
+            var result = await _directoryService.GetDirectoriesAsync(path);
+            return ApiResponse<List<DirectoryInfoDto>>.Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "获取目录列表失败");
+            return ApiResponse<List<DirectoryInfoDto>>.Fail("获取目录列表失败: " + ex.Message);
+        }
     }
 
     #endregion

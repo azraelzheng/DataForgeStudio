@@ -165,6 +165,7 @@ builder.Services.AddScoped<IKeyManagementService, KeyManagementService>();
 builder.Services.AddScoped<ISqlValidationService, SqlValidationService>();
 builder.Services.AddScoped<IReportCacheService, ReportCacheService>();
 builder.Services.AddScoped<IExportService, ExportService>();
+builder.Services.AddScoped<IDirectoryService, DirectoryService>();
 
 // 试用期追踪器（用于防止试用期重置）
 builder.Services.AddScoped<ITrialLicenseTracker, TrialLicenseTracker>();

@@ -2,6 +2,7 @@
 using System.Runtime.InteropServices;
 using DataForgeStudio.Core.Interfaces;
 using DataForgeStudio.Domain.DTOs;
+using Microsoft.Extensions.Logging;
 
 namespace DataForgeStudio.Core.Services;
 
