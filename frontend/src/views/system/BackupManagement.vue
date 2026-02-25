@@ -9,18 +9,11 @@
           style="width: 200px;"
           clearable
         />
-        <el-input
+        <DirectorySelector
           v-model="backupForm.backupPath"
-          placeholder="备份路径，如 D:\Backups"
+          placeholder="选择备份路径"
           style="width: 280px;"
-          clearable
-        >
-          <template #append>
-            <el-tooltip content="请输入 SQL Server 服务账户有写入权限的路径&#10;例如: D:\Backups 或 C:\Program Files\Microsoft SQL Server\MSSQL\Backup" placement="top">
-              <el-button :icon="QuestionFilled" />
-            </el-tooltip>
-          </template>
-        </el-input>
+        />
         <el-button type="primary" @click="handleCreateBackup" :loading="creating">
           <el-icon><Plus /></el-icon>
           创建备份
@@ -221,13 +214,10 @@
           <span style="margin-left: 10px; color: #909399;">个备份</span>
         </el-form-item>
         <el-form-item label="备份路径" required>
-          <el-input v-model="scheduleForm.backupPath" placeholder="如 D:\Backups（SQL Server 需有写入权限）" clearable>
-            <template #append>
-              <el-tooltip content="请输入 SQL Server 服务账户有写入权限的路径" placement="top">
-                <el-button :icon="QuestionFilled" />
-              </el-tooltip>
-            </template>
-          </el-input>
+          <DirectorySelector
+            v-model="scheduleForm.backupPath"
+            placeholder="选择备份路径"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -243,6 +233,7 @@ import { ref, reactive, onMounted, onUnmounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { QuestionFilled } from '@element-plus/icons-vue'
 import { systemApi } from '../../api/request'
+import DirectorySelector from '../../components/DirectorySelector.vue'
 
 // 动态表格高度相关
 const scheduleTableWrapper = ref(null)
