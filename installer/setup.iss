@@ -100,8 +100,10 @@ Root: HKLM; Subkey: "Software\{#AppName}"; ValueType: string; ValueName: "Versio
 [Run]
 ; 安装完成后运行配置器
 Filename: "{tmp}\configurator\Configurator.exe"; Parameters: "install --install-path ""{app}"" --db-server ""{code:GetDbServer}"" --db-port {code:GetDbPort} --db-auth ""{code:GetDbAuth}"" --db-user ""{code:GetDbUser}"" --db-password ""{code:GetDbPassword}"" --backend-port {code:GetBackendPort} --frontend-port {code:GetFrontendPort}"; Flags: waituntilterminated; StatusMsg: "正在配置系统..."
-; 安装完成后自动启动服务
-Filename: "{app}\Manager\nssm.exe"; Parameters: "start DFAppService"; Flags: runhidden waituntilterminated; StatusMsg: "正在启动 DataForgeStudio 服务..."
+; 安装完成后自动启动 API 服务
+Filename: "{app}\Manager\nssm.exe"; Parameters: "start DFAppService"; Flags: runhidden waituntilterminated; StatusMsg: "正在启动 DataForgeStudio API 服务..."
+; 安装完成后自动启动 Web 服务
+Filename: "{app}\Manager\nssm.exe"; Parameters: "start DFWebService"; Flags: runhidden waituntilterminated; StatusMsg: "正在启动 DataForgeStudio Web 服务..."
 ; 可选：打开管理界面
 Filename: "http://localhost:{code:GetFrontendPort}"; Flags: shellexec postinstall skipifsilent nowait; Description: "打开 DataForgeStudio 管理界面"
 
