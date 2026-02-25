@@ -390,6 +390,7 @@ public class SystemService : ISystemService
                 FileSize = (int)fileSize,
                 BackupTime = DateTime.UtcNow,
                 IsSuccess = true,
+                Description = request.Description,  // 保存备注
                 CreatedBy = createdBy,
                 CreatedTime = DateTime.UtcNow
             };
