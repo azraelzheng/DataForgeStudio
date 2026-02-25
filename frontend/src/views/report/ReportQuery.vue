@@ -495,7 +495,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { ref, reactive, computed, onMounted, onActivated, onUnmounted, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Search, Document, Download, ArrowLeft, ArrowRight, Filter, ArrowDown } from '@element-plus/icons-vue'
@@ -615,6 +615,11 @@ onMounted(async () => {
   await loadReports()
   // 监听窗口大小变化
   window.addEventListener('resize', updateTableHeight)
+})
+
+// 当从 keep-alive 缓存中重新激活时，刷新数据
+onActivated(async () => {
+  await loadReports()
 })
 
 onUnmounted(() => {
