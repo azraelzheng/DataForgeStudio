@@ -21,6 +21,7 @@ backend/**/*.csproj.user
 backend/**/*.csproj.user
 build/
 dist/
+backend/publish/
 
 # ------------- Frontend -------------
 frontend/node_modules/
@@ -39,11 +40,16 @@ backend/**/*.db-shm
 backend/**/*.db-wal
 
 # ------------- Keys & Secrets -------------
-backend/keys/
-*.pem
+# Private keys - NEVER commit (security)
+*.private.pem
+private_key.pem
 *.key
-**/keys/
+# Keys directories - but allow public keys
+**/keys/private_key.pem
+# License files
 *.lic
+license-keys.json
+# Secrets config
 secrets.production.json
 secrets.*.local.json
 
@@ -70,6 +76,9 @@ Desktop.ini
 tmp/
 temp/
 *.tmp
+# Temporary test/debug files
+001-*
+role-dialog
 
 # ------------- Claude Code -------------
 .claude/
