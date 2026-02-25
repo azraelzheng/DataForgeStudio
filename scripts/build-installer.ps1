@@ -126,10 +126,29 @@ try {
 }
 finally { Pop-Location }
 
-# Step 5: Ensure tools directory exists (no longer creating tools\scripts, nssm is now in manager)
-Write-Host "[5/5] Checking tools directory..." -ForegroundColor Yellow
-Write-Host "      NSSM has been moved to manager directory (see Step 3)" -ForegroundColor Green
-Write-Host "      tools\scripts directory is no longer needed" -ForegroundColor Green
+# Step 5: Copy public key to Server/keys directory
+Write-Host "[5/5] Copying public key to Server..." -ForegroundColor Yellow
+$SourceKeysDir = Join-Path $ProjectRoot "backend\src\DataForgeStudio.Api\keys"
+$TargetKeysDir = Join-Path $BuildDir "Server\keys"
+
+if (Test-Path $SourceKeysDir) {
+    Ensure-Directory $TargetKeysDir
+
+    # Only copy public key (private key should NOT be distributed for security)
+    $PublicKeySource = Join-Path $SourceKeysDir "public_key.pem"
+    $PublicKeyTarget = Join-Path $TargetKeysDir "public_key.pem"
+
+    if (Test-Path $PublicKeySource) {
+        Copy-Item $PublicKeySource $PublicKeyTarget -Force
+        Write-Host "      Public key copied to Server\keys\" -ForegroundColor Green
+        Write-Host "      Note: Private key is NOT included in installer (security)" -ForegroundColor Gray
+    } else {
+        Write-Host "      WARNING: public_key.pem not found in source" -ForegroundColor Yellow
+    }
+} else {
+    Write-Host "      WARNING: Source keys directory not found" -ForegroundColor Yellow
+    Write-Host "      Keys will be auto-generated on first run" -ForegroundColor Gray
+}
 
 # Build Inno Setup installer
 Write-Host ""
