@@ -467,7 +467,11 @@ public class ReportDto
     public int ReportId { get; set; }
     public required string ReportName { get; set; }
     public string? ReportCategory { get; set; }
-    public int DataSourceId { get; set; }
+    public int? DataSourceId { get; set; }
+    /// <summary>
+    /// 数据源名称
+    /// </summary>
+    public string? DataSourceName { get; set; }
     public string? Description { get; set; }
     public int ViewCount { get; set; }
     public DateTime? LastViewTime { get; set; }
