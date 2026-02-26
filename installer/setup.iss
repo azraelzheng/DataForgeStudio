@@ -206,6 +206,96 @@ begin
   Result := (Port >= 1) and (Port <= 65535);
 end;
 
+// 测试数据库连接
+function TestDbConnection(const Server, Port: String; UseWindowsAuth: Boolean;
+  const Username, Password: String; out ErrorMsg: String): Boolean;
+var
+  Connection: Variant;
+  ConnectionString: String;
+  DataSource: String;
+begin
+  Result := False;
+  ErrorMsg := '';
+
+  // 构建数据源字符串
+  DataSource := Server;
+  if Port <> '' then
+    DataSource := DataSource + ',' + Port;
+
+  try
+    // 创建 ADO 连接对象
+    Connection := CreateOleObject('ADODB.Connection');
+    Connection.ConnectionTimeout := 10;
+
+    // 构建连接字符串
+    if UseWindowsAuth then
+    begin
+      ConnectionString := 'Provider=SQLOLEDB;Data Source=' + DataSource +
+        ';Initial Catalog=master;Integrated Security=SSPI;Connect Timeout=10';
+    end
+    else
+    begin
+      ConnectionString := 'Provider=SQLOLEDB;Data Source=' + DataSource +
+        ';Initial Catalog=master;User ID=' + Username + ';Password=' + Password +
+        ';Connect Timeout=10';
+    end;
+
+    // 尝试打开连接
+    Connection.Open(ConnectionString);
+    Connection.Close;
+    Result := True;
+  except
+    on E: Exception do
+    begin
+      ErrorMsg := E.Message;
+    end;
+  end;
+end;
+
+// 数据库测试按钮点击事件
+procedure DbTestButtonClick(Sender: TObject);
+var
+  Server, Port, Username, Password: String;
+  UseWindowsAuth: Boolean;
+  ErrorMsg: String;
+  Success: Boolean;
+begin
+  // 禁用按钮，显示测试中状态
+  DbTestButton.Enabled := False;
+  DbTestButton.Caption := '测试中...';
+  DbTestStatusLabel.Caption := '正在连接数据库...';
+  DbTestStatusLabel.Font.Color := clGray;
+  DbTestPassed := False;
+
+  // 获取输入值
+  Server := Trim(DbServerEdit.Text);
+  Port := Trim(DbPortEdit.Text);
+  UseWindowsAuth := DbAuthRadioWindows.Checked;
+  Username := Trim(DbUserEdit.Text);
+  Password := DbPasswordEdit.Text;
+
+  // 执行连接测试
+  Success := TestDbConnection(Server, Port, UseWindowsAuth, Username, Password, ErrorMsg);
+
+  // 显示结果
+  if Success then
+  begin
+    DbTestStatusLabel.Caption := #10003 + ' 数据库连接成功';
+    DbTestStatusLabel.Font.Color := clGreen;
+    DbTestPassed := True;
+  end
+  else
+  begin
+    DbTestStatusLabel.Caption := #10007 + ' 连接失败: ' + ErrorMsg;
+    DbTestStatusLabel.Font.Color := clRed;
+    DbTestPassed := False;
+  end;
+
+  // 恢复按钮状态
+  DbTestButton.Enabled := True;
+  DbTestButton.Caption := '测试连接';
+end;
+
 // 验证数据库配置页面输入
 function ValidateDbConfigPage: Boolean;
 begin
