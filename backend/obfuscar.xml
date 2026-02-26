@@ -15,32 +15,32 @@
   <Var name="OptimizeMethods" value="true" />
   <Var name="SuppressIldasm" value="true" />
 
-  <!-- DataForgeStudio.Core.dll 混淆配置 -->
-  <Module file="$(InPath)/DataForgeStudio.Core/bin/Release/net8.0/DataForgeStudio.Core.dll">
-    <!-- 跳过所有接口 (I*Service, I*Repository 等) -->
-    <SkipType name="DataForgeStudio.Core.Interfaces.*" />
-
-    <!-- 跳过服务实现类 (API 层通过类名注册依赖注入) -->
-    <SkipType name="DataForgeStudio.Core.Services.*" />
-
-    <!-- 跳过配置类 (需要被 API 层访问) -->
-    <SkipType name="DataForgeStudio.Core.Configuration.*" />
-  </Module>
+  <!-- 注意：DataForgeStudio.Core 不再参与混淆 -->
+  <!-- Core 包含大量 EF Core LINQ 查询，混淆会导致表达式树参数名错误 -->
+  <!-- 解决方案：只混淆 Shared 项目中的工具类 -->
 
   <!-- DataForgeStudio.Shared.dll 混淆配置 -->
   <Module file="$(InPath)/DataForgeStudio.Shared/bin/Release/net8.0/DataForgeStudio.Shared.dll">
-    <!-- 跳过所有 DTO 类 (API 响应/请求模型) -->
-    <SkipType name="DataForgeStudio.Shared.DTO.*" />
+    <!-- 跳过所有 DTO 类及其属性和方法 (API 响应/请求模型，JSON 序列化需要属性名) -->
+    <!-- skipProperties="true" 是关键！否则属性名会被混淆导致序列化失败 -->
+    <!-- skipMethods="true" 是关键！否则静态工厂方法如 Ok/Fail 会被混淆 -->
+    <SkipType name="DataForgeStudio.Shared.DTO.*" skipProperties="true" skipFields="true" skipMethods="true" />
 
-    <!-- 跳过异常类 (需要保留异常消息) -->
-    <SkipType name="DataForgeStudio.Shared.Exceptions.*" />
+    <!-- 跳过异常类及其成员 (需要保留异常消息) -->
+    <SkipType name="DataForgeStudio.Shared.Exceptions.*" skipProperties="true" skipFields="true" />
 
     <!-- 跳过常量类 (公共访问需要) -->
-    <SkipType name="DataForgeStudio.Shared.Constants.*" />
+    <SkipType name="DataForgeStudio.Shared.Constants.*" skipProperties="true" skipFields="true" />
+
+    <!-- 跳过工具类及其方法 (被 API 层通过完整类型名和方法名引用) -->
+    <!-- EncryptionHelper 等类被其他项目直接引用，混淆后无法加载 -->
+    <!-- skipMethods="true" 是关键！否则方法名会被混淆导致调用失败 -->
+    <SkipType name="DataForgeStudio.Shared.Utils.*" skipMethods="true" />
   </Module>
 
-  <!-- 注意：DataForgeStudio.Domain 和 DataForgeStudio.Api 不参与混淆 -->
+  <!-- 注意：DataForgeStudio.Domain、DataForgeStudio.Core 和 DataForgeStudio.Api 不参与混淆 -->
   <!-- Domain 包含 EF Core 实体，混淆会导致映射失败 -->
+  <!-- Core 包含 EF Core LINQ 查询，混淆会导致表达式树错误 -->
   <!-- Api 是入口程序集，需要保持公共 API -->
 
 </Obfuscator>

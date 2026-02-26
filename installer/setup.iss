@@ -132,7 +132,8 @@ var
   FrontendPortEdit: TEdit;
   DbConfigPage: TWizardPage;
   PortConfigPage: TWizardPage;
-  ErrorLabel: TLabel;
+  DbErrorLabel: TLabel;
+  PortErrorLabel: TLabel;
   DbTestButton: TButton;
   DbTestStatusLabel: TLabel;
   DbTestPassed: Boolean;
@@ -168,7 +169,7 @@ end;
 procedure DbAuthRadioWindowsClick(Sender: TObject);
 begin
   UpdateAuthFields;
-  ErrorLabel.Caption := '';
+  DbErrorLabel.Caption := '';
   DbTestPassed := False;
 end;
 
@@ -176,14 +177,15 @@ end;
 procedure DbAuthRadioSqlClick(Sender: TObject);
 begin
   UpdateAuthFields;
-  ErrorLabel.Caption := '';
+  DbErrorLabel.Caption := '';
   DbTestPassed := False;
 end;
 
 // 输入框变化时清除错误并重置测试状态
 procedure EditChange(Sender: TObject);
 begin
-  ErrorLabel.Caption := '';
+  DbErrorLabel.Caption := '';
+  PortErrorLabel.Caption := '';
   // 重置测试状态，用户需要重新测试
   DbTestPassed := False;
   PortTestPassed := False;
@@ -305,19 +307,19 @@ end;
 function ValidateDbConfigPage: Boolean;
 begin
   Result := False;
-  ErrorLabel.Caption := '';
+  DbErrorLabel.Caption := '';
 
   // 检查服务器地址
   if Trim(DbServerEdit.Text) = '' then
   begin
-    ErrorLabel.Caption := '服务器地址不能为空';
+    DbErrorLabel.Caption := '服务器地址不能为空';
     Exit;
   end;
 
   // 检查端口
   if not ValidatePort(DbPortEdit.Text) then
   begin
-    ErrorLabel.Caption := '端口必须在 1-65535 之间';
+    DbErrorLabel.Caption := '端口必须在 1-65535 之间';
     Exit;
   end;
 
@@ -326,7 +328,7 @@ begin
   begin
     if (Trim(DbUserEdit.Text) = '') or (DbPasswordEdit.Text = '') then
     begin
-      ErrorLabel.Caption := 'SQL Server 身份验证需要填写用户名和密码';
+      DbErrorLabel.Caption := 'SQL Server 身份验证需要填写用户名和密码';
       Exit;
     end;
   end;
@@ -334,7 +336,7 @@ begin
   // 检查是否已通过连接测试
   if not DbTestPassed then
   begin
-    ErrorLabel.Caption := '请先点击"测试连接"并确保测试通过';
+    DbErrorLabel.Caption := '请先点击"测试连接"并确保测试通过';
     Exit;
   end;
 
@@ -345,26 +347,26 @@ end;
 function ValidatePortConfigPage: Boolean;
 begin
   Result := False;
-  ErrorLabel.Caption := '';
+  PortErrorLabel.Caption := '';
 
   // 检查后端端口
   if not ValidatePort(BackendPortEdit.Text) then
   begin
-    ErrorLabel.Caption := '端口必须在 1-65535 之间';
+    PortErrorLabel.Caption := '端口必须在 1-65535 之间';
     Exit;
   end;
 
   // 检查前端端口
   if not ValidatePort(FrontendPortEdit.Text) then
   begin
-    ErrorLabel.Caption := '端口必须在 1-65535 之间';
+    PortErrorLabel.Caption := '端口必须在 1-65535 之间';
     Exit;
   end;
 
   // 检查是否已通过端口检测
   if not PortTestPassed then
   begin
-    ErrorLabel.Caption := '请先点击"检测端口"并确保端口可用';
+    PortErrorLabel.Caption := '请先点击"检测端口"并确保端口可用';
     Exit;
   end;
 
@@ -635,9 +637,9 @@ begin
     Enabled := False;
   end;
 
-  // 错误提示标签
-  ErrorLabel := TLabel.Create(WizardForm);
-  with ErrorLabel do
+  // 错误提示标签（数据库页）
+  DbErrorLabel := TLabel.Create(WizardForm);
+  with DbErrorLabel do
   begin
     Parent := DbConfigPage.Surface;
     Left := 0;
@@ -731,8 +733,8 @@ begin
   end;
 
   // 错误提示标签（端口页）
-  ErrorLabel := TLabel.Create(WizardForm);
-  with ErrorLabel do
+  PortErrorLabel := TLabel.Create(WizardForm);
+  with PortErrorLabel do
   begin
     Parent := PortConfigPage.Surface;
     Left := 0;
@@ -773,14 +775,14 @@ begin
   if CurPageID = DbConfigPage.ID then
   begin
     UpdateAuthFields;
-    ErrorLabel.Caption := '';
+    DbErrorLabel.Caption := '';
     // 重置测试状态（首次进入页面时）
     if not DbTestPassed then
       DbTestStatusLabel.Caption := '';
   end
   else if CurPageID = PortConfigPage.ID then
   begin
-    ErrorLabel.Caption := '';
+    PortErrorLabel.Caption := '';
     // 重置测试状态（首次进入页面时）
     if not PortTestPassed then
       PortTestStatusLabel.Caption := '';

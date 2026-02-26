@@ -52,17 +52,10 @@ if (-not $SkipBackend) {
         dotnet obfuscar.console obfuscar.xml
         if ($LASTEXITCODE -ne 0) { throw "Obfuscation failed" }
 
-        # Copy obfuscated assemblies to Server directory
+        # Copy obfuscated Shared.dll to Server directory
+        # Note: Core.dll is NOT obfuscated to preserve EF Core expression trees
         # Obfuscar outputs to backend/Obfuscated/ by default
-        $coreObfuscated = Join-Path $ProjectRoot "backend\Obfuscated\DataForgeStudio.Core.dll"
         $sharedObfuscated = Join-Path $ProjectRoot "backend\Obfuscated\DataForgeStudio.Shared.dll"
-
-        if (Test-Path $coreObfuscated) {
-            Copy-Item $coreObfuscated "$BuildDir/Server/DataForgeStudio.Core.dll" -Force
-            Write-Host "      DataForgeStudio.Core.dll obfuscated" -ForegroundColor Green
-        } else {
-            throw "Obfuscated Core.dll not found: $coreObfuscated"
-        }
 
         if (Test-Path $sharedObfuscated) {
             Copy-Item $sharedObfuscated "$BuildDir/Server/DataForgeStudio.Shared.dll" -Force

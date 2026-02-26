@@ -104,15 +104,22 @@ var masterConnectionString = builder.Configuration.GetConnectionString("MasterCo
 connectionString = ConnectionStringHelper.DecryptIfNeeded(connectionString, builder.Configuration);
 masterConnectionString = ConnectionStringHelper.DecryptIfNeeded(masterConnectionString, builder.Configuration);
 
-// 验证连接字符串并测试连接
+// 验证连接字符串并测试连接（带超时控制）
 Console.WriteLine("=== 数据库连接配置 ===");
 Console.WriteLine($"连接字符串（脱敏）: {SanitizeConnectionString(connectionString)}");
 
+// 使用带超时的异步连接测试，避免阻塞服务启动
+var dbTestCts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
 try
 {
     using var testConnection = new SqlConnection(masterConnectionString);
-    testConnection.Open();
+    await testConnection.OpenAsync(dbTestCts.Token);
     Console.WriteLine("✅ 数据库连接测试成功");
+}
+catch (OperationCanceledException)
+{
+    Console.WriteLine($"⚠️ 数据库连接测试超时（10秒），跳过测试");
+    Console.WriteLine($"   服务将继续启动，但可能需要在运行时验证数据库连接");
 }
 catch (Exception ex)
 {

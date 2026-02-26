@@ -1179,8 +1179,24 @@ WHERE u.Username = 'root' AND r.RoleCode = 'ROLE_SUPER_ADMIN';
 
     static void RegisterWindowsService(Configuration config)
     {
-        var serverExePath = Path.Combine(config.InstallPath, "Server", "DataForgeStudio.Api.exe");
         var serviceName = "DFAppService";
+        var serverExePath = Path.Combine(config.InstallPath, "Server", "DataForgeStudio.Api.exe");
+        var nssmPath = Path.Combine(config.InstallPath, "Manager", "nssm.exe");
+        var logPath = Path.Combine(config.InstallPath, "logs");
+
+        // 确保 logs 目录存在
+        if (!Directory.Exists(logPath))
+        {
+            Directory.CreateDirectory(logPath);
+        }
+
+        // 检查 NSSM 是否存在
+        if (!File.Exists(nssmPath))
+        {
+            Console.WriteLine("  警告: NSSM 未找到，回退到 sc.exe");
+            RegisterWindowsServiceWithSc(config);
+            return;
+        }
 
         // 检查服务是否已存在
         var checkInfo = new System.Diagnostics.ProcessStartInfo
@@ -1205,6 +1221,48 @@ WHERE u.Username = 'root' AND r.RoleCode = 'ROLE_SUPER_ADMIN';
                 }
             }
         }
+
+        Console.WriteLine($"  使用 NSSM 注册服务: {serviceName}");
+
+        // 使用 NSSM 创建服务
+        RunCommand(nssmPath, $"install \"{serviceName}\" \"{serverExePath}\"");
+
+        // 设置服务显示名称和描述
+        RunCommand(nssmPath, $"set \"{serviceName}\" DisplayName \"DataForgeStudio API\"");
+        RunCommand(nssmPath, $"set \"{serviceName}\" Description \"DataForgeStudio 报表管理系统 API 服务\"");
+
+        // 设置启动类型为自动
+        RunCommand(nssmPath, $"set \"{serviceName}\" Start SERVICE_AUTO_START");
+
+        // 设置工作目录（确保相对路径正确）
+        var serverDir = Path.Combine(config.InstallPath, "Server");
+        RunCommand(nssmPath, $"set \"{serviceName}\" AppDirectory \"{serverDir}\"");
+
+        // 配置日志输出
+        RunCommand(nssmPath, $"set \"{serviceName}\" AppStdout \"{Path.Combine(logPath, "api-service-out.log")}\"");
+        RunCommand(nssmPath, $"set \"{serviceName}\" AppStderr \"{Path.Combine(logPath, "api-service-err.log")}\"");
+
+        // 配置日志轮转
+        RunCommand(nssmPath, $"set \"{serviceName}\" AppRotateFiles 1");
+        RunCommand(nssmPath, $"set \"{serviceName}\" AppRotateBytes 1048576");
+
+        // 设置服务启动超时（默认 30 秒可能不够，增加到 60 秒）
+        RunCommand(nssmPath, $"set \"{serviceName}\" AppStopMethodSkip 0");
+        RunCommand(nssmPath, $"set \"{serviceName}\" AppStopMethodConsole 1500");
+        RunCommand(nssmPath, $"set \"{serviceName}\" AppStopMethodWindow 1500");
+        RunCommand(nssmPath, $"set \"{serviceName}\" AppStopMethodThreads 1500");
+        RunCommand(nssmPath, $"set \"{serviceName}\" AppThrottle 1500");
+
+        Console.WriteLine("  Windows 服务注册完成");
+    }
+
+    /// <summary>
+    /// 使用 sc.exe 注册服务（后备方案）
+    /// </summary>
+    static void RegisterWindowsServiceWithSc(Configuration config)
+    {
+        var serverExePath = Path.Combine(config.InstallPath, "Server", "DataForgeStudio.Api.exe");
+        var serviceName = "DFAppService";
 
         // 创建服务
         var startInfo = new System.Diagnostics.ProcessStartInfo
