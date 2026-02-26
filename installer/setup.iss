@@ -248,10 +248,7 @@ begin
     Connection.Close;
     Result := True;
   except
-    on E: Exception do
-    begin
-      ErrorMsg := E.Message;
-    end;
+    ErrorMsg := GetExceptionMessage;
   end;
 end;
 
