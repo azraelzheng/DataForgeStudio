@@ -1,5 +1,0 @@
-1. 后端服务名称改为DFAppService，前端服务名称改为DFWebService。修改相关代码及前端、管理工具的相关描述。
-2. 在本机创建一个模拟服务，让用户可以在系统管理中测试服务启用、停止、重启和设置为开机自启动的功能。
-3. 数据库配置中，不能自动识别当前时开发环境还是生产环境。保存配置时仍然提示c:\program files\dataforgestudio\api\appsetting.json路径不正确
-4. 端口配置，不能自动识别当前时开发环境还是生产环境。保存配置时仍然提示c:\program files\dataforgestudio\api\appsetting.json路径不正确
-5. 优化系统管理工具的UI页面布局和字体大小，现在有部分功能、按钮不能全部显示。
