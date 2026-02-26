@@ -245,9 +245,22 @@ const passwordForm = reactive({
   confirmPassword: ''
 })
 
-// 验证确认密码 - 使用函数确保获取最新值
+// 重置密码表单数据
+const resetPasswordForm = () => {
+  passwordForm.oldPassword = ''
+  passwordForm.newPassword = ''
+  passwordForm.confirmPassword = ''
+}
+
+// 验证确认密码 - 直接使用 passwordForm 的当前值进行比较
 const validateConfirmPassword = (rule, value, callback) => {
-  if (value !== passwordForm.newPassword) {
+  // 使用 trim() 去除可能的空白字符，避免因空格导致的误判
+  const confirmValue = (value || '').trim()
+  const newValue = (passwordForm.newPassword || '').trim()
+
+  if (!confirmValue) {
+    callback(new Error('请确认新密码'))
+  } else if (confirmValue !== newValue) {
     callback(new Error('两次输入的密码不一致'))
   } else {
     callback()
@@ -263,18 +276,22 @@ const passwordRules = {
   ],
   confirmPassword: [
     { required: true, message: '请确认新密码', trigger: 'blur' },
-    { validator: validateConfirmPassword, trigger: ['blur', 'change'] }
+    { validator: validateConfirmPassword, trigger: 'blur' }
   ]
 }
 
 const handlePasswordDialogClosed = () => {
+  // 只使用 resetFields() 重置表单，避免手动清空导致状态不一致
   passwordFormRef.value?.resetFields()
-  passwordForm.oldPassword = ''
-  passwordForm.newPassword = ''
-  passwordForm.confirmPassword = ''
+  // 确保数据也被清空（以防 resetFields 不生效）
+  resetPasswordForm()
 }
 
 const handleChangePassword = async () => {
+  // 先清除之前的验证状态
+  passwordFormRef.value?.clearValidate()
+
+  // 然后进行验证
   const valid = await passwordFormRef.value.validate().catch(() => false)
   if (!valid) return
 

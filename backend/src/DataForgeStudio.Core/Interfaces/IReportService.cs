@@ -10,7 +10,7 @@ public interface IReportService
     /// <summary>
     /// 获取报表分页列表
     /// </summary>
-    Task<ApiResponse<PagedResponse<ReportDto>>> GetReportsAsync(PagedRequest request, string? reportName = null, string? category = null);
+    Task<ApiResponse<PagedResponse<ReportDto>>> GetReportsAsync(PagedRequest request, string? reportName = null, string? category = null, bool? isEnabled = null);
 
     /// <summary>
     /// 获取报表详情

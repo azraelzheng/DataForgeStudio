@@ -41,7 +41,7 @@ public class ReportService : IReportService
         _logger = logger;
     }
 
-    public async Task<ApiResponse<PagedResponse<ReportDto>>> GetReportsAsync(PagedRequest request, string? reportName = null, string? category = null)
+    public async Task<ApiResponse<PagedResponse<ReportDto>>> GetReportsAsync(PagedRequest request, string? reportName = null, string? category = null, bool? isEnabled = null)
     {
         var query = _context.Reports.AsQueryable();
 
@@ -53,6 +53,12 @@ public class ReportService : IReportService
         if (!string.IsNullOrWhiteSpace(category))
         {
             query = query.Where(r => r.ReportCategory == category);
+        }
+
+        // 添加启用状态过滤
+        if (isEnabled.HasValue)
+        {
+            query = query.Where(r => r.IsEnabled == isEnabled.Value);
         }
 
         var totalCount = await query.CountAsync();

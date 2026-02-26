@@ -47,7 +47,8 @@ public class ReportsController : ControllerBase
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
         [FromQuery] string? reportName = null,
-        [FromQuery] string? category = null)
+        [FromQuery] string? category = null,
+        [FromQuery] bool? isEnabled = null)
     {
         // 验证许可证
         var licenseError = await ValidateLicenseAsync();
@@ -57,7 +58,7 @@ public class ReportsController : ControllerBase
         }
 
         var request = new PagedRequest { PageIndex = page, PageSize = pageSize };
-        return await _reportService.GetReportsAsync(request, reportName, category);
+        return await _reportService.GetReportsAsync(request, reportName, category, isEnabled);
     }
 
     /// <summary>
