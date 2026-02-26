@@ -53,8 +53,9 @@ if (-not $SkipBackend) {
         if ($LASTEXITCODE -ne 0) { throw "Obfuscation failed" }
 
         # Copy obfuscated assemblies to Server directory
-        $coreObfuscated = Join-Path $ProjectRoot "backend\src\DataForgeStudio.Core\bin\$Configuration\net8.0\Obfuscated\DataForgeStudio.Core.dll"
-        $sharedObfuscated = Join-Path $ProjectRoot "backend\src\DataForgeStudio.Shared\bin\$Configuration\net8.0\Obfuscated\DataForgeStudio.Shared.dll"
+        # Obfuscar outputs to backend/Obfuscated/ by default
+        $coreObfuscated = Join-Path $ProjectRoot "backend\Obfuscated\DataForgeStudio.Core.dll"
+        $sharedObfuscated = Join-Path $ProjectRoot "backend\Obfuscated\DataForgeStudio.Shared.dll"
 
         if (Test-Path $coreObfuscated) {
             Copy-Item $coreObfuscated "$BuildDir/Server/DataForgeStudio.Core.dll" -Force
