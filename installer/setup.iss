@@ -169,6 +169,7 @@ procedure DbAuthRadioWindowsClick(Sender: TObject);
 begin
   UpdateAuthFields;
   ErrorLabel.Caption := '';
+  DbTestPassed := False;
 end;
 
 // SQL Server 认证单选按钮点击事件
@@ -176,12 +177,16 @@ procedure DbAuthRadioSqlClick(Sender: TObject);
 begin
   UpdateAuthFields;
   ErrorLabel.Caption := '';
+  DbTestPassed := False;
 end;
 
-// 输入框变化时清除错误
+// 输入框变化时清除错误并重置测试状态
 procedure EditChange(Sender: TObject);
 begin
   ErrorLabel.Caption := '';
+  // 重置测试状态，用户需要重新测试
+  DbTestPassed := False;
+  PortTestPassed := False;
 end;
 
 // 检查字符串是否为有效数字
@@ -326,6 +331,13 @@ begin
     end;
   end;
 
+  // 检查是否已通过连接测试
+  if not DbTestPassed then
+  begin
+    ErrorLabel.Caption := '请先点击"测试连接"并确保测试通过';
+    Exit;
+  end;
+
   Result := True;
 end;
 
@@ -346,6 +358,13 @@ begin
   if not ValidatePort(FrontendPortEdit.Text) then
   begin
     ErrorLabel.Caption := '端口必须在 1-65535 之间';
+    Exit;
+  end;
+
+  // 检查是否已通过端口检测
+  if not PortTestPassed then
+  begin
+    ErrorLabel.Caption := '请先点击"检测端口"并确保端口可用';
     Exit;
   end;
 
@@ -755,10 +774,16 @@ begin
   begin
     UpdateAuthFields;
     ErrorLabel.Caption := '';
+    // 重置测试状态（首次进入页面时）
+    if not DbTestPassed then
+      DbTestStatusLabel.Caption := '';
   end
   else if CurPageID = PortConfigPage.ID then
   begin
     ErrorLabel.Caption := '';
+    // 重置测试状态（首次进入页面时）
+    if not PortTestPassed then
+      PortTestStatusLabel.Caption := '';
   end;
 end;
 
