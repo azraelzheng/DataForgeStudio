@@ -112,6 +112,7 @@ Type: filesandordirs; Name: "{app}\logs"
 Type: filesandordirs; Name: "{app}\WebServer\logs"
 Type: filesandordirs; Name: "{app}\WebServer\temp"
 Type: filesandordirs; Name: "{app}\keys"
+Type: filesandordirs; Name: "{app}\Server\keys"
 Type: filesandordirs; Name: "{app}\DBServer"
 
 [Code]
@@ -634,6 +635,9 @@ begin
 
     // 12. 删除废弃的根级 keys 文件夹（如果存在）
     DelTree(ExpandConstant('{app}\keys'), True, True, True);
+
+    // 12b. 删除 Server\keys 文件夹（当前密钥存储位置）
+    DelTree(ExpandConstant('{app}\Server\keys'), True, True, True);
 
     // 13. 删除桌面快捷方式
     DeleteFile(ExpandConstant('{userdesktop}\DataForgeStudio 管理工具.lnk'));
