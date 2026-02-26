@@ -20,6 +20,9 @@
     <!-- 跳过所有接口 (I*Service, I*Repository 等) -->
     <SkipType name="DataForgeStudio.Core.Interfaces.*" />
 
+    <!-- 跳过服务实现类 (API 层通过类名注册依赖注入) -->
+    <SkipType name="DataForgeStudio.Core.Services.*" />
+
     <!-- 跳过配置类 (需要被 API 层访问) -->
     <SkipType name="DataForgeStudio.Core.Configuration.*" />
   </Module>
