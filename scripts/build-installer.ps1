@@ -30,7 +30,7 @@ function Ensure-Directory {
 
 # Step 1: Build Backend API
 if (-not $SkipBackend) {
-    Write-Host "[1/5] Building Backend API..." -ForegroundColor Yellow
+    Write-Host "[1/6] Building Backend API..." -ForegroundColor Yellow
     Push-Location $ProjectRoot
     try {
         dotnet publish backend/src/DataForgeStudio.Api/DataForgeStudio.Api.csproj `
@@ -41,12 +41,45 @@ if (-not $SkipBackend) {
     }
     finally { Pop-Location }
 } else {
-    Write-Host "[1/5] Skipping backend build" -ForegroundColor Gray
+    Write-Host "[1/6] Skipping backend build" -ForegroundColor Gray
 }
 
-# Step 2: Build Frontend
+# Step 2: Obfuscate critical assemblies
+if (-not $SkipBackend) {
+    Write-Host "[2/6] Obfuscating critical assemblies..." -ForegroundColor Yellow
+    Push-Location (Join-Path $ProjectRoot "backend")
+    try {
+        dotnet obfuscar.console obfuscar.xml
+        if ($LASTEXITCODE -ne 0) { throw "Obfuscation failed" }
+
+        # Copy obfuscated assemblies to Server directory
+        $coreObfuscated = Join-Path $ProjectRoot "backend\src\DataForgeStudio.Core\bin\$Configuration\net8.0\Obfuscated\DataForgeStudio.Core.dll"
+        $sharedObfuscated = Join-Path $ProjectRoot "backend\src\DataForgeStudio.Shared\bin\$Configuration\net8.0\Obfuscated\DataForgeStudio.Shared.dll"
+
+        if (Test-Path $coreObfuscated) {
+            Copy-Item $coreObfuscated "$BuildDir/Server/DataForgeStudio.Core.dll" -Force
+            Write-Host "      DataForgeStudio.Core.dll obfuscated" -ForegroundColor Green
+        } else {
+            throw "Obfuscated Core.dll not found: $coreObfuscated"
+        }
+
+        if (Test-Path $sharedObfuscated) {
+            Copy-Item $sharedObfuscated "$BuildDir/Server/DataForgeStudio.Shared.dll" -Force
+            Write-Host "      DataForgeStudio.Shared.dll obfuscated" -ForegroundColor Green
+        } else {
+            throw "Obfuscated Shared.dll not found: $sharedObfuscated"
+        }
+
+        Write-Host "      Assemblies obfuscated successfully" -ForegroundColor Green
+    }
+    finally { Pop-Location }
+} else {
+    Write-Host "[2/6] Skipping obfuscation (backend skipped)" -ForegroundColor Gray
+}
+
+# Step 3: Build Frontend
 if (-not $SkipFrontend) {
-    Write-Host "[2/5] Building Frontend..." -ForegroundColor Yellow
+    Write-Host "[3/6] Building Frontend..." -ForegroundColor Yellow
     $FrontendDir = Join-Path $ProjectRoot "frontend"
     Push-Location $FrontendDir
     try {
@@ -59,11 +92,11 @@ if (-not $SkipFrontend) {
     }
     finally { Pop-Location }
 } else {
-    Write-Host "[2/5] Skipping frontend build" -ForegroundColor Gray
+    Write-Host "[3/6] Skipping frontend build" -ForegroundColor Gray
 }
 
-# Step 3: Build DeployManager (self-contained)
-Write-Host "[3/5] Building DeployManager..." -ForegroundColor Yellow
+# Step 4: Build DeployManager (self-contained)
+Write-Host "[4/6] Building DeployManager..." -ForegroundColor Yellow
 Push-Location $ProjectRoot
 try {
     $ManagerDir = Join-Path $BuildDir "manager"
@@ -110,8 +143,8 @@ try {
 }
 finally { Pop-Location }
 
-# Step 4: Build Configurator
-Write-Host "[4/5] Building Configurator..." -ForegroundColor Yellow
+# Step 5: Build Configurator
+Write-Host "[5/6] Building Configurator..." -ForegroundColor Yellow
 Push-Location $ProjectRoot
 try {
     $ConfiguratorDir = Join-Path $BuildDir "configurator"
@@ -126,8 +159,8 @@ try {
 }
 finally { Pop-Location }
 
-# Step 5: Copy public key to Server/keys directory
-Write-Host "[5/5] Copying public key to Server..." -ForegroundColor Yellow
+# Step 6: Copy public key to Server/keys directory
+Write-Host "[6/6] Copying public key to Server..." -ForegroundColor Yellow
 $SourceKeysDir = Join-Path $ProjectRoot "backend\src\DataForgeStudio.Api\keys"
 $TargetKeysDir = Join-Path $BuildDir "Server\keys"
 
