@@ -133,6 +133,9 @@ var
   DbConfigPage: TWizardPage;
   PortConfigPage: TWizardPage;
   ErrorLabel: TLabel;
+  DbTestButton: TButton;
+  DbTestStatusLabel: TLabel;
+  DbTestPassed: Boolean;
 
 // 更新用户名密码输入框的启用状态
 procedure UpdateAuthFields;
@@ -381,6 +384,30 @@ begin
     Top := 155;
     Width := 350;
     Font.Color := clRed;
+    Caption := '';
+  end;
+
+  // 数据库测试按钮
+  DbTestButton := TButton.Create(WizardForm);
+  with DbTestButton do
+  begin
+    Parent := DbConfigPage.Surface;
+    Caption := '测试连接';
+    Left := 100;
+    Top := 180;
+    Width := 80;
+    Height := 25;
+    OnClick := @DbTestButtonClick;
+  end;
+
+  // 数据库测试状态标签
+  DbTestStatusLabel := TLabel.Create(WizardForm);
+  with DbTestStatusLabel do
+  begin
+    Parent := DbConfigPage.Surface;
+    Left := 190;
+    Top := 185;
+    Width := 200;
     Caption := '';
   end;
 
