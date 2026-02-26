@@ -84,13 +84,23 @@ public class KeyManagementService : IKeyManagementService
 
     /// <summary>
     /// 确保 RSA 密钥对存在，不存在则生成新的密钥对
+    /// 注意：对于分布式部署，只有公钥是必需的（私钥保留在公司用于签署正式许可证）
     /// </summary>
     public async Task EnsureKeyPairExistsAsync()
     {
-        // 检查密钥文件是否已存在
-        if (File.Exists(_publicKeyPath) && File.Exists(_privateKeyPath))
+        // 检查公钥是否已存在
+        if (File.Exists(_publicKeyPath))
         {
-            _logger.LogInformation("RSA 密钥对已存在，跳过生成");
+            _logger.LogInformation("RSA 公钥已存在，跳过生成");
+            // 检查私钥是否存在（用于开发/公司环境）
+            if (File.Exists(_privateKeyPath))
+            {
+                _logger.LogInformation("RSA 私钥也已存在");
+            }
+            else
+            {
+                _logger.LogInformation("RSA 私钥不存在（分布式部署模式，仅用于验证正式许可证）");
+            }
             return;
         }
 

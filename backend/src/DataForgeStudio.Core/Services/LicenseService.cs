@@ -137,6 +137,12 @@ public class LicenseService : ILicenseService
             }
 
             // 3. 使用 KeyManagementService 获取公钥验证签名
+            // 注意：正式许可证必须使用 RSA 签名，试用许可证（TRIAL_LOCAL 标记）不允许通过激活导入
+            if (licenseData.Signature == "TRIAL_LOCAL")
+            {
+                return ApiResponse<LicenseInfoDto>.Fail("试用许可证无法通过激活导入。试用许可证由系统自动生成。", "TRIAL_IMPORT_NOT_ALLOWED");
+            }
+
             // 使用与生成时相同的序列化格式
             var jsonForVerification = SerializeForSignature(licenseData);
 
@@ -273,24 +279,33 @@ public class LicenseService : ILicenseService
         }
 
         // 验证签名 - 使用与生成时相同的序列化格式
-        var jsonForVerification = SerializeForSignature(licenseData);
-
-        var publicKey = await _keyManagementService.GetPublicKeyAsync();
-        bool isValid = EncryptionHelper.RsaVerifyData(
-            jsonForVerification,
-            licenseData.Signature,
-            publicKey
-        );
-
-        if (!isValid)
+        // 注意：试用许可证使用特殊标记 "TRIAL_LOCAL"，跳过 RSA 验证
+        // 只有正式许可证需要 RSA 签名验证
+        if (licenseData.Signature != "TRIAL_LOCAL")
         {
-            var response = ApiResponse<LicenseValidationResponse>.Ok(new LicenseValidationResponse
+            var jsonForVerification = SerializeForSignature(licenseData);
+
+            var publicKey = await _keyManagementService.GetPublicKeyAsync();
+            bool isValid = EncryptionHelper.RsaVerifyData(
+                jsonForVerification,
+                licenseData.Signature,
+                publicKey
+            );
+
+            if (!isValid)
             {
-                Valid = false,
-                Message = "许可证已被篡改"
-            });
-            _memoryCache.Set(CACHE_KEY, response, TimeSpan.FromMinutes(CACHE_DURATION_MINUTES));
-            return response;
+                var response = ApiResponse<LicenseValidationResponse>.Ok(new LicenseValidationResponse
+                {
+                    Valid = false,
+                    Message = "许可证已被篡改"
+                });
+                _memoryCache.Set(CACHE_KEY, response, TimeSpan.FromMinutes(CACHE_DURATION_MINUTES));
+                return response;
+            }
+        }
+        else
+        {
+            _logger.LogDebug("试用许可证，跳过 RSA 签名验证");
         }
 
         // 检查过期
@@ -412,20 +427,15 @@ public class LicenseService : ILicenseService
                 MachineCode = machineCode,
                 IssuedDate = DateTime.UtcNow.ToString("yyyy-MM-dd"),
                 LicenseType = LICENSE_TYPE_TRIAL,
-                Signature = "" // 稍后生成签名
+                Signature = "TRIAL_LOCAL" // 试用许可证使用特殊标记，不需要 RSA 签名
             };
 
-            // 序列化为 JSON（不包含 Signature）- 使用一致的格式
-            var licenseJson = SerializeForSignature(licenseData);
-
-            // 使用私钥签名
-            using var rsa = await _keyManagementService.GetRsaWithPrivateKeyAsync();
-            var signatureBytes = rsa.SignData(
-                System.Text.Encoding.UTF8.GetBytes(licenseJson),
-                HashAlgorithmName.SHA256,
-                RSASignaturePadding.Pkcs1
-            );
-            licenseData.Signature = Convert.ToBase64String(signatureBytes);
+            // 注意：试用许可证不需要 RSA 签名
+            // 试用许可证的验证依赖于：
+            // 1. TrialLicenseTracker 跟踪试用期
+            // 2. 机器码绑定
+            // 3. 数据库记录
+            // 只有正式许可证才需要 RSA 签名验证（确保由公司签发）
 
             // 重新序列化包含签名的完整数据
             var fullLicenseJson = JsonSerializer.Serialize(licenseData);
