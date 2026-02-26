@@ -136,6 +136,9 @@ var
   DbTestButton: TButton;
   DbTestStatusLabel: TLabel;
   DbTestPassed: Boolean;
+  PortTestButton: TButton;
+  PortTestStatusLabel: TLabel;
+  PortTestPassed: Boolean;
 
 // 更新用户名密码输入框的启用状态
 procedure UpdateAuthFields;
@@ -569,6 +572,30 @@ begin
     Top := 85;
     Width := 350;
     Font.Color := clRed;
+    Caption := '';
+  end;
+
+  // 端口测试按钮
+  PortTestButton := TButton.Create(WizardForm);
+  with PortTestButton do
+  begin
+    Parent := PortConfigPage.Surface;
+    Caption := '检测端口';
+    Left := 120;
+    Top := 110;
+    Width := 80;
+    Height := 25;
+    OnClick := @PortTestButtonClick;
+  end;
+
+  // 端口测试状态标签
+  PortTestStatusLabel := TLabel.Create(WizardForm);
+  with PortTestStatusLabel do
+  begin
+    Parent := PortConfigPage.Surface;
+    Left := 210;
+    Top := 115;
+    Width := 250;
     Caption := '';
   end;
 end;
