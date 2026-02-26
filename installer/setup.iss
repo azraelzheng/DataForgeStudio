@@ -355,6 +355,157 @@ begin
   Result := True;
 end;
 
+// 执行命令并获取输出
+function ExecAndGetOutput(const Cmd, Params: String): String;
+var
+  TempFile: String;
+  ResultCode: Integer;
+  OutputLines: TStringList;
+begin
+  Result := '';
+  TempFile := ExpandConstant('{tmp}\portcheck.txt');
+
+  // 删除可能存在的临时文件
+  if FileExists(TempFile) then
+    DeleteFile(TempFile);
+
+  // 执行命令并将输出重定向到临时文件
+  Exec(Cmd, Params + ' > "' + TempFile + '" 2>&1', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+
+  // 读取输出文件
+  if FileExists(TempFile) then
+  begin
+    OutputLines := TStringList.Create;
+    try
+      OutputLines.LoadFromFile(TempFile);
+      Result := OutputLines.Text;
+    finally
+      OutputLines.Free;
+    end;
+    // 清理临时文件
+    DeleteFile(TempFile);
+  end;
+end;
+
+// 检查端口是否被占用
+function IsPortInUse(Port: Integer; out PID: String): Boolean;
+var
+  Output: String;
+  Lines: TStringList;
+  I: Integer;
+  Line: String;
+  PortStr: String;
+  ColonPos: Integer;
+  LastSpacePos: Integer;
+begin
+  Result := False;
+  PID := '';
+  PortStr := ':' + IntToStr(Port);
+
+  // 使用 netstat 检查端口
+  Output := ExecAndGetOutput('cmd.exe', '/c netstat -ano | findstr "' + PortStr + '"');
+
+  if Length(Output) = 0 then
+    Exit;
+
+  Lines := TStringList.Create;
+  try
+    Lines.Text := Output;
+    for I := 0 to Lines.Count - 1 do
+    begin
+      Line := Trim(Lines[I]);
+      // 检查是否包含 LISTENING 状态
+      if (Pos(PortStr, Line) > 0) and (Pos('LISTENING', Line) > 0) then
+      begin
+        Result := True;
+        // 提取 PID（最后一列数字）
+        LastSpacePos := 0;
+        for ColonPos := Length(Line) downto 1 do
+        begin
+          if Line[ColonPos] = ' ' then
+          begin
+            LastSpacePos := ColonPos;
+            Break;
+          end;
+        end;
+        if LastSpacePos > 0 then
+          PID := Trim(Copy(Line, LastSpacePos + 1, Length(Line) - LastSpacePos));
+        Exit;
+      end;
+    end;
+  finally
+    Lines.Free;
+  end;
+end;
+
+// 端口测试按钮点击事件
+procedure PortTestButtonClick(Sender: TObject);
+var
+  BackendPort, FrontendPort: Integer;
+  BackendPID, FrontendPID: String;
+  BackendInUse, FrontendInUse: Boolean;
+  StatusMsg: String;
+begin
+  // 禁用按钮，显示检测中状态
+  PortTestButton.Enabled := False;
+  PortTestButton.Caption := '检测中...';
+  PortTestStatusLabel.Caption := '正在检测端口...';
+  PortTestStatusLabel.Font.Color := clGray;
+  PortTestPassed := False;
+
+  // 获取端口值
+  BackendPort := StrToIntDef(BackendPortEdit.Text, 0);
+  FrontendPort := StrToIntDef(FrontendPortEdit.Text, 0);
+
+  // 检测后端端口
+  BackendInUse := IsPortInUse(BackendPort, BackendPID);
+
+  // 检测前端端口
+  FrontendInUse := IsPortInUse(FrontendPort, FrontendPID);
+
+  // 构建状态消息
+  StatusMsg := '';
+
+  // 后端端口状态
+  if BackendInUse then
+  begin
+    StatusMsg := #10007 + ' 端口 ' + IntToStr(BackendPort) + ' 已被占用 (PID: ' + BackendPID + ')';
+  end
+  else
+  begin
+    StatusMsg := #10003 + ' 端口 ' + IntToStr(BackendPort) + ' 可用';
+  end;
+
+  // 前端端口状态
+  if FrontendInUse then
+  begin
+    StatusMsg := StatusMsg + ', ' + #10007 + ' 端口 ' + IntToStr(FrontendPort) + ' 已被占用 (PID: ' + FrontendPID + ')';
+  end
+  else
+  begin
+    StatusMsg := StatusMsg + ', ' + #10003 + ' 端口 ' + IntToStr(FrontendPort) + ' 可用';
+  end;
+
+  // 更新状态标签
+  PortTestStatusLabel.Caption := StatusMsg;
+
+  // 设置颜色和通过状态
+  if (not BackendInUse) and (not FrontendInUse) then
+  begin
+    PortTestStatusLabel.Font.Color := clGreen;
+    PortTestPassed := True;
+  end
+  else
+  begin
+    PortTestStatusLabel.Font.Color := clRed;
+    PortTestPassed := False;
+  end;
+
+  // 恢复按钮状态
+  PortTestButton.Enabled := True;
+  PortTestButton.Caption := '检测端口';
+end;
+
 procedure InitializeWizard;
 begin
   // 创建数据库配置页面
