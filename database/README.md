@@ -1,233 +1,144 @@
-# Database Setup Guide
+# 数据库管理指南
 
-## Prerequisites
+## 重要说明
 
-- SQL Server 2005 or later
-- SQL Server Management Studio (SSMS) or sqlcmd command-line tool
+**DataForgeStudio 使用 Entity Framework Core Code First 方式管理数据库。**
 
-## Setup Steps
+- 应用首次启动时会**自动创建**数据库和种子数据
+- SQL 脚本仅用于**手动初始化**或**参考**
+- 数据库结构由代码定义：`backend/src/DataForgeStudio.Domain/Entities/`
 
-### 1. Create Database and Tables
+## 自动初始化（推荐）
 
-Run the database initialization script:
+应用程序启动时会自动执行以下操作：
 
-**Using SSMS:**
-1. Open SSMS and connect to your SQL Server instance
-2. Open the file `database/scripts/01_init_database.sql`
-3. Execute the script (F5 or press the Execute button)
+1. **创建数据库** - 如果不存在
+2. **创建表结构** - 根据实体定义
+3. **创建种子数据**：
+   - root 用户（系统管理员）
+   - 默认角色（超级管理员、管理员、开发者、查看者）
+   - 系统权限
 
-**Using sqlcmd:**
+### 默认账户
+
+| 用户名 | 密码 | 角色 | 说明 |
+|--------|------|------|------|
+| root | Admin@123 | 超级管理员 | 系统内置用户，UI不可见 |
+
+## 手动初始化（可选）
+
+如果需要手动创建数据库：
+
+### 方式一：使用 SQL 脚本
+
 ```bash
+# 使用 sqlcmd
 sqlcmd -S localhost -E -i database/scripts/01_init_database.sql
+
+# 或在 SSMS 中执行
+# 打开 database/scripts/01_init_database.sql 并执行
 ```
 
-### 2. Insert Seed Data
-
-Run the seed data script:
-
-**Using SSMS:**
-1. Open the file `database/scripts/02_seed_data.sql`
-2. Execute the script (F5 or press the Execute button)
-
-**Using sqlcmd:**
-```bash
-sqlcmd -S localhost -E -i database/scripts/02_seed_data.sql
-```
-
-### 3. Generate BCrypt Password Hashes (Optional)
-
-If you want to create additional users with custom passwords:
-
-1. Navigate to the tools directory:
-```bash
-cd tools/PasswordHashGenerator
-```
-
-2. Build the utility:
-```bash
-dotnet build
-```
-
-3. Run the utility:
-```bash
-dotnet run
-```
-
-4. Enter a password when prompted, and the BCrypt hash will be generated
-
-5. Copy the generated hash into a SQL INSERT statement:
-```sql
-INSERT INTO [dbo].[Users] ([Username], [PasswordHash], [RealName], [IsActive], [CreatedTime])
-VALUES ('yourusername', 'PASTE_HASH_HERE', 'Your Real Name', 1, GETUTCDATE());
-```
-
-### 4. Configure Connection String
-
-The backend connection string is in `backend/src/DataForgeStudio.Api/appsettings.json`:
-
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Data Source=localhost;Initial Catalog=DataForgeStudio_V4;Integrated Security=True;TrustServerCertificate=True;",
-    "MasterConnection": "Data Source=localhost;Initial Catalog=master;Integrated Security=True;TrustServerCertificate=True;"
-  }
-}
-```
-
-**For SQL Server Authentication (username/password):**
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Data Source=localhost;Initial Catalog=DataForgeStudio_V4;User Id=sa;Password=YourPassword;TrustServerCertificate=True;"
-  }
-}
-```
-
-**For Remote SQL Server:**
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Data Source=your-server-name;Initial Catalog=DataForgeStudio_V4;Integrated Security=True;TrustServerCertificate=True;"
-  }
-}
-```
-
-### 5. Run EF Migrations (Optional)
-
-If you want to use Entity Framework Core migrations:
+### 方式二：使用 EF Core CLI
 
 ```bash
 cd backend/src/DataForgeStudio.Api
+
+# 生成迁移
 dotnet ef migrations add InitialCreate
+
+# 应用迁移
 dotnet ef database update
 ```
 
-## Default Users
+## 数据库结构
 
-After running the seed script, the following users will be created:
+### 核心表
 
-| Username | Password | Role | Description |
-|----------|----------|------|-------------|
-| root | admin123 | Super Admin | Hidden from UI, system maintenance |
-| admin | Test123! | Admin | Administrator |
-| user01 | Test123! | User | Regular user |
-| guest | Test123! | Guest | Guest user (read-only) |
+| 表名 | 说明 |
+|------|------|
+| Users | 用户表 |
+| Roles | 角色表 |
+| UserRoles | 用户角色关联表 |
+| Permissions | 权限表 |
+| RolePermissions | 角色权限关联表 |
 
-**IMPORTANT:** The `root` user is hidden from the frontend user management (IsSystem = 1). It can only be modified directly in the database.
+### 业务表
 
-## Sample Reports
+| 表名 | 说明 |
+|------|------|
+| DataSources | 数据源配置 |
+| Reports | 报表定义 |
+| ReportFields | 报表字段配置 |
+| ReportParameters | 报表参数配置 |
 
-The following sample reports are created:
+### 系统表
 
-1. **User List** (RPT_USER_LIST)
-   - Category: System
-   - Shows all non-system users
-   - Columns: User ID, Username, Real Name, Email, Phone, Status, Created Time
+| 表名 | 说明 |
+|------|------|
+| OperationLogs | 操作日志 |
+| LoginLogs | 登录日志 |
+| SystemConfigs | 系统配置 |
+| BackupRecords | 备份记录 |
+| BackupSchedules | 备份计划 |
+| Licenses | 许可证 |
 
-2. **Role List** (RPT_ROLE_LIST)
-   - Category: System
-   - Shows all roles with user count
-   - Columns: Role ID, Role Name, Role Code, Description, User Count, Status, Created Time
+## 连接字符串配置
 
-3. **Login Statistics** (RPT_LOGIN_STATS)
-   - Category: Statistics
-   - Shows daily login statistics
-   - Parameters: Start Date, End Date
-   - Columns: Login Date, Login Count, Unique Users
-
-## Verify Installation
-
-To verify the database is set up correctly:
-
-```sql
-USE DataForgeStudio_V4;
-GO
-
--- Check users
-SELECT Username, RealName, IsActive, IsSystem FROM Users;
-
--- Check roles
-SELECT RoleName, RoleCode, IsSystem FROM Roles;
-
--- Check user roles
-SELECT u.Username, r.RoleName
-FROM Users u
-INNER JOIN UserRoles ur ON u.UserId = ur.UserId
-INNER JOIN Roles r ON ur.RoleId = r.RoleId
-ORDER BY u.Username, r.RoleName;
-
--- Check reports
-SELECT ReportName, ReportCategory, IsEnabled FROM Reports;
-
--- Check data sources
-SELECT DataSourceName, DbType, IsActive FROM DataSources;
-```
-
-## Troubleshooting
-
-### Connection Issues
-
-If you get connection errors:
-
-1. Verify SQL Server is running:
-   ```bash
-   sc query MSSQLSERVER
-   ```
-
-2. Check SQL Server allows remote connections:
-   - Open SQL Server Configuration Manager
-   - Go to SQL Server Network Configuration
-   - Enable TCP/IP protocol
-   - Restart SQL Server
-
-3. For SQL Server Express, use `.\SQLEXPRESS` as the server name:
-   ```json
-   "DefaultConnection": "Data Source=.\\SQLEXPRESS;Initial Catalog=DataForgeStudio_V4;Integrated Security=True;TrustServerCertificate=True;"
-   ```
-
-### Permission Issues
-
-If you get permission errors:
-
-1. Ensure your Windows user has access to the database
-2. Or use SQL Server authentication with a valid username/password
-3. Grant necessary permissions:
-   ```sql
-   USE DataForgeStudio_V4;
-   GO
-   -- Add user to database
-   CREATE USER [your-username] FOR LOGIN [your-username];
-
-   -- Grant necessary permissions
-   ALTER ROLE db_owner ADD MEMBER [your-username];
-   ```
-
-### Port Issues
-
-Default SQL Server port is 1433. If using a different port:
+### appsettings.json
 
 ```json
-"DefaultConnection": "Data Source=localhost,1434;Initial Catalog=DataForgeStudio_V4;Integrated Security=True;TrustServerCertificate=True;"
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Data Source=localhost;Initial Catalog=DataForgeStudio;Integrated Security=True;TrustServerCertificate=True;"
+  }
+}
 ```
 
-## Backup and Restore
+### 常见连接字符串格式
 
-### Backup Database
-
-```sql
-BACKUP DATABASE DataForgeStudio_V4
-TO DISK = 'C:\Backup\DataForgeStudio_V4_backup.bak'
-WITH FORMAT,
-MEDIANAME = 'DataForgeStudio_V4_Backup',
-NAME = 'Full Backup of DataForgeStudio_V4';
-GO
+**Windows 身份验证（推荐）：**
+```
+Data Source=localhost;Initial Catalog=DataForgeStudio;Integrated Security=True;TrustServerCertificate=True;
 ```
 
-### Restore Database
+**SQL Server 身份验证：**
+```
+Data Source=localhost;Initial Catalog=DataForgeStudio;User Id=sa;Password=YourPassword;TrustServerCertificate=True;
+```
+
+**远程服务器：**
+```
+Data Source=192.168.1.100,1433;Initial Catalog=DataForgeStudio;User Id=sa;Password=YourPassword;TrustServerCertificate=True;
+```
+
+**SQL Server Express：**
+```
+Data Source=.\SQLEXPRESS;Initial Catalog=DataForgeStudio;Integrated Security=True;TrustServerCertificate=True;
+```
+
+## 故障排除
+
+### 连接失败
+
+1. 确认 SQL Server 服务正在运行
+2. 检查防火墙是否允许 1433 端口
+3. 确认 TCP/IP 协议已启用（SQL Server Configuration Manager）
+
+### 权限问题
 
 ```sql
-RESTORE DATABASE DataForgeStudio_V4
-FROM DISK = 'C:\Backup\DataForgeStudio_V4_backup.bak'
-WITH REPLACE;
-GO
+-- 授予数据库访问权限
+USE DataForgeStudio;
+CREATE USER [your-username] FOR LOGIN [your-username];
+ALTER ROLE db_owner ADD MEMBER [your-username];
+```
+
+### 重置数据库
+
+```sql
+-- 警告：此操作会删除所有数据！
+USE master;
+DROP DATABASE IF EXISTS DataForgeStudio;
+-- 然后重新启动应用程序，会自动创建新数据库
 ```
