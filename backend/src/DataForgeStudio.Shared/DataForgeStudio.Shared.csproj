@@ -9,6 +9,8 @@
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" />
+    <!-- Code Obfuscation -->
+    <PackageReference Include="Obfuscar" Version="2.2.38" PrivateAssets="all" />
   </ItemGroup>
 
 </Project>
