@@ -30,7 +30,7 @@ function Ensure-Directory {
 
 # Step 1: Build Backend API
 if (-not $SkipBackend) {
-    Write-Host "[1/6] Building Backend API..." -ForegroundColor Yellow
+    Write-Host "[1/8] Building Backend API..." -ForegroundColor Yellow
     Push-Location $ProjectRoot
     try {
         dotnet publish backend/src/DataForgeStudio.Api/DataForgeStudio.Api.csproj `
@@ -41,12 +41,12 @@ if (-not $SkipBackend) {
     }
     finally { Pop-Location }
 } else {
-    Write-Host "[1/6] Skipping backend build" -ForegroundColor Gray
+    Write-Host "[1/8] Skipping backend build" -ForegroundColor Gray
 }
 
 # Step 2: Obfuscate critical assemblies
 if (-not $SkipBackend) {
-    Write-Host "[2/6] Obfuscating critical assemblies..." -ForegroundColor Yellow
+    Write-Host "[2/8] Obfuscating critical assemblies..." -ForegroundColor Yellow
     Push-Location (Join-Path $ProjectRoot "backend")
     try {
         dotnet obfuscar.console obfuscar.xml
@@ -75,12 +75,12 @@ if (-not $SkipBackend) {
     }
     finally { Pop-Location }
 } else {
-    Write-Host "[2/6] Skipping obfuscation (backend skipped)" -ForegroundColor Gray
+    Write-Host "[2/8] Skipping obfuscation (backend skipped)" -ForegroundColor Gray
 }
 
 # Step 3: Build Frontend
 if (-not $SkipFrontend) {
-    Write-Host "[3/6] Building Frontend..." -ForegroundColor Yellow
+    Write-Host "[3/8] Building Frontend..." -ForegroundColor Yellow
     $FrontendDir = Join-Path $ProjectRoot "frontend"
     Push-Location $FrontendDir
     try {
@@ -93,11 +93,11 @@ if (-not $SkipFrontend) {
     }
     finally { Pop-Location }
 } else {
-    Write-Host "[3/6] Skipping frontend build" -ForegroundColor Gray
+    Write-Host "[3/8] Skipping frontend build" -ForegroundColor Gray
 }
 
 # Step 4: Build DeployManager (self-contained)
-Write-Host "[4/6] Building DeployManager..." -ForegroundColor Yellow
+Write-Host "[4/8] Building DeployManager..." -ForegroundColor Yellow
 Push-Location $ProjectRoot
 try {
     $ManagerDir = Join-Path $BuildDir "manager"
@@ -145,7 +145,7 @@ try {
 finally { Pop-Location }
 
 # Step 5: Build Configurator
-Write-Host "[5/6] Building Configurator..." -ForegroundColor Yellow
+Write-Host "[5/8] Building Configurator..." -ForegroundColor Yellow
 Push-Location $ProjectRoot
 try {
     $ConfiguratorDir = Join-Path $BuildDir "configurator"
@@ -160,8 +160,24 @@ try {
 }
 finally { Pop-Location }
 
-# Step 6: Copy public key to Server/keys directory
-Write-Host "[6/6] Copying public key to Server..." -ForegroundColor Yellow
+# Step 6: Copy nginx to WebServer directory
+Write-Host "[6/8] Copying nginx to WebServer..." -ForegroundColor Yellow
+$NginxSourceDir = Join-Path $ProjectRoot "resources\nginx"
+$WebServerDir = Join-Path $BuildDir "WebServer"
+
+if (Test-Path $NginxSourceDir) {
+    # Remove old WebServer directory if exists
+    if (Test-Path $WebServerDir) { Remove-Item $WebServerDir -Recurse -Force }
+
+    # Copy nginx files
+    Copy-Item -Path $NginxSourceDir -Destination $WebServerDir -Recurse
+    Write-Host "      Nginx copied to WebServer\" -ForegroundColor Green
+} else {
+    throw "Nginx source directory not found: $NginxSourceDir"
+}
+
+# Step 7: Copy public key to Server/keys directory
+Write-Host "[7/8] Copying public key to Server..." -ForegroundColor Yellow
 $SourceKeysDir = Join-Path $ProjectRoot "backend\src\DataForgeStudio.Api\keys"
 $TargetKeysDir = Join-Path $BuildDir "Server\keys"
 
@@ -184,7 +200,8 @@ if (Test-Path $SourceKeysDir) {
     Write-Host "      Keys will be auto-generated on first run" -ForegroundColor Gray
 }
 
-# Build Inno Setup installer
+# Step 8: Build Inno Setup installer
+Write-Host "[8/8] Building Inno Setup Installer..." -ForegroundColor Yellow
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "Building Inno Setup Installer" -ForegroundColor Cyan
