@@ -91,7 +91,22 @@ test_screenshots/
 
 # Temporary test files
 test_*.py
+*_test.py
 *.png
+
+# Build artifacts (obfuscated output)
+backend/Obfuscated/
+
+# IDE (Visual Studio)
+.vs/
+*.suo
+
+# Browser test generated files
+after-login-*
+home-page
+homepage
+login-page
+user-management
 
 # License keys (sensitive)
 license-keys.json
