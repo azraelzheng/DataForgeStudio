@@ -169,24 +169,33 @@ if (Test-Path $NginxSourceDir) {
     throw "Nginx source directory not found: $NginxSourceDir"
 }
 
-# Step 7: Copy public key to Server/keys directory
-Write-Host "[7/8] Copying public key to Server..." -ForegroundColor Yellow
+# Step 7: Copy keys to Server/keys directory
+Write-Host "[7/8] Copying keys to Server..." -ForegroundColor Yellow
 $SourceKeysDir = Join-Path $ProjectRoot "backend\src\DataForgeStudio.Api\keys"
 $TargetKeysDir = Join-Path $BuildDir "Server\keys"
 
 if (Test-Path $SourceKeysDir) {
     Ensure-Directory $TargetKeysDir
 
-    # Only copy public key (private key should NOT be distributed for security)
+    # Copy both public and private keys for license verification
+    # Note: Private key is needed to sign trial licenses, public key for verification
     $PublicKeySource = Join-Path $SourceKeysDir "public_key.pem"
+    $PrivateKeySource = Join-Path $SourceKeysDir "private_key.pem"
     $PublicKeyTarget = Join-Path $TargetKeysDir "public_key.pem"
+    $PrivateKeyTarget = Join-Path $TargetKeysDir "private_key.pem"
 
     if (Test-Path $PublicKeySource) {
         Copy-Item $PublicKeySource $PublicKeyTarget -Force
         Write-Host "      Public key copied to Server\keys\" -ForegroundColor Green
-        Write-Host "      Note: Private key is NOT included in installer (security)" -ForegroundColor Gray
     } else {
         Write-Host "      WARNING: public_key.pem not found in source" -ForegroundColor Yellow
+    }
+
+    if (Test-Path $PrivateKeySource) {
+        Copy-Item $PrivateKeySource $PrivateKeyTarget -Force
+        Write-Host "      Private key copied to Server\keys\" -ForegroundColor Green
+    } else {
+        Write-Host "      WARNING: private_key.pem not found in source" -ForegroundColor Yellow
     }
 } else {
     Write-Host "      WARNING: Source keys directory not found" -ForegroundColor Yellow
