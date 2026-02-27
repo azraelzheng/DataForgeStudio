@@ -159,28 +159,15 @@
     </template>
   </el-dialog>
 
-  <!-- 帮助文档对话框 -->
-  <el-dialog
-    v-model="helpDialogVisible"
-    :title="helpDialogTitle"
-    width="600px"
-  >
-    <div class="help-content" v-html="helpDialogContent"></div>
-  </el-dialog>
-
-  <!-- 关于对话框 -->
-  <el-dialog
-    v-model="aboutDialogVisible"
-    title="关于"
-    width="400px"
-  >
-    <div class="about-content">
-      <h2>{{ systemInfo.productName }}</h2>
-      <p class="version">版本: {{ systemInfo.version }}</p>
-      <p class="copyright">{{ systemInfo.copyright }}</p>
-      <p class="company" v-if="systemInfo.company">{{ systemInfo.company }}</p>
-    </div>
-  </el-dialog>
+  <!-- 帮助系统对话框组件 -->
+  <HelpDialogs
+    v-model:aboutVisible="aboutDialogVisible"
+    :systemInfo="systemInfo"
+    v-model:documentVisible="helpDialogVisible"
+    :documentTitle="helpDialogTitle"
+    :documentContent="helpDialogContent"
+    :documentType="documentType"
+  />
   </ErrorBoundary>
 </template>
 
@@ -190,6 +177,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from './stores/user'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import ErrorBoundary from './components/ErrorBoundary.vue'
+import HelpDialogs from './components/HelpDialogs.vue'
 import request from './api/request'
 import {
   HomeFilled,
@@ -351,6 +339,7 @@ const handleChangePassword = async () => {
 const helpDialogVisible = ref(false)
 const helpDialogTitle = ref('')
 const helpDialogContent = ref('')
+const documentType = ref('manual')
 const aboutDialogVisible = ref(false)
 const systemInfo = reactive({
   productName: 'DataForgeStudio',
@@ -380,6 +369,7 @@ const fetchDocument = async (type) => {
     const res = await request.get('/system/document', { params: { type } })
     if (res.success && res.data) {
       helpDialogTitle.value = res.data.title
+      documentType.value = type
       // 将换行符转换为 <br>
       helpDialogContent.value = res.data.content?.replace(/\n/g, '<br>') || ''
       helpDialogVisible.value = true
@@ -509,42 +499,6 @@ onMounted(async () => {
 
 .help-btn:hover {
   background-color: #f5f5f5;
-}
-
-.help-content {
-  white-space: pre-wrap;
-  line-height: 1.8;
-  color: #606266;
-  max-height: 60vh;
-  overflow-y: auto;
-}
-
-.about-content {
-  text-align: center;
-  padding: 20px 0;
-}
-
-.about-content h2 {
-  margin: 0 0 16px 0;
-  color: #303133;
-}
-
-.about-content .version {
-  font-size: 16px;
-  color: #606266;
-  margin: 8px 0;
-}
-
-.about-content .copyright {
-  font-size: 14px;
-  color: #909399;
-  margin: 8px 0;
-}
-
-.about-content .company {
-  font-size: 14px;
-  color: #909399;
-  margin: 8px 0;
 }
 
 .main-content {
