@@ -177,41 +177,41 @@ class Program
             }
 
             // Extract resources
-            LogBoth("Extracting patch resources...");
+            LogBoth("正在解压补丁资源...");
             var tempPatchDir = ExtractEmbeddedResources();
             var patchInfo = await ReadPatchInfoFromDirectory(tempPatchDir);
 
             if (patchInfo == null)
             {
-                LogBoth("ERROR: Invalid patch - missing patch-info.json");
-                return (false, "Invalid patch file.", null);
+                LogBoth("错误：无效的补丁文件 - 缺少 patch-info.json");
+                return (false, "无效的补丁文件。", null);
             }
 
-            LogBoth($"Patch Version: {patchInfo.Version}");
-            LogBoth($"Install Path: {installPath}");
+            LogBoth($"补丁版本：{patchInfo.Version}");
+            LogBoth($"安装路径：{installPath}");
 
             // Step 1: Stop services
-            LogBoth("[1/6] Stopping services...");
+            LogBoth("[1/6] 停止服务...");
             await StopServicesAsync(LogBoth);
 
             // Step 2: Backup
-            LogBoth("[2/6] Creating backup...");
+            LogBoth("[2/6] 创建备份...");
             var backupPath = await CreateBackupAsync(installPath, patchInfo.Version, LogBoth);
 
             // Step 3: Update files
-            LogBoth("[3/6] Updating files...");
+            LogBoth("[3/6] 更新文件...");
             await UpdateFilesFromDirectoryAsync(tempPatchDir, installPath, LogBoth);
 
             // Step 4: Run SQL scripts
-            LogBoth("[4/6] Running database updates...");
+            LogBoth("[4/6] 执行数据库更新...");
             await RunDatabaseUpdatesFromDirectoryAsync(tempPatchDir, patchInfo.Version, LogBoth);
 
             // Step 5: Update version
-            LogBoth("[5/6] Updating version info...");
+            LogBoth("[5/6] 更新版本信息...");
             await UpdateVersionInfoAsync(installPath, patchInfo.Version, LogBoth);
 
             // Step 6: Start services
-            LogBoth("[6/6] Starting services...");
+            LogBoth("[6/6] 启动服务...");
             await StartServicesAsync(LogBoth);
 
             // Cleanup
@@ -220,12 +220,12 @@ class Program
                 Directory.Delete(tempPatchDir, true);
             }
 
-            return (true, $"Patch {patchInfo.Version} installed successfully!", backupPath);
+            return (true, $"补丁 {patchInfo.Version} 安装成功！", backupPath);
         }
         catch (Exception ex)
         {
-            LogBoth($"ERROR: {ex.Message}");
-            return (false, $"Installation failed: {ex.Message}", null);
+            LogBoth($"错误：{ex.Message}");
+            return (false, $"安装失败：{ex.Message}", null);
         }
     }
 
@@ -240,23 +240,23 @@ class Program
                 using var controller = new ServiceController(serviceName);
                 if (controller.Status == ServiceControllerStatus.Running)
                 {
-                    log($"  Stopping {serviceName}...");
+                    log($"  正在停止 {serviceName}...");
                     controller.Stop();
                     await Task.Run(() => controller.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(30)));
-                    log($"  {serviceName} stopped.");
+                    log($"  {serviceName} 已停止。");
                 }
                 else
                 {
-                    log($"  {serviceName} is not running");
+                    log($"  {serviceName} 未运行");
                 }
             }
             catch (InvalidOperationException)
             {
-                log($"  {serviceName} not found, skipping...");
+                log($"  {serviceName} 未找到，跳过...");
             }
             catch (Exception ex)
             {
-                log($"  Warning: {ex.Message}");
+                log($"  警告：{ex.Message}");
             }
         }
     }
@@ -274,7 +274,7 @@ class Program
         {
             var backupServerPath = Path.Combine(backupDir, "Server");
             await Task.Run(() => CopyDirectory(serverPath, backupServerPath, "*.dll"));
-            log($"  Backed up Server files");
+            log($"  已备份服务端文件");
         }
 
         var webSitePath = Path.Combine(installPath, "WebSite");
@@ -282,7 +282,7 @@ class Program
         {
             var backupWebPath = Path.Combine(backupDir, "WebSite");
             await Task.Run(() => CopyDirectory(webSitePath, backupWebPath));
-            log($"  Backed up WebSite files");
+            log($"  已备份网站文件");
         }
 
         return backupDir;
@@ -298,7 +298,7 @@ class Program
             {
                 var targetFile = Path.Combine(serverTarget, Path.GetFileName(file));
                 File.Copy(file, targetFile, true);
-                log($"  Updated: {Path.GetFileName(file)}");
+                log($"  已更新：{Path.GetFileName(file)}");
             }
         }
 
@@ -307,7 +307,7 @@ class Program
         {
             var webSiteTarget = Path.Combine(installPath, "WebSite");
             await Task.Run(() => CopyDirectory(webSiteSource, webSiteTarget));
-            log($"  Updated WebSite files");
+            log($"  已更新网站文件");
         }
     }
 
@@ -315,14 +315,14 @@ class Program
     {
         if (string.IsNullOrEmpty(_dbServer) || string.IsNullOrEmpty(_dbName))
         {
-            log("  No database connection info, skipping SQL updates");
+            log("  无数据库连接信息，跳过 SQL 更新");
             return;
         }
 
         var sqlDir = Path.Combine(sourceDir, "sql");
         if (!Directory.Exists(sqlDir))
         {
-            log("  No SQL scripts found");
+            log("  未找到 SQL 脚本");
             return;
         }
 
@@ -330,7 +330,7 @@ class Program
                                $"User Id={_dbUser};Password={_dbPassword};" +
                                "TrustServerCertificate=True;Connection Timeout=30;";
 
-        log($"  Connecting to: {_dbServer}/{_dbName}");
+        log($"  正在连接：{_dbServer}/{_dbName}");
 
         var sqlFiles = Directory.GetFiles(sqlDir, "*.sql").OrderBy(f => f);
 
@@ -339,9 +339,9 @@ class Program
             try
             {
                 var sql = await File.ReadAllTextAsync(sqlFile);
-                log($"  Executing: {Path.GetFileName(sqlFile)}");
+                log($"  正在执行：{Path.GetFileName(sqlFile)}");
                 await ExecuteSqlScriptAsync(connectionString, sql);
-                log($"  Success");
+                log($"  成功");
             }
             catch (Exception ex)
             {
@@ -374,7 +374,7 @@ class Program
     {
         var versionFile = Path.Combine(installPath, "version.txt");
         await File.WriteAllTextAsync(versionFile, $"Version: {version}{Environment.NewLine}Installed: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
-        log($"  Version file updated to {version}");
+        log($"  版本文件已更新为 {version}");
     }
 
     static async Task StartServicesAsync(Action<string> log)
@@ -388,23 +388,23 @@ class Program
                 using var controller = new ServiceController(serviceName);
                 if (controller.Status == ServiceControllerStatus.Stopped)
                 {
-                    log($"  Starting {serviceName}...");
+                    log($"  正在启动 {serviceName}...");
                     controller.Start();
                     await Task.Run(() => controller.WaitForStatus(ServiceControllerStatus.Running, TimeSpan.FromSeconds(30)));
-                    log($"  {serviceName} started.");
+                    log($"  {serviceName} 已启动。");
                 }
                 else
                 {
-                    log($"  {serviceName} already running");
+                    log($"  {serviceName} 已在运行");
                 }
             }
             catch (InvalidOperationException)
             {
-                log($"  {serviceName} not found");
+                log($"  {serviceName} 未找到");
             }
             catch (Exception ex)
             {
-                log($"  Warning: {ex.Message}");
+                log($"  警告：{ex.Message}");
             }
         }
     }
@@ -433,8 +433,13 @@ class Program
 
 class PatchInfo
 {
+    [System.Text.Json.Serialization.JsonPropertyName("version")]
     public string Version { get; set; } = "";
+
+    [System.Text.Json.Serialization.JsonPropertyName("buildDate")]
     public string BuildDate { get; set; } = "";
+
+    [System.Text.Json.Serialization.JsonPropertyName("type")]
     public string Type { get; set; } = "";
 }
 
@@ -734,17 +739,17 @@ class PatchInstallerForm : Form
         {
             AppendLog("");
             AppendLog("========================================");
-            AppendLog("Installation completed successfully!");
+            AppendLog("安装成功完成！");
             if (!string.IsNullOrEmpty(backupPath))
             {
-                AppendLog($"Backup: {backupPath}");
+                AppendLog($"备份位置：{backupPath}");
             }
             AppendLog("========================================");
 
             MessageBox.Show(message, "成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-            _cancelButton.Text = "关闭";
-            _cancelButton.Enabled = true;
+            // Close the program after successful installation
+            Close();
         }
         else
         {
