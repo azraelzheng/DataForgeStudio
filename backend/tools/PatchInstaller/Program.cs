@@ -444,16 +444,11 @@ class PatchInfo
 class PatchInstallerForm : Form
 {
     private TextBox _installPathTextBox = null!;
-    private TextBox _dbServerTextBox = null!;
-    private TextBox _dbNameTextBox = null!;
-    private TextBox _dbUserTextBox = null!;
-    private TextBox _dbPasswordTextBox = null!;
     private TextBox _logTextBox = null!;
     private Button _installButton = null!;
     private Button _cancelButton = null!;
     private Button _browseButton = null!;
     private ProgressBar _progressBar = null!;
-    private GroupBox _dbGroup = null!;
 
     public PatchInstallerForm()
     {
@@ -465,7 +460,7 @@ class PatchInstallerForm : Form
     {
         // Form settings
         Text = $"DataForgeStudio 补丁安装程序 - V{Program._patchVersion}";
-        Size = new Size(600, 550);
+        Size = new Size(600, 420);
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
         MinimizeBox = false;
@@ -516,57 +511,6 @@ class PatchInstallerForm : Form
         _browseButton.Click += BrowseButton_Click;
         mainPanel.Controls.Add(_browseButton);
         yPos += 55;
-
-        // Database settings group
-        _dbGroup = new GroupBox
-        {
-            Text = "Database Settings (Optional - for SQL updates)",
-            Location = new Point(20, yPos),
-            Size = new Size(540, 130),
-            Font = new Font("Segoe UI", 9)
-        };
-
-        var dbYPos = 22;
-
-        // DB Server
-        var dbServerLabel = new Label { Text = "Server:", Location = new Point(15, dbYPos), Size = new Size(80, 20) };
-        _dbGroup.Controls.Add(dbServerLabel);
-        _dbServerTextBox = new TextBox { Location = new Point(100, dbYPos - 2), Size = new Size(150, 25) };
-        _dbGroup.Controls.Add(_dbServerTextBox);
-
-        // DB Name
-        var dbNameLabel = new Label { Text = "Database:", Location = new Point(270, dbYPos), Size = new Size(70, 20) };
-        _dbGroup.Controls.Add(dbNameLabel);
-        _dbNameTextBox = new TextBox { Location = new Point(345, dbYPos - 2), Size = new Size(150, 25) };
-        _dbGroup.Controls.Add(_dbNameTextBox);
-        dbYPos += 35;
-
-        // DB User
-        var dbUserLabel = new Label { Text = "Username:", Location = new Point(15, dbYPos), Size = new Size(80, 20) };
-        _dbGroup.Controls.Add(dbUserLabel);
-        _dbUserTextBox = new TextBox { Location = new Point(100, dbYPos - 2), Size = new Size(150, 25) };
-        _dbGroup.Controls.Add(_dbUserTextBox);
-
-        // DB Password
-        var dbPassLabel = new Label { Text = "Password:", Location = new Point(270, dbYPos), Size = new Size(70, 20) };
-        _dbGroup.Controls.Add(dbPassLabel);
-        _dbPasswordTextBox = new TextBox { Location = new Point(345, dbYPos - 2), Size = new Size(150, 25), UseSystemPasswordChar = true };
-        _dbGroup.Controls.Add(_dbPasswordTextBox);
-        dbYPos += 35;
-
-        // Note
-        var noteLabel = new Label
-        {
-            Text = "Note: Leave empty if no database updates are required.",
-            Location = new Point(15, dbYPos),
-            Size = new Size(500, 20),
-            ForeColor = Color.Gray,
-            Font = new Font("Segoe UI", 8)
-        };
-        _dbGroup.Controls.Add(noteLabel);
-
-        mainPanel.Controls.Add(_dbGroup);
-        yPos += 140;
 
         // Progress bar
         _progressBar = new ProgressBar
@@ -652,12 +596,6 @@ class PatchInstallerForm : Form
                 }
             }
         }
-
-        // Default database values
-        _dbServerTextBox.Text = Program._dbServer ?? "";
-        _dbNameTextBox.Text = Program._dbName ?? "DataForgeStudio";
-        _dbUserTextBox.Text = Program._dbUser ?? "sa";
-        _dbPasswordTextBox.Text = Program._dbPassword ?? "";
     }
 
     void BrowseButton_Click(object? sender, EventArgs e)
@@ -703,17 +641,16 @@ class PatchInstallerForm : Form
         _cancelButton.Enabled = false;
         _installPathTextBox.Enabled = false;
         _browseButton.Enabled = false;
-        _dbGroup.Enabled = false;
         _progressBar.Visible = true;
         _logTextBox.Clear();
 
         // Run installation
         var (success, message, backupPath) = await Program.RunInstallationAsync(
             installPath,
-            string.IsNullOrWhiteSpace(_dbServerTextBox.Text) ? null : _dbServerTextBox.Text,
-            string.IsNullOrWhiteSpace(_dbNameTextBox.Text) ? null : _dbNameTextBox.Text,
-            string.IsNullOrWhiteSpace(_dbUserTextBox.Text) ? null : _dbUserTextBox.Text,
-            string.IsNullOrWhiteSpace(_dbPasswordTextBox.Text) ? null : _dbPasswordTextBox.Text,
+            Program._dbServer,
+            Program._dbName,
+            Program._dbUser,
+            Program._dbPassword,
             msg => AppendLog(msg)
         );
 
@@ -748,7 +685,6 @@ class PatchInstallerForm : Form
             _cancelButton.Enabled = true;
             _installPathTextBox.Enabled = true;
             _browseButton.Enabled = true;
-            _dbGroup.Enabled = true;
         }
     }
 
