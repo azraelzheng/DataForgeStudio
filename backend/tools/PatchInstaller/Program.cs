@@ -596,6 +596,78 @@ class PatchInstallerForm : Form
                 }
             }
         }
+
+        // 如果目录存在，自动读取配置
+        if (Directory.Exists(_installPathTextBox.Text))
+        {
+            LoadDatabaseConfig(_installPathTextBox.Text);
+        }
+    }
+
+    /// <summary>
+    /// 从安装目录的 appsettings.json 读取数据库配置
+    /// </summary>
+    void LoadDatabaseConfig(string installPath)
+    {
+        var configPath = Path.Combine(installPath, "Server", "appsettings.json");
+        if (!File.Exists(configPath))
+        {
+            return;
+        }
+
+        try
+        {
+            var json = File.ReadAllText(configPath);
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+
+            if (root.TryGetProperty("ConnectionStrings", out var connStrings) &&
+                connStrings.TryGetProperty("DefaultConnection", out var defaultConn))
+            {
+                var connectionString = defaultConn.GetString() ?? "";
+                ParseConnectionString(connectionString);
+            }
+        }
+        catch
+        {
+            // 忽略解析错误，使用默认值
+        }
+    }
+
+    /// <summary>
+    /// 解析连接字符串，提取数据库配置
+    /// </summary>
+    void ParseConnectionString(string connectionString)
+    {
+        var parts = connectionString.Split(';');
+        foreach (var part in parts)
+        {
+            var kv = part.Split('=', 2);
+            if (kv.Length != 2) continue;
+
+            var key = kv[0].Trim().ToLower();
+            var value = kv[1].Trim();
+
+            switch (key)
+            {
+                case "data source":
+                case "server":
+                    Program._dbServer = value.Replace("tcp:", "");
+                    break;
+                case "initial catalog":
+                case "database":
+                    Program._dbName = value;
+                    break;
+                case "user id":
+                case "uid":
+                    Program._dbUser = value;
+                    break;
+                case "password":
+                case "pwd":
+                    Program._dbPassword = value;
+                    break;
+            }
+        }
     }
 
     void BrowseButton_Click(object? sender, EventArgs e)
@@ -614,6 +686,7 @@ class PatchInstallerForm : Form
         if (dialog.ShowDialog() == DialogResult.OK)
         {
             _installPathTextBox.Text = dialog.SelectedPath;
+            LoadDatabaseConfig(dialog.SelectedPath);  // 自动读取数据库配置
         }
     }
 
