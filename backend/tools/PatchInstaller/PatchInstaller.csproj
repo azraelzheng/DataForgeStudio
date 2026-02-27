@@ -12,6 +12,7 @@
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <AssemblyName>PatchInstaller</AssemblyName>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <ApplicationIcon>..\..\..\resources\icons\app.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
