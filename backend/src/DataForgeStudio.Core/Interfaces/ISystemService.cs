@@ -86,4 +86,15 @@ public interface ISystemService
     /// 切换备份计划启用状态
     /// </summary>
     Task<ApiResponse> ToggleBackupScheduleAsync(int scheduleId);
+
+    /// <summary>
+    /// 获取系统信息（版本号等）
+    /// </summary>
+    ApiResponse<SystemInfoDto> GetSystemInfo();
+
+    /// <summary>
+    /// 获取文档内容
+    /// </summary>
+    /// <param name="type">文档类型: eula, privacy, manual</param>
+    ApiResponse<DocumentDto> GetDocument(string type);
 }

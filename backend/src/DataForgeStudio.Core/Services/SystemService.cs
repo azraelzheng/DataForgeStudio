@@ -822,4 +822,155 @@ public class SystemService : ISystemService
     }
 
     #endregion
+
+    #region 系统信息与帮助文档
+
+    /// <summary>
+    /// 获取系统信息
+    /// </summary>
+    public ApiResponse<SystemInfoDto> GetSystemInfo()
+    {
+        var version = typeof(SystemService).Assembly.GetName().Version?.ToString(3) ?? "1.0.0";
+        var dto = new SystemInfoDto
+        {
+            ProductName = "DataForgeStudio",
+            Version = version,
+            Copyright = $"Copyright © {DateTime.Now.Year}",
+            Company = "DataForge"
+        };
+        return ApiResponse<SystemInfoDto>.Ok(dto);
+    }
+
+    /// <summary>
+    /// 获取文档内容
+    /// </summary>
+    public ApiResponse<DocumentDto> GetDocument(string type)
+    {
+        var (title, fileName) = type.ToLower() switch
+        {
+            "eula" => ("用户协议", "EULA.txt"),
+            "privacy" => ("隐私政策", "PRIVACY.txt"),
+            "manual" => ("用户手册", "USER-MANUAL.txt"),
+            _ => ("", "")
+        };
+
+        if (string.IsNullOrEmpty(title))
+        {
+            return ApiResponse<DocumentDto>.Fail("不支持的文档类型", "INVALID_TYPE");
+        }
+
+        try
+        {
+            // 尝试从 docs 目录读取文件
+            var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            var docPath = Path.Combine(baseDir, "docs", fileName);
+
+            // 如果 docs 目录不存在，尝试从上级目录查找
+            if (!File.Exists(docPath))
+            {
+                docPath = Path.Combine(baseDir, "..", "docs", fileName);
+            }
+
+            string content;
+            if (File.Exists(docPath))
+            {
+                content = File.ReadAllText(docPath, System.Text.Encoding.UTF8);
+            }
+            else
+            {
+                // 如果文件不存在，返回默认内容
+                content = type.ToLower() switch
+                {
+                    "eula" => GetDefaultEULA(),
+                    "privacy" => GetDefaultPrivacy(),
+                    "manual" => GetDefaultManual(),
+                    _ => ""
+                };
+            }
+
+            return ApiResponse<DocumentDto>.Ok(new DocumentDto
+            {
+                Title = title,
+                Content = content
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "读取文档失败: {Type}", type);
+            return ApiResponse<DocumentDto>.Fail("读取文档失败", "READ_ERROR");
+        }
+    }
+
+    private static string GetDefaultEULA()
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("End User License Agreement (EULA)");
+        sb.AppendLine();
+        sb.AppendLine("DataForgeStudio");
+        sb.AppendLine();
+        sb.AppendLine("1. License Grant");
+        sb.AppendLine("This software is licensed for use on a single machine.");
+        sb.AppendLine();
+        sb.AppendLine("2. Restrictions");
+        sb.AppendLine("You may not reverse engineer, decompile, or disassemble this software.");
+        sb.AppendLine();
+        sb.AppendLine("3. Disclaimer");
+        sb.AppendLine("This software is provided as-is without any warranty.");
+        sb.AppendLine();
+        sb.AppendLine("4. Intellectual Property");
+        sb.AppendLine("All rights reserved by the developer.");
+        sb.AppendLine();
+        sb.AppendLine("Contact: 14279807@qq.com");
+        return sb.ToString();
+    }
+
+    private static string GetDefaultPrivacy()
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("Privacy Policy");
+        sb.AppendLine();
+        sb.AppendLine("DataForgeStudio");
+        sb.AppendLine();
+        sb.AppendLine("1. Information Collection");
+        sb.AppendLine("This software stores configuration and logs locally only.");
+        sb.AppendLine();
+        sb.AppendLine("2. Data Security");
+        sb.AppendLine("All sensitive data is encrypted before storage.");
+        sb.AppendLine();
+        sb.AppendLine("3. Data Transfer");
+        sb.AppendLine("No data is transmitted to external servers.");
+        sb.AppendLine();
+        sb.AppendLine("4. User Rights");
+        sb.AppendLine("Users have the right to delete their data.");
+        sb.AppendLine();
+        sb.AppendLine("Last Updated: January 2026");
+        return sb.ToString();
+    }
+
+    private static string GetDefaultManual()
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("DataForgeStudio User Manual");
+        sb.AppendLine();
+        sb.AppendLine("1. Overview");
+        sb.AppendLine("DataForgeStudio is a report management system with multi-datasource support.");
+        sb.AppendLine();
+        sb.AppendLine("2. Main Features");
+        sb.AppendLine("- Report Query: Execute reports and export data");
+        sb.AppendLine("- Report Design: Create and edit SQL reports");
+        sb.AppendLine("- Data Source: Configure database connections");
+        sb.AppendLine("- User Management: Manage users and permissions");
+        sb.AppendLine("- License: View and manage software license");
+        sb.AppendLine();
+        sb.AppendLine("3. Quick Start");
+        sb.AppendLine("1) Login with admin account");
+        sb.AppendLine("2) Add database connection in Data Source");
+        sb.AppendLine("3) Create report in Report Design");
+        sb.AppendLine("4) Execute report in Report Query");
+        sb.AppendLine();
+        sb.AppendLine("For detailed help, contact support.");
+        return sb.ToString();
+    }
+
+    #endregion
 }

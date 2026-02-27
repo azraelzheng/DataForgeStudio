@@ -29,7 +29,7 @@
             </div>
           </template>
           <el-descriptions :column="1" border v-if="licenseStore.license">
-            <el-descriptions-item label="产品名称">DataForgeStudio V1.0</el-descriptions-item>
+            <el-descriptions-item label="产品名称">DataForgeStudio</el-descriptions-item>
             <el-descriptions-item label="许可证类型">
               <el-tag :type="licenseStore.isTrial ? 'warning' : 'success'">
                 {{ getLicenseTypeText(licenseStore.license.licenseType) }}

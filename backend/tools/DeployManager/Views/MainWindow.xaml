@@ -186,10 +186,6 @@
                               Foreground="#AAFFFFFF" VerticalAlignment="Center" Margin="0,0,6,0"/>
                     <TextBlock Text="{Binding ModeText}" Foreground="#CCFFFFFF" FontSize="13" VerticalAlignment="Center"/>
                 </StackPanel>
-
-                <!-- 版权信息 -->
-                <TextBlock Grid.Column="3" Text="DataForgeStudio V4" Foreground="#88FFFFFF"
-                          FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Right"/>
             </Grid>
         </Border>
     </Grid>

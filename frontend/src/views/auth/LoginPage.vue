@@ -3,7 +3,7 @@
     <div class="login-card">
       <div class="login-header">
         <h1>DataForgeStudio</h1>
-        <p>报表管理系统 V1.0</p>
+        <p>报表管理系统</p>
       </div>
 
       <el-form ref="formRef" :model="loginForm" :rules="rules" @submit.prevent="handleLogin" class="login-form">
@@ -46,7 +46,7 @@
       </el-form>
 
       <div class="login-footer">
-        <p>DataForgeStudio V1.0</p>
+        <p>DataForgeStudio</p>
       </div>
     </div>
   </div>

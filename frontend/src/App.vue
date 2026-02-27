@@ -96,6 +96,21 @@
         </div>
 
         <div class="header-right">
+          <!-- 帮助按钮 -->
+          <el-dropdown @command="handleHelpCommand" trigger="click">
+            <span class="help-btn">
+              <el-icon><QuestionFilled /></el-icon>
+            </span>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="about">关于</el-dropdown-item>
+                <el-dropdown-item command="manual">帮助文档</el-dropdown-item>
+                <el-dropdown-item command="eula">用户协议</el-dropdown-item>
+                <el-dropdown-item command="privacy">隐私政策</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+
           <el-dropdown @command="handleCommand">
             <span class="user-info">
               <el-icon><User /></el-icon>
@@ -143,6 +158,29 @@
       <el-button type="primary" @click="handleChangePassword" :loading="passwordSubmitting">确定</el-button>
     </template>
   </el-dialog>
+
+  <!-- 帮助文档对话框 -->
+  <el-dialog
+    v-model="helpDialogVisible"
+    :title="helpDialogTitle"
+    width="600px"
+  >
+    <div class="help-content" v-html="helpDialogContent"></div>
+  </el-dialog>
+
+  <!-- 关于对话框 -->
+  <el-dialog
+    v-model="aboutDialogVisible"
+    title="关于"
+    width="400px"
+  >
+    <div class="about-content">
+      <h2>{{ systemInfo.productName }}</h2>
+      <p class="version">版本: {{ systemInfo.version }}</p>
+      <p class="copyright">{{ systemInfo.copyright }}</p>
+      <p class="company" v-if="systemInfo.company">{{ systemInfo.company }}</p>
+    </div>
+  </el-dialog>
   </ErrorBoundary>
 </template>
 
@@ -152,6 +190,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from './stores/user'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import ErrorBoundary from './components/ErrorBoundary.vue'
+import request from './api/request'
 import {
   HomeFilled,
   Fold,
@@ -166,7 +205,8 @@ import {
   Coin,
   DocumentCopy,
   FolderOpened,
-  Loading
+  Loading,
+  QuestionFilled
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
@@ -177,15 +217,6 @@ const isCollapse = ref(false)
 const isAuthChecking = ref(true)
 
 const currentRoute = computed(() => route)
-
-onMounted(async () => {
-  const isValid = await userStore.checkAuth()
-  isAuthChecking.value = false
-
-  if (!isValid && route.path !== '/login') {
-    router.push('/login')
-  }
-})
 
 const activeMenu = computed(() => {
   const path = route.path
@@ -315,6 +346,82 @@ const handleChangePassword = async () => {
     passwordSubmitting.value = false
   }
 }
+
+// 帮助系统
+const helpDialogVisible = ref(false)
+const helpDialogTitle = ref('')
+const helpDialogContent = ref('')
+const aboutDialogVisible = ref(false)
+const systemInfo = reactive({
+  productName: 'DataForgeStudio',
+  version: '',
+  copyright: '',
+  company: ''
+})
+
+// 获取系统信息
+const fetchSystemInfo = async () => {
+  try {
+    const res = await request.get('/system/info')
+    if (res.success && res.data) {
+      systemInfo.productName = res.data.productName || 'DataForgeStudio'
+      systemInfo.version = res.data.version || ''
+      systemInfo.copyright = res.data.copyright || ''
+      systemInfo.company = res.data.company || ''
+    }
+  } catch {
+    // 忽略错误
+  }
+}
+
+// 获取文档内容
+const fetchDocument = async (type) => {
+  try {
+    const res = await request.get('/system/document', { params: { type } })
+    if (res.success && res.data) {
+      helpDialogTitle.value = res.data.title
+      // 将换行符转换为 <br>
+      helpDialogContent.value = res.data.content?.replace(/\n/g, '<br>') || ''
+      helpDialogVisible.value = true
+    }
+  } catch {
+    ElMessage.error('获取文档失败')
+  }
+}
+
+// 处理帮助菜单命令
+const handleHelpCommand = async (command) => {
+  switch (command) {
+    case 'about':
+      await fetchSystemInfo()
+      aboutDialogVisible.value = true
+      break
+    case 'manual':
+      await fetchDocument('manual')
+      break
+    case 'eula':
+      await fetchDocument('eula')
+      break
+    case 'privacy':
+      await fetchDocument('privacy')
+      break
+  }
+}
+
+// 组件挂载时获取系统信息
+onMounted(async () => {
+  const isValid = await userStore.checkAuth()
+  isAuthChecking.value = false
+
+  if (!isValid && route.path !== '/login') {
+    router.push('/login')
+  }
+
+  // 获取系统信息（用于关于对话框）
+  if (isValid) {
+    fetchSystemInfo()
+  }
+})
 </script>
 
 <style scoped>
@@ -387,6 +494,57 @@ const handleChangePassword = async () => {
 
 .user-info:hover {
   background-color: #f5f5f5;
+}
+
+.help-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: background-color 0.3s;
+}
+
+.help-btn:hover {
+  background-color: #f5f5f5;
+}
+
+.help-content {
+  white-space: pre-wrap;
+  line-height: 1.8;
+  color: #606266;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.about-content {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.about-content h2 {
+  margin: 0 0 16px 0;
+  color: #303133;
+}
+
+.about-content .version {
+  font-size: 16px;
+  color: #606266;
+  margin: 8px 0;
+}
+
+.about-content .copyright {
+  font-size: 14px;
+  color: #909399;
+  margin: 8px 0;
+}
+
+.about-content .company {
+  font-size: 14px;
+  color: #909399;
+  margin: 8px 0;
 }
 
 .main-content {

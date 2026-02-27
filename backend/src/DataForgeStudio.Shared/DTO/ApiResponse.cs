@@ -822,3 +822,45 @@ public class LicenseUsageStatsDto
     /// </summary>
     public int CurrentDataSources { get; set; }
 }
+
+/// <summary>
+/// 系统信息 DTO
+/// </summary>
+public class SystemInfoDto
+{
+    /// <summary>
+    /// 产品名称
+    /// </summary>
+    public required string ProductName { get; set; }
+
+    /// <summary>
+    /// 版本号
+    /// </summary>
+    public required string Version { get; set; }
+
+    /// <summary>
+    /// 版权信息
+    /// </summary>
+    public required string Copyright { get; set; }
+
+    /// <summary>
+    /// 公司名称
+    /// </summary>
+    public string? Company { get; set; }
+}
+
+/// <summary>
+/// 文档 DTO
+/// </summary>
+public class DocumentDto
+{
+    /// <summary>
+    /// 文档标题
+    /// </summary>
+    public required string Title { get; set; }
+
+    /// <summary>
+    /// 文档内容
+    /// </summary>
+    public required string Content { get; set; }
+}

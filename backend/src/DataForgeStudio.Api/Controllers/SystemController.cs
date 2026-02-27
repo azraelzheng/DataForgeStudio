@@ -265,4 +265,29 @@ public class SystemController : ControllerBase
     }
 
     #endregion
+
+    #region 系统信息与帮助文档
+
+    /// <summary>
+    /// 获取系统信息（版本号等）- 无需认证
+    /// </summary>
+    [HttpGet("info")]
+    [AllowAnonymous]
+    public ApiResponse<SystemInfoDto> GetSystemInfo()
+    {
+        return _systemService.GetSystemInfo();
+    }
+
+    /// <summary>
+    /// 获取文档内容 - 无需认证
+    /// </summary>
+    /// <param name="type">文档类型: eula, privacy, manual</param>
+    [HttpGet("document")]
+    [AllowAnonymous]
+    public ApiResponse<DocumentDto> GetDocument([FromQuery] string type)
+    {
+        return _systemService.GetDocument(type);
+    }
+
+    #endregion
 }

@@ -285,6 +285,22 @@ class Program
             log($"  已备份网站文件");
         }
 
+        var docsPath = Path.Combine(installPath, "docs");
+        if (Directory.Exists(docsPath))
+        {
+            var backupDocsPath = Path.Combine(backupDir, "docs");
+            await Task.Run(() => CopyDirectory(docsPath, backupDocsPath));
+            log($"  已备份文档文件");
+        }
+
+        var managerPath = Path.Combine(installPath, "Manager");
+        if (Directory.Exists(managerPath))
+        {
+            var backupManagerPath = Path.Combine(backupDir, "Manager");
+            await Task.Run(() => CopyDirectory(managerPath, backupManagerPath, "*.dll"));
+            log($"  已备份管理工具文件");
+        }
+
         return backupDir;
     }
 
@@ -308,6 +324,28 @@ class Program
             var webSiteTarget = Path.Combine(installPath, "WebSite");
             await Task.Run(() => CopyDirectory(webSiteSource, webSiteTarget));
             log($"  已更新网站文件");
+        }
+
+        // Update docs folder (help documents)
+        var docsSource = Path.Combine(sourceDir, "docs");
+        if (Directory.Exists(docsSource))
+        {
+            var docsTarget = Path.Combine(installPath, "docs");
+            await Task.Run(() => CopyDirectory(docsSource, docsTarget));
+            log($"  已更新文档文件");
+        }
+
+        // Update Manager folder (DeployManager)
+        var managerSource = Path.Combine(sourceDir, "Manager");
+        if (Directory.Exists(managerSource))
+        {
+            var managerTarget = Path.Combine(installPath, "Manager");
+            foreach (var file in Directory.GetFiles(managerSource, "*.dll"))
+            {
+                var targetFile = Path.Combine(managerTarget, Path.GetFileName(file));
+                File.Copy(file, targetFile, true);
+                log($"  已更新：Manager/{Path.GetFileName(file)}");
+            }
         }
     }
 

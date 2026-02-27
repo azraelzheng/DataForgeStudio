@@ -83,6 +83,8 @@ Source: "{#BuildDir}\Server\*"; DestDir: "{app}\Server"; Flags: ignoreversion re
 Source: "{#BuildDir}\WebSite\*"; DestDir: "{app}\WebSite"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#BuildDir}\WebServer\*"; DestDir: "{app}\WebServer"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#BuildDir}\manager\*"; DestDir: "{app}\Manager"; Flags: ignoreversion recursesubdirs createallsubdirs
+; 文档文件
+Source: "{#ProjectRoot}\resources\docs\*.txt"; DestDir: "{app}\docs"; Flags: ignoreversion
 ; nssm.exe 已经包含在 manager 目录中（由 build-installer.ps1 复制）
 ; tools\scripts 目录已移除（不再需要）
 

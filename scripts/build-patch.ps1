@@ -143,6 +143,28 @@ $VersionInfo = @{
 }
 $VersionInfo | ConvertTo-Json | Out-File (Join-Path $PatchContentDir "patch-info.json") -Encoding UTF8
 
+# Copy docs folder (for help documents)
+$DocsSourceDir = Join-Path $ProjectRoot "resources\docs"
+if (Test-Path $DocsSourceDir) {
+    $DocsTargetDir = Join-Path $PatchContentDir "docs"
+    Copy-Item -Path $DocsSourceDir -Destination $DocsTargetDir -Recurse
+    Write-Host "      Added docs folder" -ForegroundColor Green
+}
+
+# Copy DeployManager for Manager directory update
+$DeployManagerSource = Join-Path $ProjectRoot "backend\tools\DeployManager\bin\Release\net8.0-windows\DeployManager.dll"
+if (Test-Path $DeployManagerSource) {
+    $ManagerDir = Join-Path $PatchContentDir "Manager"
+    New-Item -ItemType Directory -Path $ManagerDir -Force | Out-Null
+    Copy-Item -Path $DeployManagerSource -Destination $ManagerDir -Force
+    # Also copy Shared.dll which DeployManager depends on
+    $SharedSource = Join-Path $ProjectRoot "backend\tools\DeployManager\bin\Release\net8.0-windows\DataForgeStudio.Shared.dll"
+    if (Test-Path $SharedSource) {
+        Copy-Item -Path $SharedSource -Destination $ManagerDir -Force
+    }
+    Write-Host "      Added DeployManager" -ForegroundColor Green
+}
+
 # Create patch.zip in PatchInstaller directory (will be embedded)
 Compress-Archive -Path "$PatchContentDir\*" -DestinationPath $PatchZipPath -Force
 Write-Host "      patch.zip created" -ForegroundColor Green
