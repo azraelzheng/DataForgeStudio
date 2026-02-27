@@ -1,14 +1,15 @@
 using System.Diagnostics;
+using System.Drawing;
 using System.IO.Compression;
 using System.Reflection;
 using System.ServiceProcess;
 using System.Text.Json;
+using System.Windows.Forms;
 
 namespace PatchInstaller;
 
 /// <summary>
-/// DataForgeStudio Patch Installer
-/// Single EXE with embedded patch resources
+/// DataForgeStudio Patch Installer with GUI
 /// </summary>
 class Program
 {
@@ -16,163 +17,54 @@ class Program
         Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
         "DataForgeStudio", "Logs", $"patch-install-{DateTime.Now:yyyyMMdd-HHmmss}.log");
 
-    // Embedded resource zip name
     private const string EmbeddedResourceName = "patch-resources.zip";
 
-    private static string? _installPath;
-    private static string? _dbServer;
-    private static string? _dbName;
-    private static string? _dbUser;
-    private static string? _dbPassword;
+    internal static string? _installPath;
+    internal static string? _dbServer;
+    internal static string? _dbName;
+    internal static string? _dbUser;
+    internal static string? _dbPassword;
     private static bool _embeddedMode = false;
+    private static PatchInfo? _patchInfo;
+    internal static string _patchVersion = "Unknown";
 
-    static async Task<int> Main(string[] args)
+    [STAThread]
+    static void Main(string[] args)
     {
-        Console.Title = "DataForgeStudio Patch Installer";
-        Console.OutputEncoding = System.Text.Encoding.UTF8;
+        Application.EnableVisualStyles();
+        Application.SetCompatibleTextRenderingDefault(false);
 
-        PrintHeader();
-
-        // Check if we have embedded resources
+        // Check embedded resources
         _embeddedMode = HasEmbeddedResources();
 
+        // Try to get patch info for display
         if (_embeddedMode)
         {
-            Log("Running in embedded mode (single EXE patch)");
-        }
-
-        // Parse arguments
-        if (!ParseArguments(args))
-        {
-            PrintUsage();
-            return 1;
-        }
-
-        try
-        {
-            // Ensure log directory exists
-            Directory.CreateDirectory(Path.GetDirectoryName(LogFile)!);
-
-            // Extract embedded resources or read from zip
-            string tempPatchDir;
-            PatchInfo? patchInfo;
-
-            if (_embeddedMode)
+            try
             {
-                Log("Extracting embedded patch resources...");
-                tempPatchDir = ExtractEmbeddedResources();
-                patchInfo = await ReadPatchInfoFromDirectory(tempPatchDir);
-            }
-            else
-            {
-                Log("ERROR: No embedded resources found. This patch was not built correctly.");
-                return 1;
-            }
-
-            if (patchInfo == null)
-            {
-                Log("ERROR: Invalid patch - missing patch-info.json");
-                return 1;
-            }
-
-            Log($"Patch Version: {patchInfo.Version}");
-            Log($"Patch Type: {patchInfo.Type}");
-            Log($"Install Path: {_installPath}");
-            Log("");
-
-            // Confirm installation
-            if (!args.Contains("-y") && !args.Contains("--yes"))
-            {
-                Console.Write("Continue with installation? (Y/N): ");
-                var response = Console.ReadLine();
-                if (response?.ToUpper() != "Y")
+                var tempDir = ExtractEmbeddedResources();
+                _patchInfo = ReadPatchInfoFromDirectory(tempDir).Result;
+                if (_patchInfo != null)
                 {
-                    Log("Installation cancelled by user.");
-                    return 0;
+                    _patchVersion = _patchInfo.Version;
+                }
+                // Clean up temp dir, we'll extract again during install
+                if (Directory.Exists(tempDir))
+                {
+                    Directory.Delete(tempDir, true);
                 }
             }
-
-            // Step 1: Stop services
-            Log("[Step 1/6] Stopping services...");
-            await StopServicesAsync();
-
-            // Step 2: Backup current version
-            Log("[Step 2/6] Creating backup...");
-            var backupPath = await CreateBackupAsync(_installPath!, patchInfo.Version);
-
-            // Step 3: Update files
-            Log("[Step 3/6] Updating files...");
-            await UpdateFilesFromDirectoryAsync(tempPatchDir, _installPath!);
-
-            // Step 4: Run SQL scripts (if any)
-            Log("[Step 4/6] Running database updates...");
-            await RunDatabaseUpdatesFromDirectoryAsync(tempPatchDir, patchInfo.Version);
-
-            // Step 5: Update version info
-            Log("[Step 5/6] Updating version info...");
-            await UpdateVersionInfoAsync(_installPath!, patchInfo.Version);
-
-            // Step 6: Start services
-            Log("[Step 6/6] Starting services...");
-            await StartServicesAsync();
-
-            // Cleanup temp directory
-            if (Directory.Exists(tempPatchDir))
-            {
-                Directory.Delete(tempPatchDir, true);
-            }
-
-            Log("");
-            Log("========================================");
-            Log("Patch installation completed successfully!");
-            Log($"Version: {patchInfo.Version}");
-            Log($"Backup: {backupPath}");
-            Log($"Log: {LogFile}");
-            Log("========================================");
-
-            return 0;
+            catch { /* Ignore errors during info extraction */ }
         }
-        catch (Exception ex)
-        {
-            Log($"ERROR: {ex.Message}");
-            Log($"Stack trace: {ex.StackTrace}");
-            return 1;
-        }
+
+        // Parse command line args for defaults
+        ParseArguments(args);
+
+        // Show GUI
+        Application.Run(new PatchInstallerForm());
     }
 
-    static void PrintHeader()
-    {
-        Console.WriteLine("========================================");
-        Console.WriteLine("  DataForgeStudio Patch Installer");
-        Console.WriteLine("========================================");
-        Console.WriteLine();
-    }
-
-    static void PrintUsage()
-    {
-        Console.WriteLine("Usage: PatchInstaller.exe [options]");
-        Console.WriteLine();
-        Console.WriteLine("Required options:");
-        Console.WriteLine("  -i, --install-path <path> Installation directory");
-        Console.WriteLine();
-        Console.WriteLine("Database options (required for SQL updates):");
-        Console.WriteLine("  --db-server <server>    Database server");
-        Console.WriteLine("  --db-name <name>        Database name");
-        Console.WriteLine("  --db-user <user>        Database username");
-        Console.WriteLine("  --db-password <pass>    Database password");
-        Console.WriteLine();
-        Console.WriteLine("Other options:");
-        Console.WriteLine("  -y, --yes               Skip confirmation prompt");
-        Console.WriteLine("  -h, --help              Show this help message");
-        Console.WriteLine();
-        Console.WriteLine("Example:");
-        Console.WriteLine("  PatchInstaller.exe -i \"C:\\Program Files\\DataForgeStudio\"");
-        Console.WriteLine();
-        Console.WriteLine("With database update:");
-        Console.WriteLine("  PatchInstaller.exe -i \"C:\\Program Files\\DataForgeStudio\" --db-server localhost --db-name DataForgeStudio --db-user sa --db-password xxx");
-    }
-
-    static bool ParseArguments(string[] args)
+    static void ParseArguments(string[] args)
     {
         for (int i = 0; i < args.Length; i++)
         {
@@ -199,25 +91,8 @@ class Program
                     _dbPassword = args.ElementAtOrDefault(i + 1);
                     i++;
                     break;
-                case "-h":
-                case "--help":
-                    return false;
             }
         }
-
-        if (string.IsNullOrEmpty(_installPath))
-        {
-            Console.WriteLine("ERROR: Installation path is required");
-            return false;
-        }
-
-        if (!Directory.Exists(_installPath))
-        {
-            Console.WriteLine($"ERROR: Installation directory not found: {_installPath}");
-            return false;
-        }
-
-        return true;
     }
 
     static bool HasEmbeddedResources()
@@ -244,25 +119,11 @@ class Program
 
                 using var archive = new ZipArchive(stream);
                 archive.ExtractToDirectory(tempDir);
-                Log($"  Extracted embedded resources");
                 break;
             }
         }
 
         return tempDir;
-    }
-
-    static void Log(string message)
-    {
-        var timestamp = DateTime.Now.ToString("HH:mm:ss");
-        var logMessage = $"[{timestamp}] {message}";
-        Console.WriteLine(logMessage);
-
-        try
-        {
-            File.AppendAllText(LogFile, logMessage + Environment.NewLine);
-        }
-        catch { /* Ignore log file errors */ }
     }
 
     static async Task<PatchInfo?> ReadPatchInfoFromDirectory(string directory)
@@ -274,7 +135,101 @@ class Program
         return JsonSerializer.Deserialize<PatchInfo>(json);
     }
 
-    static async Task StopServicesAsync()
+    static void Log(string message)
+    {
+        var timestamp = DateTime.Now.ToString("HH:mm:ss");
+        var logMessage = $"[{timestamp}] {message}";
+
+        try
+        {
+            File.AppendAllText(LogFile, logMessage + Environment.NewLine);
+        }
+        catch { /* Ignore log file errors */ }
+    }
+
+    // Installation logic - called from form
+    public static async Task<(bool Success, string Message, string? BackupPath)> RunInstallationAsync(
+        string installPath,
+        string? dbServer, string? dbName, string? dbUser, string? dbPassword,
+        Action<string> logCallback)
+    {
+        _installPath = installPath;
+        _dbServer = dbServer;
+        _dbName = dbName;
+        _dbUser = dbUser;
+        _dbPassword = dbPassword;
+
+        void LogBoth(string msg)
+        {
+            Log(msg);
+            logCallback(msg);
+        }
+
+        try
+        {
+            // Ensure log directory exists
+            Directory.CreateDirectory(Path.GetDirectoryName(LogFile)!);
+
+            if (!_embeddedMode)
+            {
+                LogBoth("ERROR: No embedded resources found.");
+                return (false, "This patch was not built correctly.", null);
+            }
+
+            // Extract resources
+            LogBoth("Extracting patch resources...");
+            var tempPatchDir = ExtractEmbeddedResources();
+            var patchInfo = await ReadPatchInfoFromDirectory(tempPatchDir);
+
+            if (patchInfo == null)
+            {
+                LogBoth("ERROR: Invalid patch - missing patch-info.json");
+                return (false, "Invalid patch file.", null);
+            }
+
+            LogBoth($"Patch Version: {patchInfo.Version}");
+            LogBoth($"Install Path: {installPath}");
+
+            // Step 1: Stop services
+            LogBoth("[1/6] Stopping services...");
+            await StopServicesAsync(LogBoth);
+
+            // Step 2: Backup
+            LogBoth("[2/6] Creating backup...");
+            var backupPath = await CreateBackupAsync(installPath, patchInfo.Version, LogBoth);
+
+            // Step 3: Update files
+            LogBoth("[3/6] Updating files...");
+            await UpdateFilesFromDirectoryAsync(tempPatchDir, installPath, LogBoth);
+
+            // Step 4: Run SQL scripts
+            LogBoth("[4/6] Running database updates...");
+            await RunDatabaseUpdatesFromDirectoryAsync(tempPatchDir, patchInfo.Version, LogBoth);
+
+            // Step 5: Update version
+            LogBoth("[5/6] Updating version info...");
+            await UpdateVersionInfoAsync(installPath, patchInfo.Version, LogBoth);
+
+            // Step 6: Start services
+            LogBoth("[6/6] Starting services...");
+            await StartServicesAsync(LogBoth);
+
+            // Cleanup
+            if (Directory.Exists(tempPatchDir))
+            {
+                Directory.Delete(tempPatchDir, true);
+            }
+
+            return (true, $"Patch {patchInfo.Version} installed successfully!", backupPath);
+        }
+        catch (Exception ex)
+        {
+            LogBoth($"ERROR: {ex.Message}");
+            return (false, $"Installation failed: {ex.Message}", null);
+        }
+    }
+
+    static async Task StopServicesAsync(Action<string> log)
     {
         var services = new[] { "DFAppService", "DFWebService" };
 
@@ -285,28 +240,28 @@ class Program
                 using var controller = new ServiceController(serviceName);
                 if (controller.Status == ServiceControllerStatus.Running)
                 {
-                    Log($"  Stopping {serviceName}...");
+                    log($"  Stopping {serviceName}...");
                     controller.Stop();
                     await Task.Run(() => controller.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(30)));
-                    Log($"  {serviceName} stopped.");
+                    log($"  {serviceName} stopped.");
                 }
                 else
                 {
-                    Log($"  {serviceName} is not running (status: {controller.Status})");
+                    log($"  {serviceName} is not running");
                 }
             }
             catch (InvalidOperationException)
             {
-                Log($"  {serviceName} not found, skipping...");
+                log($"  {serviceName} not found, skipping...");
             }
             catch (Exception ex)
             {
-                Log($"  Warning: Failed to stop {serviceName}: {ex.Message}");
+                log($"  Warning: {ex.Message}");
             }
         }
     }
 
-    static async Task<string> CreateBackupAsync(string installPath, string version)
+    static async Task<string> CreateBackupAsync(string installPath, string version, Action<string> log)
     {
         var backupDir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
@@ -314,30 +269,27 @@ class Program
 
         Directory.CreateDirectory(backupDir);
 
-        // Backup Server directory
         var serverPath = Path.Combine(installPath, "Server");
         if (Directory.Exists(serverPath))
         {
             var backupServerPath = Path.Combine(backupDir, "Server");
             await Task.Run(() => CopyDirectory(serverPath, backupServerPath, "*.dll"));
-            Log($"  Backed up Server files");
+            log($"  Backed up Server files");
         }
 
-        // Backup WebSite directory
-        var webSitePath = Path.Combine(installPath, "WebServer", "html");
+        var webSitePath = Path.Combine(installPath, "WebSite");
         if (Directory.Exists(webSitePath))
         {
             var backupWebPath = Path.Combine(backupDir, "WebSite");
             await Task.Run(() => CopyDirectory(webSitePath, backupWebPath));
-            Log($"  Backed up WebSite files");
+            log($"  Backed up WebSite files");
         }
 
         return backupDir;
     }
 
-    static async Task UpdateFilesFromDirectoryAsync(string sourceDir, string installPath)
+    static async Task UpdateFilesFromDirectoryAsync(string sourceDir, string installPath, Action<string> log)
     {
-        // Update Server files
         var serverSource = Path.Combine(sourceDir, "Server");
         if (Directory.Exists(serverSource))
         {
@@ -346,44 +298,39 @@ class Program
             {
                 var targetFile = Path.Combine(serverTarget, Path.GetFileName(file));
                 File.Copy(file, targetFile, true);
-                Log($"  Updated: {Path.GetFileName(file)}");
+                log($"  Updated: {Path.GetFileName(file)}");
             }
         }
 
-        // Update WebSite files
         var webSiteSource = Path.Combine(sourceDir, "WebSite");
         if (Directory.Exists(webSiteSource))
         {
-            var webSiteTarget = Path.Combine(installPath, "WebServer", "html");
+            var webSiteTarget = Path.Combine(installPath, "WebSite");
             await Task.Run(() => CopyDirectory(webSiteSource, webSiteTarget));
-            Log($"  Updated WebSite files");
+            log($"  Updated WebSite files");
         }
-
-        await Task.CompletedTask;
     }
 
-    static async Task RunDatabaseUpdatesFromDirectoryAsync(string sourceDir, string version)
+    static async Task RunDatabaseUpdatesFromDirectoryAsync(string sourceDir, string version, Action<string> log)
     {
-        // Check if SQL connection info is provided
         if (string.IsNullOrEmpty(_dbServer) || string.IsNullOrEmpty(_dbName))
         {
-            Log("  No database connection info provided, skipping SQL updates");
+            log("  No database connection info, skipping SQL updates");
             return;
         }
 
         var sqlDir = Path.Combine(sourceDir, "sql");
         if (!Directory.Exists(sqlDir))
         {
-            Log("  No SQL scripts found in patch");
+            log("  No SQL scripts found");
             return;
         }
 
-        // Build connection string
         var connectionString = $"Server={_dbServer};Database={_dbName};" +
                                $"User Id={_dbUser};Password={_dbPassword};" +
                                "TrustServerCertificate=True;Connection Timeout=30;";
 
-        Log($"  Connecting to database: {_dbServer}/{_dbName}");
+        log($"  Connecting to: {_dbServer}/{_dbName}");
 
         var sqlFiles = Directory.GetFiles(sqlDir, "*.sql").OrderBy(f => f);
 
@@ -392,13 +339,13 @@ class Program
             try
             {
                 var sql = await File.ReadAllTextAsync(sqlFile);
-                Log($"  Executing: {Path.GetFileName(sqlFile)}");
+                log($"  Executing: {Path.GetFileName(sqlFile)}");
                 await ExecuteSqlScriptAsync(connectionString, sql);
-                Log($"  Executed successfully");
+                log($"  Success");
             }
             catch (Exception ex)
             {
-                Log($"  ERROR: {ex.Message}");
+                log($"  ERROR: {ex.Message}");
                 throw;
             }
         }
@@ -423,14 +370,14 @@ class Program
         }
     }
 
-    static async Task UpdateVersionInfoAsync(string installPath, string version)
+    static async Task UpdateVersionInfoAsync(string installPath, string version, Action<string> log)
     {
         var versionFile = Path.Combine(installPath, "version.txt");
         await File.WriteAllTextAsync(versionFile, $"Version: {version}{Environment.NewLine}Installed: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
-        Log($"  Version file updated to {version}");
+        log($"  Version file updated to {version}");
     }
 
-    static async Task StartServicesAsync()
+    static async Task StartServicesAsync(Action<string> log)
     {
         var services = new[] { "DFAppService", "DFWebService" };
 
@@ -441,23 +388,23 @@ class Program
                 using var controller = new ServiceController(serviceName);
                 if (controller.Status == ServiceControllerStatus.Stopped)
                 {
-                    Log($"  Starting {serviceName}...");
+                    log($"  Starting {serviceName}...");
                     controller.Start();
                     await Task.Run(() => controller.WaitForStatus(ServiceControllerStatus.Running, TimeSpan.FromSeconds(30)));
-                    Log($"  {serviceName} started.");
+                    log($"  {serviceName} started.");
                 }
                 else
                 {
-                    Log($"  {serviceName} is not stopped (status: {controller.Status})");
+                    log($"  {serviceName} already running");
                 }
             }
             catch (InvalidOperationException)
             {
-                Log($"  {serviceName} not found, skipping...");
+                log($"  {serviceName} not found");
             }
             catch (Exception ex)
             {
-                Log($"  Warning: Failed to start {serviceName}: {ex.Message}");
+                log($"  Warning: {ex.Message}");
             }
         }
     }
@@ -489,4 +436,331 @@ class PatchInfo
     public string Version { get; set; } = "";
     public string BuildDate { get; set; } = "";
     public string Type { get; set; } = "";
+}
+
+/// <summary>
+/// Main GUI Form for Patch Installer
+/// </summary>
+class PatchInstallerForm : Form
+{
+    private TextBox _installPathTextBox = null!;
+    private TextBox _dbServerTextBox = null!;
+    private TextBox _dbNameTextBox = null!;
+    private TextBox _dbUserTextBox = null!;
+    private TextBox _dbPasswordTextBox = null!;
+    private TextBox _logTextBox = null!;
+    private Button _installButton = null!;
+    private Button _cancelButton = null!;
+    private Button _browseButton = null!;
+    private ProgressBar _progressBar = null!;
+    private GroupBox _dbGroup = null!;
+
+    public PatchInstallerForm()
+    {
+        InitializeComponents();
+        LoadDefaultValues();
+    }
+
+    void InitializeComponents()
+    {
+        // Form settings
+        Text = $"DataForgeStudio 补丁安装程序 - V{Program._patchVersion}";
+        Size = new Size(600, 550);
+        FormBorderStyle = FormBorderStyle.FixedDialog;
+        MaximizeBox = false;
+        MinimizeBox = false;
+        StartPosition = FormStartPosition.CenterScreen;
+
+        var mainPanel = new Panel
+        {
+            Dock = DockStyle.Fill,
+            Padding = new Padding(20)
+        };
+
+        var yPos = 10;
+
+        // Title
+        var titleLabel = new Label
+        {
+            Text = $"补丁版本：{Program._patchVersion}",
+            Location = new Point(20, yPos),
+            Size = new Size(540, 25),
+            Font = new Font("Segoe UI", 12, FontStyle.Bold),
+            ForeColor = Color.FromArgb(64, 158, 255)
+        };
+        mainPanel.Controls.Add(titleLabel);
+        yPos += 35;
+
+        // Install path
+        var pathLabel = new Label
+        {
+            Text = "安装目录：",
+            Location = new Point(20, yPos),
+            Size = new Size(150, 20)
+        };
+        mainPanel.Controls.Add(pathLabel);
+
+        _installPathTextBox = new TextBox
+        {
+            Location = new Point(20, yPos + 22),
+            Size = new Size(460, 25)
+        };
+        mainPanel.Controls.Add(_installPathTextBox);
+
+        _browseButton = new Button
+        {
+            Text = "浏览...",
+            Location = new Point(490, yPos + 20),
+            Size = new Size(70, 28)
+        };
+        _browseButton.Click += BrowseButton_Click;
+        mainPanel.Controls.Add(_browseButton);
+        yPos += 55;
+
+        // Database settings group
+        _dbGroup = new GroupBox
+        {
+            Text = "Database Settings (Optional - for SQL updates)",
+            Location = new Point(20, yPos),
+            Size = new Size(540, 130),
+            Font = new Font("Segoe UI", 9)
+        };
+
+        var dbYPos = 22;
+
+        // DB Server
+        var dbServerLabel = new Label { Text = "Server:", Location = new Point(15, dbYPos), Size = new Size(80, 20) };
+        _dbGroup.Controls.Add(dbServerLabel);
+        _dbServerTextBox = new TextBox { Location = new Point(100, dbYPos - 2), Size = new Size(150, 25) };
+        _dbGroup.Controls.Add(_dbServerTextBox);
+
+        // DB Name
+        var dbNameLabel = new Label { Text = "Database:", Location = new Point(270, dbYPos), Size = new Size(70, 20) };
+        _dbGroup.Controls.Add(dbNameLabel);
+        _dbNameTextBox = new TextBox { Location = new Point(345, dbYPos - 2), Size = new Size(150, 25) };
+        _dbGroup.Controls.Add(_dbNameTextBox);
+        dbYPos += 35;
+
+        // DB User
+        var dbUserLabel = new Label { Text = "Username:", Location = new Point(15, dbYPos), Size = new Size(80, 20) };
+        _dbGroup.Controls.Add(dbUserLabel);
+        _dbUserTextBox = new TextBox { Location = new Point(100, dbYPos - 2), Size = new Size(150, 25) };
+        _dbGroup.Controls.Add(_dbUserTextBox);
+
+        // DB Password
+        var dbPassLabel = new Label { Text = "Password:", Location = new Point(270, dbYPos), Size = new Size(70, 20) };
+        _dbGroup.Controls.Add(dbPassLabel);
+        _dbPasswordTextBox = new TextBox { Location = new Point(345, dbYPos - 2), Size = new Size(150, 25), UseSystemPasswordChar = true };
+        _dbGroup.Controls.Add(_dbPasswordTextBox);
+        dbYPos += 35;
+
+        // Note
+        var noteLabel = new Label
+        {
+            Text = "Note: Leave empty if no database updates are required.",
+            Location = new Point(15, dbYPos),
+            Size = new Size(500, 20),
+            ForeColor = Color.Gray,
+            Font = new Font("Segoe UI", 8)
+        };
+        _dbGroup.Controls.Add(noteLabel);
+
+        mainPanel.Controls.Add(_dbGroup);
+        yPos += 140;
+
+        // Progress bar
+        _progressBar = new ProgressBar
+        {
+            Location = new Point(20, yPos),
+            Size = new Size(540, 25),
+            Style = ProgressBarStyle.Marquee,
+            MarqueeAnimationSpeed = 30,
+            Visible = false
+        };
+        mainPanel.Controls.Add(_progressBar);
+        yPos += 30;
+
+        // Log text box
+        var logLabel = new Label
+        {
+            Text = "安装日志：",
+            Location = new Point(20, yPos),
+            Size = new Size(100, 20)
+        };
+        mainPanel.Controls.Add(logLabel);
+        yPos += 22;
+
+        _logTextBox = new TextBox
+        {
+            Location = new Point(20, yPos),
+            Size = new Size(540, 130),
+            Multiline = true,
+            ScrollBars = ScrollBars.Vertical,
+            ReadOnly = true,
+            Font = new Font("Consolas", 9),
+            BackColor = Color.FromArgb(245, 245, 245)
+        };
+        mainPanel.Controls.Add(_logTextBox);
+        yPos += 140;
+
+        // Buttons
+        _installButton = new Button
+        {
+            Text = "安装",
+            Location = new Point(370, yPos),
+            Size = new Size(90, 32),
+            BackColor = Color.FromArgb(64, 158, 255),
+            ForeColor = Color.White,
+            FlatStyle = FlatStyle.Flat
+        };
+        _installButton.Click += InstallButton_Click;
+        mainPanel.Controls.Add(_installButton);
+
+        _cancelButton = new Button
+        {
+            Text = "取消",
+            Location = new Point(470, yPos),
+            Size = new Size(90, 32)
+        };
+        _cancelButton.Click += (s, e) => Close();
+        mainPanel.Controls.Add(_cancelButton);
+
+        Controls.Add(mainPanel);
+    }
+
+    void LoadDefaultValues()
+    {
+        // Default install path
+        var defaultPath = Program._installPath ?? @"C:\Program Files\DataForgeStudio";
+        _installPathTextBox.Text = defaultPath;
+
+        // Check if path exists, if not try other common locations
+        if (!Directory.Exists(defaultPath))
+        {
+            var altPaths = new[]
+            {
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "DataForgeStudio"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "DataForgeStudio")
+            };
+
+            foreach (var path in altPaths)
+            {
+                if (Directory.Exists(path))
+                {
+                    _installPathTextBox.Text = path;
+                    break;
+                }
+            }
+        }
+
+        // Default database values
+        _dbServerTextBox.Text = Program._dbServer ?? "";
+        _dbNameTextBox.Text = Program._dbName ?? "DataForgeStudio";
+        _dbUserTextBox.Text = Program._dbUser ?? "sa";
+        _dbPasswordTextBox.Text = Program._dbPassword ?? "";
+    }
+
+    void BrowseButton_Click(object? sender, EventArgs e)
+    {
+        using var dialog = new FolderBrowserDialog
+        {
+            Description = "Select DataForgeStudio installation directory",
+            ShowNewFolderButton = false
+        };
+
+        if (Directory.Exists(_installPathTextBox.Text))
+        {
+            dialog.SelectedPath = _installPathTextBox.Text;
+        }
+
+        if (dialog.ShowDialog() == DialogResult.OK)
+        {
+            _installPathTextBox.Text = dialog.SelectedPath;
+        }
+    }
+
+    async void InstallButton_Click(object? sender, EventArgs e)
+    {
+        var installPath = _installPathTextBox.Text.Trim();
+
+        // Validate
+        if (string.IsNullOrEmpty(installPath))
+        {
+            MessageBox.Show("Please enter the installation directory.", "Validation Error",
+                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        if (!Directory.Exists(installPath))
+        {
+            MessageBox.Show($"Installation directory not found: {installPath}", "Validation Error",
+                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        // Disable controls
+        _installButton.Enabled = false;
+        _cancelButton.Enabled = false;
+        _installPathTextBox.Enabled = false;
+        _browseButton.Enabled = false;
+        _dbGroup.Enabled = false;
+        _progressBar.Visible = true;
+        _logTextBox.Clear();
+
+        // Run installation
+        var (success, message, backupPath) = await Program.RunInstallationAsync(
+            installPath,
+            string.IsNullOrWhiteSpace(_dbServerTextBox.Text) ? null : _dbServerTextBox.Text,
+            string.IsNullOrWhiteSpace(_dbNameTextBox.Text) ? null : _dbNameTextBox.Text,
+            string.IsNullOrWhiteSpace(_dbUserTextBox.Text) ? null : _dbUserTextBox.Text,
+            string.IsNullOrWhiteSpace(_dbPasswordTextBox.Text) ? null : _dbPasswordTextBox.Text,
+            msg => AppendLog(msg)
+        );
+
+        // Show result
+        _progressBar.Visible = false;
+
+        if (success)
+        {
+            AppendLog("");
+            AppendLog("========================================");
+            AppendLog("Installation completed successfully!");
+            if (!string.IsNullOrEmpty(backupPath))
+            {
+                AppendLog($"Backup: {backupPath}");
+            }
+            AppendLog("========================================");
+
+            MessageBox.Show(message, "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+            _cancelButton.Text = "Close";
+            _cancelButton.Enabled = true;
+        }
+        else
+        {
+            AppendLog("");
+            AppendLog($"ERROR: {message}");
+
+            MessageBox.Show(message, "Installation Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+            // Re-enable controls to allow retry
+            _installButton.Enabled = true;
+            _cancelButton.Enabled = true;
+            _installPathTextBox.Enabled = true;
+            _browseButton.Enabled = true;
+            _dbGroup.Enabled = true;
+        }
+    }
+
+    void AppendLog(string message)
+    {
+        if (InvokeRequired)
+        {
+            Invoke(() => AppendLog(message));
+            return;
+        }
+
+        _logTextBox.AppendText(message + Environment.NewLine);
+        _logTextBox.ScrollToCaret();
+    }
 }
