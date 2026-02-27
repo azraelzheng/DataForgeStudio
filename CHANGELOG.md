@@ -4,6 +4,13 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)
 
+## [1.0.1] - 2026-02-27
+
+### 修复
+- 修复 SQL Server 命名实例连接问题：输入服务器地址如 `ALLWIN104\TPLUS` 时连接测试失败
+  - 问题原因：连接字符串格式错误，命名实例不应手动指定端口号
+  - 解决方案：新增 `ConnectionStringBuilder` 工具类，自动检测命名实例并生成正确的连接字符串
+
 ## [1.0.0] - 2026-02-27
 
 ### 新增

@@ -10,6 +10,48 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Language Preference**: Use Chinese for responses and code comments.
 
+**Current Version**: V1.0.0
+
+---
+
+## 版本管理规范（重要！）
+
+### 当前版本号
+- **版本**: 1.0.0
+- **发布日期**: 2026-02-27
+
+### 版本号规则（语义化版本）
+| 类型 | 格式 | 示例 | 说明 |
+|------|------|------|------|
+| Bug 修复 | `1.0.x` | 1.0.1, 1.0.2 | 向后兼容的问题修复 |
+| 新功能 | `1.x.0` | 1.1.0, 1.2.0 | 向后兼容的新功能 |
+| 重大更新 | `x.0.0` | 2.0.0 | 破坏性变更 |
+
+### 分支管理规则
+
+**每次会话开始修改代码时，必须：**
+1. 创建新分支（不要直接在 master 上修改）
+2. 分支命名规范：
+   - Bug 修复: `bugfix/简短描述` (如 `bugfix/named-instance-connection`)
+   - 新功能: `feature/简短描述` (如 `feature/export-pdf`)
+   - 重构: `refactor/简短描述`
+3. 推送到远程仓库但不合并
+4. 更新 `CHANGELOG.md` 记录变更
+
+### 构建方式
+
+**默认使用补丁包构建，除非用户明确要求完整构建：**
+- 补丁包：只包含变更的文件（DLL、前端资源等）
+- 完整构建：完整的安装程序
+
+```bash
+# 构建补丁包（默认）
+./scripts/build-patch.ps1 -Version "1.0.1"
+
+# 完整构建（仅当用户要求时）
+./scripts/build-installer.ps1
+```
+
 ---
 
 ## Common Commands
