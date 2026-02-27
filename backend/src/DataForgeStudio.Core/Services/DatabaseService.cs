@@ -62,7 +62,11 @@ public class DatabaseService : IDatabaseService
 
         return dataSource.DbType switch
         {
-            "SqlServer" => $"Server={dataSource.ServerAddress},{dataSource.Port};Database={dataSource.DatabaseName};User Id={dataSource.Username};Password={password};Connection Timeout={dataSource.ConnectionTimeout};TrustServerCertificate=True;",
+            "SqlServer" => ConnectionStringBuilder.BuildSqlServerConnectionString(
+                dataSource.ServerAddress, dataSource.Port,
+                dataSource.DatabaseName ?? "master",
+                dataSource.Username ?? "", password,
+                dataSource.ConnectionTimeout),
             "MySql" => $"Server={dataSource.ServerAddress};Port={dataSource.Port};Database={dataSource.DatabaseName};Uid={dataSource.Username};Pwd={password};Connection Timeout={dataSource.ConnectionTimeout};AllowUserVariables=True;SslMode=None;",
             "PostgreSQL" => $"Host={dataSource.ServerAddress};Port={dataSource.Port};Database={dataSource.DatabaseName};Username={dataSource.Username};Password={password};Timeout={dataSource.ConnectionTimeout};",
             "Oracle" => $"Data Source=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST={dataSource.ServerAddress})(PORT={dataSource.Port}))(CONNECT_DATA=(SERVICE_NAME={dataSource.DatabaseName})));User Id={dataSource.Username};Password={password};",
@@ -342,7 +346,11 @@ public class DatabaseService : IDatabaseService
     {
         return dataSource.DbType switch
         {
-            "SqlServer" => $"Server={dataSource.ServerAddress},{dataSource.Port};Database={dataSource.DatabaseName};User Id={dataSource.Username};Password={plainPassword};Connection Timeout={dataSource.ConnectionTimeout};TrustServerCertificate=True;",
+            "SqlServer" => ConnectionStringBuilder.BuildSqlServerConnectionString(
+                dataSource.ServerAddress, dataSource.Port,
+                dataSource.DatabaseName ?? "master",
+                dataSource.Username ?? "", plainPassword,
+                dataSource.ConnectionTimeout),
             "MySql" => $"Server={dataSource.ServerAddress};Port={dataSource.Port};Database={dataSource.DatabaseName};Uid={dataSource.Username};Pwd={plainPassword};Connection Timeout={dataSource.ConnectionTimeout};AllowUserVariables=True;SslMode=None;",
             "PostgreSQL" => $"Host={dataSource.ServerAddress};Port={dataSource.Port};Database={dataSource.DatabaseName};Username={dataSource.Username};Password={plainPassword};Timeout={dataSource.ConnectionTimeout};",
             "Oracle" => $"Data Source=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST={dataSource.ServerAddress})(PORT={dataSource.Port}))(CONNECT_DATA=(SERVICE_NAME={dataSource.DatabaseName})));User Id={dataSource.Username};Password={plainPassword};",

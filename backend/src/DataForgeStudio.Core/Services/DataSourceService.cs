@@ -259,15 +259,28 @@ public class DataSourceService : IDataSourceService
         var databaseName = !string.IsNullOrEmpty(request.Database) ? request.Database : "master";
 
         // 直接构建连接字符串进行测试（密码是明文的）
-        var connectionString = request.DbType switch
+        string connectionString;
+        switch (request.DbType)
         {
-            "SqlServer" => $"Server={request.Server},{request.Port};Database={databaseName};User Id={request.Username};Password={request.Password};Connection Timeout=30;TrustServerCertificate=True;",
-            "MySql" => $"Server={request.Server};Port={request.Port};Database={databaseName};Uid={request.Username};Pwd={request.Password};Connection Timeout=30;AllowUserVariables=True;SslMode=None;",
-            "PostgreSQL" => $"Host={request.Server};Port={request.Port};Database={databaseName};Username={request.Username};Password={request.Password};Timeout=30;",
-            "Oracle" => $"Data Source=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST={request.Server})(PORT={request.Port}))(CONNECT_DATA=(SERVICE_NAME={databaseName})));User Id={request.Username};Password={request.Password};",
-            "SQLite" => $"Data Source={databaseName};",
-            _ => throw new NotSupportedException($"不支持的数据库类型: {request.DbType}")
-        };
+            case "SqlServer":
+                connectionString = ConnectionStringBuilder.BuildSqlServerConnectionString(
+                    request.Server, request.Port, databaseName, request.Username, request.Password, 30);
+                break;
+            case "MySql":
+                connectionString = $"Server={request.Server};Port={request.Port};Database={databaseName};Uid={request.Username};Pwd={request.Password};Connection Timeout=30;AllowUserVariables=True;SslMode=None;";
+                break;
+            case "PostgreSQL":
+                connectionString = $"Host={request.Server};Port={request.Port};Database={databaseName};Username={request.Username};Password={request.Password};Timeout=30;";
+                break;
+            case "Oracle":
+                connectionString = $"Data Source=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST={request.Server})(PORT={request.Port}))(CONNECT_DATA=(SERVICE_NAME={databaseName})));User Id={request.Username};Password={request.Password};";
+                break;
+            case "SQLite":
+                connectionString = $"Data Source={databaseName};";
+                break;
+            default:
+                throw new NotSupportedException($"不支持的数据库类型: {request.DbType}");
+        }
 
         // 创建临时数据源对象用于 DatabaseService
         var tempDataSource = new DataSource
@@ -296,14 +309,25 @@ public class DataSourceService : IDataSourceService
         try
         {
             // 构建连接字符串（不指定数据库）
-            var connectionString = request.DbType switch
+            string connectionString;
+            switch (request.DbType)
             {
-                "SqlServer" => $"Server={request.Server},{request.Port};Database=master;User Id={request.Username};Password={request.Password};Connection Timeout=30;TrustServerCertificate=True;",
-                "MySql" => $"Server={request.Server};Port={request.Port};Database=information_schema;Uid={request.Username};Pwd={request.Password};Connection Timeout=30;AllowUserVariables=True;SslMode=None;",
-                "PostgreSQL" => $"Host={request.Server};Port={request.Port};Database=postgres;Username={request.Username};Password={request.Password};Timeout=30;",
-                "Oracle" => $"Data Source=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST={request.Server})(PORT={request.Port}))(CONNECT_DATA=(SERVICE_NAME=oracl)));User Id={request.Username};Password={request.Password};",
-                _ => throw new NotSupportedException($"不支持的数据库类型: {request.DbType}")
-            };
+                case "SqlServer":
+                    connectionString = ConnectionStringBuilder.BuildSqlServerConnectionString(
+                        request.Server, request.Port, "master", request.Username, request.Password, 30);
+                    break;
+                case "MySql":
+                    connectionString = $"Server={request.Server};Port={request.Port};Database=information_schema;Uid={request.Username};Pwd={request.Password};Connection Timeout=30;AllowUserVariables=True;SslMode=None;";
+                    break;
+                case "PostgreSQL":
+                    connectionString = $"Host={request.Server};Port={request.Port};Database=postgres;Username={request.Username};Password={request.Password};Timeout=30;";
+                    break;
+                case "Oracle":
+                    connectionString = $"Data Source=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST={request.Server})(PORT={request.Port}))(CONNECT_DATA=(SERVICE_NAME=oracl)));User Id={request.Username};Password={request.Password};";
+                    break;
+                default:
+                    throw new NotSupportedException($"不支持的数据库类型: {request.DbType}");
+            }
 
             var result = await _databaseService.GetDatabasesAsync(request.DbType, connectionString);
             if (!result.Success)
