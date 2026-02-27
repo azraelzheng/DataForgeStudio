@@ -674,7 +674,7 @@ class PatchInstallerForm : Form
     {
         using var dialog = new FolderBrowserDialog
         {
-            Description = "Select DataForgeStudio installation directory",
+            Description = "选择 DataForgeStudio 安装目录",
             ShowNewFolderButton = false
         };
 
@@ -697,14 +697,14 @@ class PatchInstallerForm : Form
         // Validate
         if (string.IsNullOrEmpty(installPath))
         {
-            MessageBox.Show("Please enter the installation directory.", "Validation Error",
+            MessageBox.Show("请输入安装目录。", "验证错误",
                 MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
 
         if (!Directory.Exists(installPath))
         {
-            MessageBox.Show($"Installation directory not found: {installPath}", "Validation Error",
+            MessageBox.Show($"安装目录不存在：{installPath}", "验证错误",
                 MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
@@ -741,9 +741,9 @@ class PatchInstallerForm : Form
             }
             AppendLog("========================================");
 
-            MessageBox.Show(message, "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show(message, "成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-            _cancelButton.Text = "Close";
+            _cancelButton.Text = "关闭";
             _cancelButton.Enabled = true;
         }
         else
@@ -751,7 +751,7 @@ class PatchInstallerForm : Form
             AppendLog("");
             AppendLog($"ERROR: {message}");
 
-            MessageBox.Show(message, "Installation Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBox.Show(message, "安装失败", MessageBoxButtons.OK, MessageBoxIcon.Error);
 
             // Re-enable controls to allow retry
             _installButton.Enabled = true;
