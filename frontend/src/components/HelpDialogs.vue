@@ -12,7 +12,12 @@
       <!-- 顶部渐变装饰 -->
       <div class="about-header">
         <div class="about-logo">
-          <el-icon :size="48"><DataAnalysis /></el-icon>
+          <svg viewBox="0 0 32 32" width="48" height="48">
+            <rect width="32" height="32" rx="7" ry="7" fill="rgba(255,255,255,0.2)"/>
+            <rect x="6" y="18" width="4" height="8" rx="1" fill="white"/>
+            <rect x="14" y="12" width="4" height="14" rx="1" fill="white"/>
+            <rect x="22" y="7" width="4" height="19" rx="1" fill="white"/>
+          </svg>
         </div>
         <h1 class="about-title">{{ systemInfo.productName }}</h1>
         <p class="about-subtitle">企业级报表管理系统</p>
@@ -84,7 +89,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { DataAnalysis, Document, Reading, Lock } from '@element-plus/icons-vue'
+import { Document, Reading, Lock } from '@element-plus/icons-vue'
 
 // Props
 const props = defineProps({

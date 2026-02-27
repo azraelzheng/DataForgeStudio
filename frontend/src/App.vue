@@ -14,8 +14,19 @@
     <!-- 侧边栏 -->
     <el-aside :width="isCollapse ? '64px' : '200px'" class="sidebar">
       <div class="logo">
+        <svg class="logo-icon" viewBox="0 0 32 32" width="28" height="28">
+          <defs>
+            <linearGradient id="logo-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#667eea"/>
+              <stop offset="100%" stop-color="#764ba2"/>
+            </linearGradient>
+          </defs>
+          <rect width="32" height="32" rx="7" ry="7" fill="url(#logo-bg)"/>
+          <rect x="6" y="18" width="4" height="8" rx="1" fill="white"/>
+          <rect x="14" y="12" width="4" height="14" rx="1" fill="white"/>
+          <rect x="22" y="7" width="4" height="19" rx="1" fill="white"/>
+        </svg>
         <h2 v-if="!isCollapse">数据报表</h2>
-        <h2 v-else>报表</h2>
       </div>
 
       <el-menu
@@ -429,12 +440,19 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 10px;
   color: #fff;
+  padding: 0 16px;
+}
+
+.logo-icon {
+  flex-shrink: 0;
 }
 
 .logo h2 {
   font-size: 18px;
   margin: 0;
+  white-space: nowrap;
 }
 
 .sidebar-menu {
