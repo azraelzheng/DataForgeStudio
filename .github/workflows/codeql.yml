@@ -1,0 +1,50 @@
+# GitHub CodeQL 代码安全扫描
+# 对于公开仓库免费使用
+name: "CodeQL Security Scan"
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  schedule:
+    # 每周一凌晨 2 点扫描
+    - cron: '0 2 * * 1'
+
+jobs:
+  analyze:
+    name: Analyze Code
+    runs-on: windows-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['csharp', 'javascript']
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+
+      - name: Setup .NET
+        if: matrix.language == 'csharp'
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Build .NET
+        if: matrix.language == 'csharp'
+        run: dotnet build backend/DataForgeStudio.sln --configuration Release --no-incremental
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
