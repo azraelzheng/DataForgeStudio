@@ -5,13 +5,23 @@
 【系统要求】
 
 操作系统：
-  - Windows 10 或更高版本
-  - Windows Server 2016 或更高版本
+  ✅ Windows 10 或更高版本
+  ✅ Windows Server 2012 R2 或更高版本
+  ✅ Windows Server 2016 或更高版本（推荐）
+
+  ❌ 不支持的系统：
+     - Windows 7 / 8 / 8.1
+     - Windows Server 2008 / 2008 R2
+     - Windows Server 2012（已停止支持）
 
 运行环境：
   - .NET 8.0 Runtime（安装程序会自动检测并提示安装）
   - 至少 4GB 内存
   - 至少 500MB 可用磁盘空间
+
+重要提示：
+  .NET 8.0 不支持 Windows Server 2008 R2 及更早版本。
+  如需在这些系统上运行，请升级操作系统。
 
 数据库：
   - SQL Server 2005 或更高版本

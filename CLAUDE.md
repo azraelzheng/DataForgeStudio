@@ -8,6 +8,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Tech Stack**: ASP.NET Core 8.0 backend, Vue 3 frontend, SQL Server 2005+
 
+**System Requirements**: Windows 10+ / Windows Server 2012 R2+ (不支持 Windows Server 2008 R2)
+
 **Language Preference**: Use Chinese for responses and code comments.
 
 **Current Version**: V1.0.0
