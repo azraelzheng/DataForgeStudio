@@ -1,14 +1,20 @@
 # GitHub CodeQL 代码安全扫描
-# 对于公开仓库免费使用
 name: "CodeQL Security Scan"
 
 on:
   push:
     branches: [master]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - '.github/workflows/codeql.yml'
   pull_request:
     branches: [master]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - '.github/workflows/codeql.yml'
   schedule:
-    # 每周一凌晨 2 点扫描
     - cron: '0 2 * * 1'
 
 jobs:
@@ -23,7 +29,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: ['csharp', 'javascript']
+        include:
+          - language: csharp
+            build-mode: manual
+          - language: javascript-typescript
+            build-mode: none
 
     steps:
       - name: Checkout repository
@@ -33,6 +43,9 @@ jobs:
         uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          # 针对不同语言的源码路径
+          source-root: ${{ matrix.language == 'csharp' && 'backend' || 'frontend' }}
 
       - name: Setup .NET
         if: matrix.language == 'csharp'
