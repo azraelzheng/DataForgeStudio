@@ -1,4 +1,5 @@
 using DataForgeStudio.Domain.DTOs;
+using DataForgeStudio.Shared.DTO;
 
 namespace DataForgeStudio.Core.Interfaces;
 

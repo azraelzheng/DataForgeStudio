@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using DataForgeStudio.Core.Interfaces;
 using DataForgeStudio.Core.Services;
 using DataForgeStudio.Domain.DTOs;
 using DataForgeStudio.Shared.DTO;
