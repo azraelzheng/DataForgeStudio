@@ -1,7 +1,9 @@
-; DataForgeStudio V1.0 安装脚本 for Inno Setup
+; DataForgeStudio V1.0.1 安装脚本 for Inno Setup
 #define AppName "DataForgeStudio"
-#define AppVersion "1.0.0"
-#define AppPublisher "DataForgeStudio"
+#define AppVersion "1.0.1"
+#define AppPublisher "Jason Zheng"
+#define AppURL "https://github.com/jasonzheng/DataForgeStudio"
+#define AppEmail "14279807@qq.com"
 
 #ifndef ProjectRoot
   #define ProjectRoot ".."
@@ -19,6 +21,9 @@ AppName={#AppName}
 AppVersion={#AppVersion}
 AppVerName={#AppName} {#AppVersion}
 AppPublisher={#AppPublisher}
+AppPublisherURL={#AppURL}
+AppSupportURL=mailto:{#AppEmail}
+AppUpdatesURL={#AppURL}
 DefaultDirName=C:\Program Files\{#AppName}
 DefaultGroupName={#AppName}
 AllowNoIcons=yes
@@ -34,6 +39,14 @@ UninstallDisplayIcon={app}\Manager\DeployManager.exe
 UninstallDisplayName={#AppName}
 SetupLogging=yes
 SetupIconFile={#ProjectRoot}\resources\icons\app.ico
+; 文件版本信息（Windows 资源管理器详细信息页显示）
+VersionInfoVersion=1.0.1.0
+VersionInfoCompany={#AppPublisher}
+VersionInfoDescription=DataForgeStudio 数据报表管理系统安装程序
+VersionInfoCopyright=Copyright (C) 2026 {#AppPublisher}
+VersionInfoProductName={#AppName}
+VersionInfoProductVersion={#AppVersion}
+VersionInfoProductTextVersion={#AppVersion}
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"

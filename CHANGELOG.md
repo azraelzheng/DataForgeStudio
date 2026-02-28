@@ -4,13 +4,14 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)
 
-## [1.0.1] - 2026-02-27
+## [1.0.1] - 2026-02-28
 
 ### 新增
 - 帮助系统：顶部栏添加"？"帮助按钮，提供关于、帮助文档、用户协议、隐私政策等入口
 - 后端 API：新增 `/api/system/info` 获取系统信息，`/api/system/document` 获取文档内容
 - 补丁安装程序：`PatchInstaller.exe` 支持自动停止服务、备份、更新文件、执行 SQL 脚本、重启服务
 - 安装目录文档：README.txt、INSTALL.txt、EULA.txt、PRIVACY.txt
+- 安装程序文件属性：添加版本信息、开发者信息、版权声明等详细信息
 
 ### 修复
 - 修复 SQL Server 命名实例连接问题：输入服务器地址如 `ALLWIN104\TPLUS` 时连接测试失败
@@ -21,6 +22,7 @@
 - 移除前端硬编码版本号（LoginPage.vue、LicenseManagement.vue）
 - 移除 DeployManager 右下角版本文字显示
 - 版本号改为从后端 API 动态获取
+- 更新安装脚本（setup.iss）添加开发者信息和 Windows 文件版本属性
 
 ## [1.0.0] - 2026-02-27
 
