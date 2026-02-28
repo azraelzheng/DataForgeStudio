@@ -8,7 +8,9 @@ const LICENSE_REQUIRED_ROUTES = [
   '/report/design',
   '/report/designer',
   '/report/list',
-  '/system/datasource'
+  '/system/datasource',
+  '/dashboard',
+  '/display'
 ]
 
 const routes = [
@@ -89,6 +91,27 @@ const routes = [
     name: 'SystemBackup',
     component: () => import('../views/system/BackupManagement.vue'),
     meta: { title: '备份管理', requiresAuth: true, permission: 'backup:view' }
+  },
+  // 看板管理
+  {
+    path: '/dashboard',
+    name: 'Dashboard',
+    component: () => import('../views/dashboard/DashboardManagement.vue'),
+    meta: { title: '看板管理', requiresAuth: true, permission: 'dashboard:view' }
+  },
+  // 车间大屏配置
+  {
+    path: '/display',
+    name: 'DisplayConfig',
+    component: () => import('../display/views/DisplayConfig.vue'),
+    meta: { title: '车间大屏', requiresAuth: true, permission: 'display:view' }
+  },
+  // 全屏展示（不显示在菜单中）
+  {
+    path: '/display/fullscreen',
+    name: 'FullscreenView',
+    component: () => import('../display/views/FullscreenView.vue'),
+    meta: { title: '全屏展示', requiresAuth: true, permission: 'display:view' }
   },
   {
     path: '/login',

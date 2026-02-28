@@ -38,6 +38,20 @@ public class DataForgeStudioDbContext : DbContext
     public DbSet<BackupSchedule> BackupSchedules { get; set; }
     public DbSet<License> Licenses { get; set; }
 
+    // 看板
+    public DbSet<KanbanBoard> KanbanBoards { get; set; }
+    public DbSet<KanbanCard> KanbanCards { get; set; }
+    public DbSet<KanbanActivity> KanbanActivities { get; set; }
+    public DbSet<KanbanAttachment> KanbanAttachments { get; set; }
+    public DbSet<KanbanComment> KanbanComments { get; set; }
+
+    // Dashboard
+    public DbSet<Dashboard> Dashboards { get; set; }
+    public DbSet<DashboardWidget> DashboardWidgets { get; set; }
+
+    // Display
+    public DbSet<DisplayConfig> DisplayConfigs { get; set; }
+
     #endregion
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -233,6 +247,126 @@ public class DataForgeStudioDbContext : DbContext
         {
             entity.HasIndex(e => e.NextRunTime);
             entity.HasIndex(e => e.IsEnabled);
+        });
+
+        // 配置 KanbanBoard
+        modelBuilder.Entity<KanbanBoard>(entity =>
+        {
+            entity.Property(e => e.BoardName).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.ColumnsConfig).IsRequired();
+            entity.Property(e => e.SwimLaneBy).HasMaxLength(50);
+            entity.Property(e => e.CustomSwimLaneField).HasMaxLength(100);
+        });
+
+        // 配置 KanbanCard
+        modelBuilder.Entity<KanbanCard>(entity =>
+        {
+            entity.HasIndex(e => e.BoardId);
+            entity.HasIndex(e => new { e.BoardId, e.Status });
+            entity.HasIndex(e => new { e.BoardId, e.Status, e.SortOrder });
+
+            entity.Property(e => e.Title).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Status).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.Priority).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.AssigneeId).HasMaxLength(100);
+            entity.Property(e => e.AssigneeName).HasMaxLength(100);
+            entity.Property(e => e.AssigneeAvatar).HasMaxLength(500);
+            entity.Property(e => e.CreatedBy).HasMaxLength(100);
+
+            entity.HasOne(e => e.Board)
+                .WithMany(b => b.Cards)
+                .HasForeignKey(e => e.BoardId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // 配置 KanbanActivity
+        modelBuilder.Entity<KanbanActivity>(entity =>
+        {
+            entity.HasIndex(e => e.CardId);
+            entity.HasIndex(e => e.CreatedTime);
+
+            entity.Property(e => e.UserId).HasMaxLength(100);
+            entity.Property(e => e.UserName).HasMaxLength(100);
+            entity.Property(e => e.ActivityType).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.IpAddress).HasMaxLength(50);
+
+            entity.HasOne(e => e.Card)
+                .WithMany(c => c.Activities)
+                .HasForeignKey(e => e.CardId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // 配置 KanbanAttachment
+        modelBuilder.Entity<KanbanAttachment>(entity =>
+        {
+            entity.HasIndex(e => e.CardId);
+
+            entity.Property(e => e.FileName).HasMaxLength(255).IsRequired();
+            entity.Property(e => e.FilePath).HasMaxLength(500).IsRequired();
+            entity.Property(e => e.FileType).HasMaxLength(100);
+            entity.Property(e => e.UploadedBy).HasMaxLength(100);
+
+            entity.HasOne(e => e.Card)
+                .WithMany()
+                .HasForeignKey(e => e.CardId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // 配置 KanbanComment
+        modelBuilder.Entity<KanbanComment>(entity =>
+        {
+            entity.HasIndex(e => e.CardId);
+            entity.HasIndex(e => e.CreatedTime);
+
+            entity.Property(e => e.UserId).HasMaxLength(100);
+            entity.Property(e => e.UserName).HasMaxLength(100);
+            entity.Property(e => e.IpAddress).HasMaxLength(50);
+
+            entity.HasOne(e => e.Card)
+                .WithMany()
+                .HasForeignKey(e => e.CardId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // 配置 Dashboard
+        modelBuilder.Entity<Dashboard>(entity =>
+        {
+            entity.HasIndex(e => e.DashboardGuid).IsUnique();
+            entity.HasIndex(e => e.Category);
+            entity.HasIndex(e => e.IsPublished);
+
+            entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.Category).HasMaxLength(50);
+        });
+
+        // 配置 DashboardWidget
+        modelBuilder.Entity<DashboardWidget>(entity =>
+        {
+            entity.HasIndex(e => e.DashboardId);
+            entity.HasIndex(e => e.WidgetGuid).IsUnique();
+            entity.HasIndex(e => new { e.DashboardId, e.DisplayOrder });
+
+            entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Type).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.Position).IsRequired();
+
+            entity.HasOne(e => e.Dashboard)
+                .WithMany(d => d.Widgets)
+                .HasForeignKey(e => e.DashboardId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // 配置 DisplayConfig
+        modelBuilder.Entity<DisplayConfig>(entity =>
+        {
+            entity.HasIndex(e => e.ConfigGuid).IsUnique();
+
+            entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.Transition).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.DashboardIds).IsRequired();
         });
 
         // 全局配置: 禁止级联删除
