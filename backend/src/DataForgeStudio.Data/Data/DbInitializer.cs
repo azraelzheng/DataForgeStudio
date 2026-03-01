@@ -63,11 +63,11 @@ public static class DbInitializer
             Console.WriteLine("✅ Root 用户密码已更新为: Admin@123");
         }
 
-        // 创建权限（如果不存在）
+        // 同步权限（添加缺失的权限）
         // 注意：如果 forceResetPermissions=true，权限已经在 ResetPermissionsAsync 中创建了
-        if (!await context.Permissions.AnyAsync())
+        if (!forceResetPermissions)
         {
-            await CreateAllPermissionsAsync(context);
+            await SyncMissingPermissionsAsync(context);
         }
 
         // 创建或更新超级管理员角色
@@ -134,11 +134,33 @@ public static class DbInitializer
     }
 
     /// <summary>
-    /// 创建所有系统权限
+    /// 同步缺失的权限（添加新权限而不删除现有权限）
     /// </summary>
-    private static async Task CreateAllPermissionsAsync(DataForgeStudioDbContext context)
+    private static async Task SyncMissingPermissionsAsync(DataForgeStudioDbContext context)
     {
-        var permissions = new List<Permission>
+        var existingCodes = await context.Permissions
+            .Select(p => p.PermissionCode)
+            .ToListAsync();
+
+        var allPermissions = GetAllPermissions();
+        var missingPermissions = allPermissions
+            .Where(p => !existingCodes.Contains(p.PermissionCode))
+            .ToList();
+
+        if (missingPermissions.Any())
+        {
+            context.Permissions.AddRange(missingPermissions);
+            await context.SaveChangesAsync();
+            Console.WriteLine($"✅ 已添加 {missingPermissions.Count} 个新权限: {string.Join(", ", missingPermissions.Select(p => p.PermissionCode))}");
+        }
+    }
+
+    /// <summary>
+    /// 获取所有权限定义（用于同步和创建）
+    /// </summary>
+    private static List<Permission> GetAllPermissions()
+    {
+        return new List<Permission>
         {
             // 用户管理权限
             new Permission { PermissionCode = "user:view", PermissionName = "查看用户", Module = "User", Action = "View", Description = "查看用户列表" },
@@ -154,12 +176,9 @@ public static class DbInitializer
             new Permission { PermissionCode = "role:delete", PermissionName = "删除角色", Module = "Role", Action = "Delete", Description = "删除角色" },
             new Permission { PermissionCode = "role:assignPermissions", PermissionName = "分配权限", Module = "Role", Action = "AssignPermissions", Description = "为角色分配权限" },
 
-            // 报表管理权限
-            // 报表查询相关
+            // 报表权限
             new Permission { PermissionCode = "report:query", PermissionName = "访问报表查询", Module = "Report", Action = "Query", Description = "访问报表查询页面" },
             new Permission { PermissionCode = "report:execute", PermissionName = "执行报表查询", Module = "Report", Action = "Execute", Description = "执行报表查询并查看结果" },
-
-            // 报表设计相关
             new Permission { PermissionCode = "report:design", PermissionName = "访问报表设计", Module = "Report", Action = "Design", Description = "访问报表设计管理页面" },
             new Permission { PermissionCode = "report:create", PermissionName = "创建报表", Module = "Report", Action = "Create", Description = "创建新报表" },
             new Permission { PermissionCode = "report:edit", PermissionName = "编辑报表", Module = "Report", Action = "Edit", Description = "编辑报表配置" },
@@ -167,19 +186,19 @@ public static class DbInitializer
             new Permission { PermissionCode = "report:toggle", PermissionName = "停用启用报表", Module = "Report", Action = "Toggle", Description = "停用或启用报表" },
             new Permission { PermissionCode = "report:export", PermissionName = "导出报表", Module = "Report", Action = "Export", Description = "导出报表数据" },
 
-            // 数据源管理权限
+            // 数据源权限
             new Permission { PermissionCode = "datasource:view", PermissionName = "查看数据源", Module = "DataSource", Action = "View", Description = "查看数据源列表" },
             new Permission { PermissionCode = "datasource:create", PermissionName = "创建数据源", Module = "DataSource", Action = "Create", Description = "创建新数据源" },
             new Permission { PermissionCode = "datasource:edit", PermissionName = "编辑数据源", Module = "DataSource", Action = "Edit", Description = "编辑数据源" },
             new Permission { PermissionCode = "datasource:delete", PermissionName = "删除数据源", Module = "DataSource", Action = "Delete", Description = "删除数据源" },
             new Permission { PermissionCode = "datasource:test", PermissionName = "测试连接", Module = "DataSource", Action = "Test", Description = "测试数据源连接" },
 
-            // 日志管理权限
+            // 日志权限
             new Permission { PermissionCode = "log:view", PermissionName = "查看日志", Module = "Log", Action = "View", Description = "查看操作日志" },
             new Permission { PermissionCode = "log:clear", PermissionName = "清空日志", Module = "Log", Action = "Clear", Description = "清空操作日志" },
             new Permission { PermissionCode = "log:export", PermissionName = "导出日志", Module = "Log", Action = "Export", Description = "导出操作日志" },
 
-            // 备份管理权限
+            // 备份权限
             new Permission { PermissionCode = "backup:view", PermissionName = "查看备份", Module = "Backup", Action = "View", Description = "查看备份列表" },
             new Permission { PermissionCode = "backup:create", PermissionName = "创建备份", Module = "Backup", Action = "Create", Description = "创建数据备份" },
             new Permission { PermissionCode = "backup:restore", PermissionName = "恢复备份", Module = "Backup", Action = "Restore", Description = "恢复数据备份" },
@@ -191,9 +210,26 @@ public static class DbInitializer
 
             // 系统设置权限
             new Permission { PermissionCode = "system:view", PermissionName = "查看系统设置", Module = "System", Action = "View", Description = "查看系统配置" },
-            new Permission { PermissionCode = "system:edit", PermissionName = "编辑系统设置", Module = "System", Action = "Edit", Description = "编辑系统配置" }
-        };
+            new Permission { PermissionCode = "system:edit", PermissionName = "编辑系统设置", Module = "System", Action = "Edit", Description = "编辑系统配置" },
 
+            // 看板管理权限
+            new Permission { PermissionCode = "dashboard:view", PermissionName = "查看看板", Module = "Dashboard", Action = "View", Description = "查看看板列表" },
+            new Permission { PermissionCode = "dashboard:create", PermissionName = "创建看板", Module = "Dashboard", Action = "Create", Description = "创建新看板" },
+            new Permission { PermissionCode = "dashboard:edit", PermissionName = "编辑看板", Module = "Dashboard", Action = "Edit", Description = "编辑看板配置" },
+            new Permission { PermissionCode = "dashboard:delete", PermissionName = "删除看板", Module = "Dashboard", Action = "Delete", Description = "删除看板" },
+
+            // 车间大屏权限
+            new Permission { PermissionCode = "display:view", PermissionName = "查看大屏", Module = "Display", Action = "View", Description = "查看大屏配置" },
+            new Permission { PermissionCode = "display:config", PermissionName = "配置大屏", Module = "Display", Action = "Config", Description = "配置大屏显示" }
+        };
+    }
+
+    /// <summary>
+    /// 创建所有系统权限
+    /// </summary>
+    private static async Task CreateAllPermissionsAsync(DataForgeStudioDbContext context)
+    {
+        var permissions = GetAllPermissions();
         context.Permissions.AddRange(permissions);
         await context.SaveChangesAsync();
     }

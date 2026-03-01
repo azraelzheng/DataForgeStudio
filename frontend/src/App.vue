@@ -58,6 +58,18 @@
           </el-menu-item>
         </el-sub-menu>
 
+        <!-- 看板管理 -->
+        <el-menu-item index="/dashboard" v-if="userStore.hasPermission('dashboard:view')">
+          <el-icon><DataBoard /></el-icon>
+          <span>看板管理</span>
+        </el-menu-item>
+
+        <!-- 车间大屏 -->
+        <el-menu-item index="/display" v-if="userStore.hasPermission('display:view')">
+          <el-icon><Monitor /></el-icon>
+          <span>车间大屏</span>
+        </el-menu-item>
+
         <el-menu-item index="/license" v-if="userStore.hasPermission('license:view')">
           <el-icon><Key /></el-icon>
           <span>许可管理</span>
@@ -205,7 +217,9 @@ import {
   DocumentCopy,
   FolderOpened,
   Loading,
-  QuestionFilled
+  QuestionFilled,
+  DataBoard,
+  Monitor
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
