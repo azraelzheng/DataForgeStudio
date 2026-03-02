@@ -38,6 +38,11 @@ public class DataForgeStudioDbContext : DbContext
     public DbSet<BackupSchedule> BackupSchedules { get; set; }
     public DbSet<License> Licenses { get; set; }
 
+    // 大屏
+    public DbSet<Dashboard> Dashboards { get; set; }
+    public DbSet<DashboardWidget> DashboardWidgets { get; set; }
+    public DbSet<WidgetRule> WidgetRules { get; set; }
+
     #endregion
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -234,6 +239,54 @@ public class DataForgeStudioDbContext : DbContext
         {
             entity.HasIndex(e => e.NextRunTime);
             entity.HasIndex(e => e.IsEnabled);
+        });
+
+        // 配置 Dashboard
+        modelBuilder.Entity<Dashboard>(entity =>
+        {
+            entity.HasIndex(e => e.IsPublic);
+            entity.HasIndex(e => e.CreatedTime);
+
+            entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Theme).HasMaxLength(20).HasDefaultValue("dark");
+
+            entity.HasOne(e => e.Creator)
+                .WithMany()
+                .HasForeignKey(e => e.CreatedBy)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // 配置 DashboardWidget
+        modelBuilder.Entity<DashboardWidget>(entity =>
+        {
+            entity.HasIndex(e => new { e.DashboardId, e.ReportId });
+
+            entity.Property(e => e.WidgetType).HasMaxLength(50).IsRequired();
+
+            entity.HasOne(e => e.Dashboard)
+                .WithMany(d => d.Widgets)
+                .HasForeignKey(e => e.DashboardId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Report)
+                .WithMany()
+                .HasForeignKey(e => e.ReportId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // 配置 WidgetRule
+        modelBuilder.Entity<WidgetRule>(entity =>
+        {
+            entity.HasIndex(e => e.WidgetId);
+
+            entity.Property(e => e.Field).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Operator).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.ActionType).HasMaxLength(50).IsRequired();
+
+            entity.HasOne(e => e.Widget)
+                .WithMany(w => w.Rules)
+                .HasForeignKey(e => e.WidgetId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         // 全局配置: 禁止级联删除

@@ -145,6 +145,9 @@ builder.Services.AddScoped<ISqlValidationService, SqlValidationService>();
 builder.Services.AddScoped<IReportCacheService, ReportCacheService>();
 builder.Services.AddScoped<IExportService, ExportService>();
 
+// 注册大屏服务
+builder.Services.AddScoped<IDashboardService, DashboardService>();
+
 // 试用期追踪器（用于防止试用期重置）
 builder.Services.AddScoped<ITrialLicenseTracker, TrialLicenseTracker>();
 

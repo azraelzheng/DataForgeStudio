@@ -90,6 +90,36 @@ const routes = [
     component: () => import('../views/system/BackupManagement.vue'),
     meta: { title: '备份管理', requiresAuth: true, permission: 'backup:view' }
   },
+  // 大屏模块
+  {
+    path: '/dashboard',
+    name: 'Dashboard',
+    redirect: '/dashboard/list'
+  },
+  {
+    path: '/dashboard/list',
+    name: 'DashboardList',
+    component: () => import('../views/dashboard/DashboardList.vue'),
+    meta: { title: '大屏管理', requiresAuth: true, permission: 'dashboard:view' }
+  },
+  {
+    path: '/dashboard/designer/:id?',
+    name: 'DashboardDesigner',
+    component: () => import('../views/dashboard/DashboardDesigner.vue'),
+    meta: { title: '大屏设计器', requiresAuth: true, permission: 'dashboard:edit' }
+  },
+  {
+    path: '/dashboard/view/:id',
+    name: 'DashboardView',
+    component: () => import('../views/dashboard/DashboardView.vue'),
+    meta: { title: '大屏展示', requiresAuth: true, permission: 'dashboard:view' }
+  },
+  {
+    path: '/public/d/:id',
+    name: 'PublicDashboard',
+    component: () => import('../views/dashboard/PublicDashboard.vue'),
+    meta: { title: '大屏', requiresAuth: false }
+  },
   {
     path: '/login',
     name: 'Login',

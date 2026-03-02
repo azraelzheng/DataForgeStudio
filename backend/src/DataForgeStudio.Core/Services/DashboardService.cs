@@ -30,6 +30,8 @@ public class DashboardService : IDashboardService
 
     /// <summary>
     /// 获取大屏分页列表
+    /// 注意：此分页方法使用 OFFSET/FETCH 语法，需要 SQL Server 2012+
+    /// 如果需要支持 SQL Server 2005，请使用原始 SQL 查询配合 ROW_NUMBER()
     /// </summary>
     public async Task<ApiResponse<PagedResponse<DashboardDto>>> GetDashboardsAsync(PagedRequest request, string? name = null)
     {
@@ -656,6 +658,24 @@ public class DashboardService : IDashboardService
 
         var dashboardDetail = MapToDetailDto(dashboard);
         return ApiResponse<DashboardDetailDto>.Ok(dashboardDetail);
+    }
+
+    /// <summary>
+    /// 获取公开大屏数据（无需登录）
+    /// </summary>
+    public async Task<ApiResponse<DashboardDataDto>> GetPublicDashboardDataAsync(int dashboardId)
+    {
+        // 首先验证是否为公开大屏
+        var dashboard = await _context.Dashboards
+            .FirstOrDefaultAsync(d => d.DashboardId == dashboardId && d.IsPublic);
+
+        if (dashboard == null)
+        {
+            return ApiResponse<DashboardDataDto>.Fail("大屏不存在或未公开", "NOT_FOUND");
+        }
+
+        // 调用现有的数据获取逻辑
+        return await GetDashboardDataAsync(dashboardId);
     }
 
     #endregion

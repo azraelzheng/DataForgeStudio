@@ -117,6 +117,8 @@ public class RateLimitMiddleware
             return 5; // 5次/15分钟
         if (path.Contains("/api/reports/test-query"))
             return 10; // 10次/5分钟
+        if (path.Contains("/public/"))
+            return 60; // 公开访问：60次/分钟
         return 100; // 通用限制
     }
 
@@ -126,6 +128,8 @@ public class RateLimitMiddleware
             return TimeSpan.FromMinutes(5);
         if (path.Contains("/api/auth/login") || path.Contains("/api/auth/force-password-change"))
             return TimeSpan.FromMinutes(15);
+        if (path.Contains("/public/"))
+            return TimeSpan.FromMinutes(1); // 公开访问：每分钟
         return TimeSpan.FromMinutes(1); // 通用：每分钟
     }
 }

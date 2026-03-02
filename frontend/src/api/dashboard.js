@@ -66,21 +66,34 @@ export function deleteDashboard(id) {
 }
 
 /**
- * 切换大屏启用状态
+ * 切换大屏公开状态
+ * 注意：此功能通过更新大屏实现，后端未提供单独的 toggle 端点
  * @param {number|string} id - 大屏ID
+ * @param {Object} data - 更新数据
  * @returns {Promise}
  */
-export function toggleDashboard(id) {
-  return request.post(`/dashboards/${id}/toggle`)
+export function toggleDashboard(id, data) {
+  return request.put(`/dashboards/${id}`, data)
 }
 
 /**
  * 复制大屏
+ * 注意：此功能需要手动实现，后端未提供 copy 端点
  * @param {number|string} id - 大屏ID
  * @returns {Promise}
  */
-export function copyDashboard(id) {
-  return request.post(`/dashboards/${id}/copy`)
+export async function copyDashboard(id) {
+  // 获取原大屏详情
+  const detail = await request.get(`/dashboards/${id}`)
+  if (!detail.success) return detail
+
+  // 创建新大屏
+  const { dashboardId, widgets, createdTime, updatedTime, ...rest } = detail.data
+  const newDashboard = {
+    ...rest,
+    name: `${rest.name} (副本)`
+  }
+  return request.post('/dashboards', newDashboard)
 }
 
 // ==================== 组件管理 ====================
@@ -156,7 +169,7 @@ export function getWidgets(dashboardId) {
  * @returns {Promise}
  */
 export function convertFromReport(reportId, dashboardName, options = {}) {
-  return request.post('/dashboards/convert-from-report', {
+  return request.post('/dashboards/convert', {
     reportId,
     dashboardName,
     ...options
@@ -188,32 +201,33 @@ export function getWidgetData(dashboardId, widgetId, params) {
 
 /**
  * 刷新大屏数据
+ * 注意：后端未提供 refresh 端点，使用 getDashboardData 获取最新数据
  * @param {number|string} id - 大屏ID
  * @returns {Promise}
  */
 export function refreshDashboardData(id) {
-  return request.post(`/dashboards/${id}/refresh`)
+  return request.get(`/dashboards/${id}/data`)
 }
 
 // ==================== 公开访问 ====================
 
 /**
  * 获取公开大屏详情（无需登录）
- * @param {string} publicId - 公开访问ID
+ * @param {number|string} id - 大屏ID
  * @returns {Promise}
  */
-export function getPublicDashboard(publicId) {
-  return request.get(`/dashboards/public/${publicId}`)
+export function getPublicDashboard(id) {
+  return request.get(`/public/d/${id}`)
 }
 
 /**
  * 获取公开大屏数据（无需登录）
- * @param {string} publicId - 公开访问ID
+ * @param {number|string} id - 大屏ID
  * @param {Object} params - 查询参数
  * @returns {Promise}
  */
-export function getPublicDashboardData(publicId, params) {
-  return request.get(`/dashboards/public/${publicId}/data`, { params })
+export function getPublicDashboardData(id, params) {
+  return request.get(`/public/d/${id}/data`, { params })
 }
 
 // ==================== 模板管理 ====================
