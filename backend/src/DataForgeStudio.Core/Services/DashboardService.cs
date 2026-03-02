@@ -14,15 +14,18 @@ public class DashboardService : IDashboardService
 {
     private readonly DataForgeStudioDbContext _context;
     private readonly IReportService _reportService;
+    private readonly ILicenseService _licenseService;
     private readonly ILogger<DashboardService> _logger;
 
     public DashboardService(
         DataForgeStudioDbContext context,
         IReportService reportService,
+        ILicenseService licenseService,
         ILogger<DashboardService> logger)
     {
         _context = context;
         _reportService = reportService;
+        _licenseService = licenseService;
         _logger = logger;
     }
 
@@ -98,6 +101,16 @@ public class DashboardService : IDashboardService
     /// </summary>
     public async Task<ApiResponse<DashboardDto>> CreateDashboardAsync(CreateDashboardRequest request, int createdBy)
     {
+        // 检查许可证限制
+        var limitCheck = await _licenseService.CheckDashboardLimitAsync();
+        if (!limitCheck.Success)
+        {
+            return ApiResponse<DashboardDto>.Fail(
+                limitCheck.Message,
+                limitCheck.ErrorCode ?? "DASHBOARD_LIMIT_EXCEEDED"
+            );
+        }
+
         var dashboard = new Dashboard
         {
             Name = request.Name,
@@ -202,11 +215,16 @@ public class DashboardService : IDashboardService
             return ApiResponse<DashboardWidgetDto>.Fail("大屏不存在", "NOT_FOUND");
         }
 
-        // 验证报表是否存在
-        var report = await _context.Reports.FindAsync(request.ReportId);
-        if (report == null)
+        // 验证报表是否存在（仅当 ReportId > 0 时验证）
+        string? reportName = null;
+        if (request.ReportId > 0)
         {
-            return ApiResponse<DashboardWidgetDto>.Fail("关联的报表不存在", "REPORT_NOT_FOUND");
+            var report = await _context.Reports.FindAsync(request.ReportId);
+            if (report == null)
+            {
+                return ApiResponse<DashboardWidgetDto>.Fail("关联的报表不存在", "REPORT_NOT_FOUND");
+            }
+            reportName = report.ReportName;
         }
 
         var widget = new DashboardWidget
@@ -231,7 +249,7 @@ public class DashboardService : IDashboardService
         dashboard.UpdatedTime = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 
-        var widgetDto = MapToWidgetDto(widget, report.ReportName);
+        var widgetDto = MapToWidgetDto(widget, reportName);
         return ApiResponse<DashboardWidgetDto>.Ok(widgetDto, "组件添加成功");
     }
 
@@ -249,11 +267,14 @@ public class DashboardService : IDashboardService
             return ApiResponse.Fail("组件不存在", "NOT_FOUND");
         }
 
-        // 验证报表是否存在
-        var report = await _context.Reports.FindAsync(request.ReportId);
-        if (report == null)
+        // 验证报表是否存在（仅当 ReportId > 0 时验证）
+        if (request.ReportId > 0)
         {
-            return ApiResponse.Fail("关联的报表不存在", "REPORT_NOT_FOUND");
+            var report = await _context.Reports.FindAsync(request.ReportId);
+            if (report == null)
+            {
+                return ApiResponse.Fail("关联的报表不存在", "REPORT_NOT_FOUND");
+            }
         }
 
         widget.ReportId = request.ReportId;

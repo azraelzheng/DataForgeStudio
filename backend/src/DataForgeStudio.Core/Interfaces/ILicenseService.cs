@@ -50,4 +50,10 @@ public interface ILicenseService
     /// </summary>
     /// <returns>如果可以创建返回成功响应，否则返回失败响应并包含限制信息</returns>
     Task<ApiResponse> CheckDataSourceLimitAsync();
+
+    /// <summary>
+    /// 检查是否可以创建新的大屏
+    /// </summary>
+    /// <returns>如果可以创建返回成功响应，否则返回失败响应并包含限制信息</returns>
+    Task<ApiResponse> CheckDashboardLimitAsync();
 }

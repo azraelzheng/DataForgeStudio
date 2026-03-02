@@ -79,6 +79,7 @@ public class LicenseService : ILicenseService
             MaxUsers = licenseData.MaxUsers,
             MaxReports = licenseData.MaxReports,
             MaxDataSources = licenseData.MaxDataSources,
+            MaxDashboards = licenseData.MaxDashboards,
             Features = licenseData.Features
         };
     }
@@ -133,6 +134,7 @@ public class LicenseService : ILicenseService
                 MaxUsers = licenseData.MaxUsers,
                 MaxReports = licenseData.MaxReports,
                 MaxDataSources = licenseData.MaxDataSources,
+                MaxDashboards = licenseData.MaxDashboards,
                 Features = licenseData.Features,
                 MachineCode = licenseData.MachineCode,
                 IssuedDate = licenseData.IssuedDate,
@@ -284,6 +286,7 @@ public class LicenseService : ILicenseService
             MaxUsers = licenseData.MaxUsers,
             MaxReports = licenseData.MaxReports,
             MaxDataSources = licenseData.MaxDataSources,
+            MaxDashboards = licenseData.MaxDashboards,
             Features = licenseData.Features,
             MachineCode = licenseData.MachineCode,
             IssuedDate = licenseData.IssuedDate,
@@ -427,7 +430,8 @@ public class LicenseService : ILicenseService
                 MaxUsers = 5,
                 MaxReports = 10,
                 MaxDataSources = 2,
-                Features = new List<string> { "报表设计", "报表查询", "数据源管理" },
+                MaxDashboards = 3,
+                Features = new List<string> { "报表设计", "报表查询", "数据源管理", "大屏设计" },
                 MachineCode = machineCode,
                 IssuedDate = DateTime.UtcNow.ToString("yyyy-MM-dd"),
                 LicenseType = LICENSE_TYPE_TRIAL,
@@ -503,11 +507,16 @@ public class LicenseService : ILicenseService
             var currentDataSources = await _context.DataSources
                 .CountAsync();
 
+            // 统计大屏数量
+            var currentDashboards = await _context.Dashboards
+                .CountAsync();
+
             var stats = new LicenseUsageStatsDto
             {
                 CurrentUsers = currentUsers,
                 CurrentReports = currentReports,
-                CurrentDataSources = currentDataSources
+                CurrentDataSources = currentDataSources,
+                CurrentDashboards = currentDashboards
             };
 
             return ApiResponse<LicenseUsageStatsDto>.Ok(stats);
@@ -653,6 +662,51 @@ public class LicenseService : ILicenseService
         {
             _logger.LogError(ex, "检查数据源数量限制失败");
             return ApiResponse.Fail($"检查数据源限制失败: {ex.Message}", "CHECK_LIMIT_FAILED");
+        }
+    }
+
+    /// <summary>
+    /// 检查是否可以创建新的大屏
+    /// </summary>
+    public async Task<ApiResponse> CheckDashboardLimitAsync()
+    {
+        try
+        {
+            // 验证许可证是否有效
+            var validationResult = await ValidateLicenseAsync();
+            if (!validationResult.Success || validationResult.Data == null || !validationResult.Data.Valid)
+            {
+                return ApiResponse.Fail(validationResult.Data?.Message ?? "许可证无效", "LICENSE_INVALID");
+            }
+
+            var licenseInfo = validationResult.Data.LicenseInfo;
+            if (licenseInfo == null)
+            {
+                return ApiResponse.Fail("无法获取许可证信息", "LICENSE_INFO_MISSING");
+            }
+
+            // 如果 MaxDashboards 为 0 或 null，表示无限制
+            if (licenseInfo.MaxDashboards == null || licenseInfo.MaxDashboards == 0)
+            {
+                return ApiResponse.Ok();
+            }
+
+            // 统计当前大屏数量
+            var currentDashboards = await _context.Dashboards.CountAsync();
+
+            if (currentDashboards >= licenseInfo.MaxDashboards)
+            {
+                return ApiResponse.Fail(
+                    $"已达到许可证大屏数量限制（当前: {currentDashboards}，最大: {licenseInfo.MaxDashboards}），无法创建新大屏",
+                    "DASHBOARD_LIMIT_EXCEEDED");
+            }
+
+            return ApiResponse.Ok();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "检查大屏数量限制失败");
+            return ApiResponse.Fail($"检查大屏限制失败: {ex.Message}", "CHECK_LIMIT_FAILED");
         }
     }
 }
