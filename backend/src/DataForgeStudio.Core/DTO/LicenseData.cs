@@ -39,6 +39,11 @@ public class LicenseData
     public int MaxDataSources { get; set; }
 
     /// <summary>
+    /// 最大大屏数量（0 表示无限制）
+    /// </summary>
+    public int MaxDashboards { get; set; }
+
+    /// <summary>
     /// 功能列表
     /// </summary>
     public List<string> Features { get; set; } = new();
