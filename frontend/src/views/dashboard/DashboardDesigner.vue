@@ -75,6 +75,25 @@
               </div>
             </div>
           </div>
+          <!-- 预置模板 -->
+          <div class="widget-category">
+            <div class="category-title">预置模板</div>
+            <div class="template-list">
+              <div
+                v-for="template in presetTemplates"
+                :key="template.id"
+                class="template-item"
+                @click="applyTemplate(template)"
+              >
+                <div class="template-preview" :style="{ background: template.previewBg }">
+                  <div class="template-grid">
+                    <div v-for="(cell, idx) in template.previewGrid" :key="idx" class="preview-cell" :style="cell"></div>
+                  </div>
+                </div>
+                <div class="template-name">{{ template.name }}</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -114,16 +133,28 @@
                 <template v-if="item.widgetType === 'table'">
                   <div class="widget-title">{{ item.title || '表格' }}</div>
                   <div class="widget-preview table-preview">
-                    <el-table :data="[]" size="small" border>
-                      <el-table-column label="列1" width="80" />
-                      <el-table-column label="列2" width="80" />
-                      <el-table-column label="列3" width="80" />
+                    <el-table :data="getWidgetPreviewData(item)" size="small" border>
+                      <el-table-column
+                        v-for="(col, index) in getTableColumns(item)"
+                        :key="index"
+                        :prop="col.field"
+                        :label="col.label"
+                        :min-width="col.width || 80"
+                      />
+                      <el-table-column
+                        v-if="!item.config?.columns || item.config.columns.length === 0"
+                        label="未配置列"
+                        width="120"
+                      />
                     </el-table>
+                    <div v-if="getWidgetPreviewData(item).length === 0" class="no-data-hint">
+                      {{ item.reportId ? '加载中...' : '请绑定报表以显示数据' }}
+                    </div>
                   </div>
                 </template>
 
-                <!-- 数字卡片组件 -->
-                <template v-else-if="item.widgetType === 'card-number'">
+                <!-- 数字卡片组件 (支持 statistics 别名) -->
+                <template v-else-if="item.widgetType === 'card-number' || item.widgetType === 'statistics'">
                   <div class="widget-preview card-preview">
                     <div class="card-value">{{ item.config?.value || '1,234' }}</div>
                     <div class="card-label">{{ item.title || '数据标题' }}</div>
@@ -154,6 +185,15 @@
                       <el-icon :size="48"><TrendCharts /></el-icon>
                       <span>{{ getChartTypeName(item.widgetType) }}</span>
                     </div>
+                  </div>
+                </template>
+
+                <!-- 未知组件类型 -->
+                <template v-else>
+                  <div class="widget-title">{{ item.title || '组件' }}</div>
+                  <div class="widget-preview unknown-preview">
+                    <el-icon :size="32"><QuestionFilled /></el-icon>
+                    <span>{{ item.widgetType || '未知类型' }}</span>
                   </div>
                 </template>
 
@@ -192,19 +232,19 @@
                 <el-input-number v-model="dashboardForm.height" :min="600" :max="2160" :step="100" />
               </el-form-item>
               <el-form-item label="背景颜色">
-                <el-color-picker v-model="dashboardForm.backgroundColor" />
+                <el-color-picker id="backgroundColor" v-model="dashboardForm.backgroundColor" />
               </el-form-item>
               <el-form-item label="背景图片">
                 <el-input v-model="dashboardForm.backgroundImage" placeholder="背景图片URL" />
               </el-form-item>
               <el-form-item label="主题">
-                <el-radio-group v-model="dashboardForm.theme">
+                <el-radio-group id="theme" v-model="dashboardForm.theme">
                   <el-radio value="dark">深色</el-radio>
                   <el-radio value="light">浅色</el-radio>
                 </el-radio-group>
               </el-form-item>
               <el-form-item label="刷新间隔">
-                <el-select v-model="dashboardForm.refreshInterval" style="width: 100%">
+                <el-select id="refreshInterval" v-model="dashboardForm.refreshInterval" style="width: 100%">
                   <el-option label="不刷新" :value="0" />
                   <el-option label="30秒" :value="30" />
                   <el-option label="1分钟" :value="60" />
@@ -289,7 +329,7 @@
                 </div>
 
                 <!-- 组件特定配置 -->
-                <template v-if="selectedWidget.widgetType === 'card-number'">
+                <template v-if="selectedWidget.widgetType === 'card-number' || selectedWidget.widgetType === 'statistics'">
                   <el-divider>数字卡片配置</el-divider>
                   <el-form-item label="数据字段">
                     <el-select v-model="selectedWidget.config.valueField" placeholder="选择数值字段" style="width: 100%">
@@ -364,10 +404,16 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, onActivated, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { GridLayout, GridItem } from 'vue-grid-layout'
+import {
+  ArrowLeft, Edit, View, Check, Delete, Plus,
+  TrendCharts, QuestionFilled,
+  Grid, Odometer, DataLine, Sunrise,
+  Histogram, PieChart, Stopwatch
+} from '@element-plus/icons-vue'
+// vue-grid-layout 已在 main.js 中全局注册
 import {
   getDashboard,
   createDashboard,
@@ -378,6 +424,12 @@ import {
   updateWidgetPositions
 } from '../../api/dashboard'
 import { reportApi } from '../../api/request'
+
+// 图标映射
+const iconMap = {
+  Grid, Odometer, DataLine, Sunrise,
+  Histogram, TrendCharts, PieChart, Stopwatch
+}
 
 const router = useRouter()
 const route = useRoute()
@@ -390,6 +442,9 @@ const selectedWidgetId = ref(null)
 const canvasContainer = ref(null)
 const reportList = ref([])
 const availableFields = ref([])
+const widgetDataMap = ref({})  // 存储组件预览数据
+const widgetQueryConditions = ref([])  // 当前选中组件的查询条件定义
+const queryConditionValues = ref({})   // 当前选中组件的查询条件值
 
 // 大屏表单
 const dashboardForm = reactive({
@@ -428,18 +483,121 @@ const selectedWidget = computed(() => {
 
 // 基础组件列表
 const basicWidgets = [
-  { type: 'table', name: '表格', icon: 'Grid' },
-  { type: 'card-number', name: '数字卡片', icon: 'Odometer' },
-  { type: 'progress-bar', name: '进度条', icon: 'DataLine' },
-  { type: 'status-light', name: '状态灯', icon: 'Sunrise' }
+  { type: 'table', name: '表格', icon: Grid },
+  { type: 'card-number', name: '数字卡片', icon: Odometer },
+  { type: 'progress-bar', name: '进度条', icon: DataLine },
+  { type: 'status-light', name: '状态灯', icon: Sunrise }
 ]
 
 // 图表组件列表
 const chartWidgets = [
-  { type: 'chart-bar', name: '柱状图', icon: 'Histogram' },
-  { type: 'chart-line', name: '折线图', icon: 'TrendCharts' },
-  { type: 'chart-pie', name: '饼图', icon: 'PieChart' },
-  { type: 'gauge', name: '仪表盘', icon: 'Stopwatch' }
+  { type: 'chart-bar', name: '柱状图', icon: Histogram },
+  { type: 'chart-line', name: '折线图', icon: TrendCharts },
+  { type: 'chart-pie', name: '饼图', icon: PieChart },
+  { type: 'gauge', name: '仪表盘', icon: Stopwatch }
+]
+
+// 预置模板列表 - 基于参考图片设计
+const presetTemplates = [
+  {
+    id: 'production-monitor',
+    name: '生产监控',
+    previewBg: 'linear-gradient(135deg, #0a1628 0%, #1a2a4a 100%)',
+    previewGrid: [
+      { gridArea: '1/1/3/3', background: 'rgba(0,212,255,0.2)', border: '1px solid rgba(0,212,255,0.3)' },
+      { gridArea: '1/3/2/4', background: 'rgba(0,255,136,0.2)', border: '1px solid rgba(0,255,136,0.3)' },
+      { gridArea: '2/3/3/4', background: 'rgba(255,170,0,0.2)', border: '1px solid rgba(255,170,0,0.3)' }
+    ],
+    layout: [
+      { i: 'w1', x: 0, y: 0, w: 8, h: 8, widgetType: 'table', title: '生产数据监控', config: {} },
+      { i: 'w2', x: 8, y: 0, w: 4, h: 4, widgetType: 'card-number', title: '当日产量', config: { color: '#00d4ff' } },
+      { i: 'w3', x: 8, y: 4, w: 4, h: 4, widgetType: 'card-number', title: '设备稼动率', config: { color: '#00ff88' } }
+    ]
+  },
+  {
+    id: 'quality-inspection',
+    name: '质检',
+    previewBg: 'linear-gradient(135deg, #0a1628 0%, #2a1a4a 100%)',
+    previewGrid: [
+      { gridArea: '1/1/2/3', background: 'rgba(138,100,255,0.2)', border: '1px solid rgba(138,100,255,0.3)' },
+      { gridArea: '2/1/3/2', background: 'rgba(0,212,255,0.2)', border: '1px solid rgba(0,212,255,0.3)' },
+      { gridArea: '2/2/3/3', background: 'rgba(0,255,136,0.2)', border: '1px solid rgba(0,255,136,0.3)' }
+    ],
+    layout: [
+      { i: 'w1', x: 0, y: 0, w: 8, h: 5, widgetType: 'table', title: '质检数据', config: {} },
+      { i: 'w2', x: 8, y: 0, w: 4, h: 5, widgetType: 'chart-bar', title: '合格率统计', config: { color: '#8a64ff' } },
+      { i: 'w3', x: 0, y: 5, w: 6, h: 4, widgetType: 'table', title: '不良品明细', config: {} },
+      { i: 'w4', x: 6, y: 5, w: 6, h: 4, widgetType: 'gauge', title: '整体合格率', config: { maxValue: 100, value: 95 } }
+    ]
+  },
+  {
+    id: 'process-progress',
+    name: '工序进度',
+    previewBg: 'linear-gradient(135deg, #0a1628 0%, #1a3a3a 100%)',
+    previewGrid: [
+      { gridArea: '1/1/2/4', background: 'rgba(0,212,255,0.2)', border: '1px solid rgba(0,212,255,0.3)' },
+      { gridArea: '2/1/3/4', background: 'rgba(0,255,136,0.15)', border: '1px solid rgba(0,255,136,0.3)' },
+      { gridArea: '2/2/3/3', background: 'rgba(255,170,0,0.3)', border: '1px solid rgba(255,170,0,0.5)' }
+    ],
+    layout: [
+      { i: 'w1', x: 0, y: 0, w: 12, h: 4, widgetType: 'table', title: '工序进度表', config: {} },
+      { i: 'w2', x: 0, y: 4, w: 12, h: 5, widgetType: 'chart-bar', title: '甘特图', config: { color: '#00d4ff' } },
+      { i: 'w3', x: 0, y: 9, w: 4, h: 3, widgetType: 'progress-bar', title: '整体进度', config: { percentage: 65, color: '#00ff88' } },
+      { i: 'w4', x: 4, y: 9, w: 4, h: 3, widgetType: 'progress-bar', title: '完成率', config: { percentage: 78, color: '#00d4ff' } },
+      { i: 'w5', x: 8, y: 9, w: 4, h: 3, widgetType: 'progress-bar', title: '延误率', config: { percentage: 12, color: '#ff6b6b' } }
+    ]
+  },
+  {
+    id: 'order-progress',
+    name: '订单进度',
+    previewBg: 'linear-gradient(135deg, #0a1628 0%, #2a2a1a 100%)',
+    previewGrid: [
+      { gridArea: '1/1/3/3', background: 'rgba(255,170,0,0.2)', border: '1px solid rgba(255,170,0,0.3)' },
+      { gridArea: '1/3/2/4', background: 'rgba(0,212,255,0.2)', border: '1px solid rgba(0,212,255,0.3)' },
+      { gridArea: '2/3/3/4', background: 'rgba(0,255,136,0.2)', border: '1px solid rgba(0,255,136,0.3)' }
+    ],
+    layout: [
+      { i: 'w1', x: 0, y: 0, w: 8, h: 7, widgetType: 'table', title: '订单明细', config: {} },
+      { i: 'w2', x: 8, y: 0, w: 4, h: 3, widgetType: 'card-number', title: '待处理订单', config: { color: '#ffaa00' } },
+      { i: 'w3', x: 8, y: 3, w: 4, h: 4, widgetType: 'chart-pie', title: '订单状态分布', config: {} },
+      { i: 'w4', x: 0, y: 7, w: 6, h: 5, widgetType: 'table', title: '今日交付', config: {} },
+      { i: 'w5', x: 6, y: 7, w: 6, h: 5, widgetType: 'chart-line', title: '订单趋势', config: { color: '#00d4ff' } }
+    ]
+  },
+  {
+    id: 'equipment-status',
+    name: '设备状态',
+    previewBg: 'linear-gradient(135deg, #0a1628 0%, #1a1a2a 100%)',
+    previewGrid: [
+      { gridArea: '1/1/2/2', background: 'rgba(0,255,136,0.2)', border: '1px solid rgba(0,255,136,0.3)' },
+      { gridArea: '1/2/2/3', background: 'rgba(255,170,0,0.2)', border: '1px solid rgba(255,170,0,0.3)' },
+      { gridArea: '1/3/2/4', background: 'rgba(255,100,100,0.2)', border: '1px solid rgba(255,100,100,0.3)' },
+      { gridArea: '2/1/3/4', background: 'rgba(0,212,255,0.15)', border: '1px solid rgba(0,212,255,0.3)' }
+    ],
+    layout: [
+      { i: 'w1', x: 0, y: 0, w: 4, h: 3, widgetType: 'status-light', title: '运行中', config: { color: '#00ff88' } },
+      { i: 'w2', x: 4, y: 0, w: 4, h: 3, widgetType: 'status-light', title: '待机', config: { color: '#ffaa00' } },
+      { i: 'w3', x: 8, y: 0, w: 4, h: 3, widgetType: 'status-light', title: '故障', config: { color: '#ff6b6b' } },
+      { i: 'w4', x: 0, y: 3, w: 12, h: 5, widgetType: 'table', title: '设备列表', config: {} },
+      { i: 'w5', x: 0, y: 8, w: 6, h: 4, widgetType: 'chart-bar', title: '设备效率', config: { color: '#00d4ff' } },
+      { i: 'w6', x: 6, y: 8, w: 6, h: 4, widgetType: 'chart-line', title: '温度监控', config: { color: '#ff6b6b' } }
+    ]
+  },
+  {
+    id: 'kanban-board',
+    name: '看板布局',
+    previewBg: 'linear-gradient(135deg, #0a1628 0%, #1a2a3a 100%)',
+    previewGrid: [
+      { gridArea: '1/1/3/2', background: 'rgba(0,212,255,0.2)', border: '1px solid rgba(0,212,255,0.3)' },
+      { gridArea: '1/2/3/3', background: 'rgba(0,255,136,0.2)', border: '1px solid rgba(0,255,136,0.3)' },
+      { gridArea: '1/3/3/4', background: 'rgba(255,170,0,0.2)', border: '1px solid rgba(255,170,0,0.3)' }
+    ],
+    layout: [
+      { i: 'w1', x: 0, y: 0, w: 4, h: 12, widgetType: 'table', title: '待处理', config: {} },
+      { i: 'w2', x: 4, y: 0, w: 4, h: 12, widgetType: 'table', title: '进行中', config: {} },
+      { i: 'w3', x: 8, y: 0, w: 4, h: 12, widgetType: 'table', title: '已完成', config: {} }
+    ]
+  }
 ]
 
 // 获取图表类型名称
@@ -453,13 +611,27 @@ const getChartTypeName = (type) => {
   return names[type] || '图表'
 }
 
+// 获取表格列配置
+const getTableColumns = (widget) => {
+  if (widget.config?.columns && widget.config.columns.length > 0) {
+    return widget.config.columns
+  }
+  // 默认返回空数组，显示"未配置列"
+  return []
+}
+
 // 加载报表列表
 const loadReportList = async () => {
   try {
     const res = await reportApi.getReports({ pageSize: 1000, includeDisabled: false })
     if (res.success) {
       const data = res.data
-      reportList.value = data.Items || data.items || []
+      // 后端返回 PascalCase，需要转换为统一格式
+      const items = data.Items || data.items || []
+      reportList.value = items.map(r => ({
+        reportId: r.ReportId || r.reportId,
+        reportName: r.ReportName || r.reportName
+      }))
     }
   } catch {
     // 加载失败
@@ -472,29 +644,57 @@ const loadDashboard = async (id) => {
     const res = await getDashboard(id)
     if (res.success) {
       const data = res.data
-      dashboardForm.name = data.name || ''
-      dashboardForm.description = data.description || ''
-      dashboardForm.width = data.width || 1920
-      dashboardForm.height = data.height || 1080
-      dashboardForm.backgroundColor = data.backgroundColor || '#0d1b2a'
-      dashboardForm.backgroundImage = data.backgroundImage || ''
-      dashboardForm.theme = data.settings?.theme || 'dark'
-      dashboardForm.refreshInterval = data.settings?.refreshInterval || 0
+      dashboardForm.name = data.Name || data.name || ''
+      dashboardForm.description = data.Description || data.description || ''
+      dashboardForm.theme = data.Theme || data.theme || 'dark'
+      dashboardForm.refreshInterval = data.RefreshInterval || data.refreshInterval || 0
 
-      // 加载组件布局
-      if (data.widgets && data.widgets.length > 0) {
-        layout.value = data.widgets.map((w, index) => ({
-          i: w.widgetId || w.id || `widget-${index}`,
-          x: w.x || 0,
-          y: w.y || index,
-          w: w.width || 3,
-          h: w.height || 3,
-          widgetType: w.widgetType,
-          title: w.title,
-          reportId: w.reportId,
-          config: w.config || {},
-          conditionStyles: w.conditionStyles || []
-        }))
+      // 解析 ThemeConfig 获取画布配置
+      try {
+        const themeConfig = JSON.parse(data.ThemeConfig || data.themeConfig || '{}')
+        dashboardForm.width = themeConfig.width || 1920
+        dashboardForm.height = themeConfig.height || 1080
+        dashboardForm.backgroundColor = themeConfig.backgroundColor || '#0d1b2a'
+        dashboardForm.backgroundImage = themeConfig.backgroundImage || ''
+      } catch {
+        // 解析失败时使用默认值
+        dashboardForm.width = 1920
+        dashboardForm.height = 1080
+        dashboardForm.backgroundColor = '#0d1b2a'
+      }
+
+      // 先清空布局，再加载组件
+      layout.value = []
+      const widgets = data.Widgets || data.widgets || []
+      console.log('Loading widgets from server:', widgets)
+      if (widgets.length > 0) {
+        layout.value = widgets.map((w, index) => {
+          // 解析 DataConfig 和 StyleConfig
+          let config = {}
+          let conditionStyles = []
+          try {
+            config = JSON.parse(w.DataConfig || w.dataConfig || '{}')
+          } catch { config = {} }
+          try {
+            const styleConfig = JSON.parse(w.StyleConfig || w.styleConfig || '{}')
+            conditionStyles = styleConfig.conditionStyles || []
+          } catch { }
+
+          const widget = {
+            i: w.WidgetId || w.widgetId || w.id || `widget-${index}`,
+            x: w.PositionX ?? w.x ?? 0,
+            y: w.PositionY ?? w.y ?? index,
+            w: w.Width ?? w.width ?? 3,
+            h: w.Height ?? w.height ?? 3,
+            widgetType: w.WidgetType || w.widgetType,
+            title: w.Title || w.title,
+            reportId: w.ReportId || w.reportId,
+            config: config,
+            conditionStyles: conditionStyles
+          }
+          console.log('Loaded widget:', widget.i, 'reportId:', widget.reportId, 'raw:', w.ReportId, w.reportId)
+          return widget
+        })
       }
     }
   } catch {
@@ -506,6 +706,44 @@ const loadDashboard = async (id) => {
 const handleDragStart = (event, widget) => {
   event.dataTransfer.setData('widgetType', widget.type)
   event.dataTransfer.setData('widgetName', widget.name)
+}
+
+// 应用预置模板
+const applyTemplate = async (template) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要应用"${template.name}"模板吗？这将清空当前画布上的所有组件。`,
+      '应用模板',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+
+    // 清空当前布局
+    layout.value = []
+
+    // 应用模板布局（重新生成唯一ID）
+    const newLayout = template.layout.map((item, index) => ({
+      ...item,
+      i: `template-${Date.now()}-${index}`,
+      config: { ...item.config },
+      reportId: null,
+      conditionStyles: []
+    }))
+
+    layout.value = newLayout
+
+    // 设置主题色
+    if (template.previewBg) {
+      dashboardForm.backgroundColor = '#0a1628'
+    }
+
+    ElMessage.success(`已应用"${template.name}"模板，请为各组件绑定数据源`)
+  } catch {
+    // 用户取消
+  }
 }
 
 // 放置组件
@@ -622,21 +860,112 @@ const handleResize = () => {
   // 组件大小变化时的回调
 }
 
-// 报表变更时加载字段
+// 获取字段键名（用于表单绑定）
+const getFieldKey = (qc) => {
+  return `${qc.fieldName}_${qc.operator}`
+}
+
+// 获取操作符标签
+const getOperatorLabel = (operator) => {
+  const labels = {
+    'eq': '等于',
+    'ne': '不等于',
+    'gt': '大于',
+    'lt': '小于',
+    'ge': '大于等于',
+    'le': '小于等于',
+    'like': '包含',
+    'between': '介于',
+    'null': '为空',
+    'notnull': '不为空',
+    'true': '为真',
+    'false': '为假'
+  }
+  return labels[operator] || operator
+}
+
+// 获取操作符占位符
+const getOperatorPlaceholder = (operator) => {
+  const labels = {
+    'eq': '请输入等于的值',
+    'ne': '请输入不等于的值',
+    'gt': '请输入最小值（不含）',
+    'lt': '请输入最大值（不含）',
+    'ge': '请输入最小值',
+    'le': '请输入最大值',
+    'like': '请输入包含的关键字',
+    'between': '请输入范围值'
+  }
+  return labels[operator] || '请输入值'
+}
+
+// 报表变更时加载字段、查询条件和预览数据
 const handleReportChange = async (reportId) => {
   if (!reportId) {
     availableFields.value = []
+    widgetQueryConditions.value = []
+    queryConditionValues.value = {}
     return
   }
 
   try {
+    // 获取报表详情
     const res = await reportApi.getReport(reportId)
-    if (res.success && res.data.columns) {
-      availableFields.value = res.data.columns.map(col => col.fieldName)
+    if (res.success) {
+      const reportData = res.data
+      const columns = reportData.Columns || reportData.columns || []
+      availableFields.value = columns.map(col => col.FieldName || col.fieldName)
+
+      // 获取查询条件
+      const conditions = reportData.QueryConditions || reportData.queryConditions || []
+      widgetQueryConditions.value = conditions.map(qc => ({
+        fieldName: qc.FieldName || qc.fieldName,
+        displayName: qc.DisplayName || qc.displayName || qc.FieldName || qc.fieldName,
+        dataType: qc.DataType || qc.dataType || 'String',
+        operator: qc.Operator || qc.operator || 'eq',
+        defaultValue: qc.DefaultValue || qc.defaultValue
+      }))
+
+      // 初始化条件值（使用默认值）
+      queryConditionValues.value = {}
+      widgetQueryConditions.value.forEach(qc => {
+        if (!['null', 'notnull', 'true', 'false'].includes(qc.operator)) {
+          if (qc.defaultValue) {
+            queryConditionValues.value[getFieldKey(qc)] = qc.defaultValue
+          }
+        }
+      })
+
+      // 存储列信息到组件配置中
+      if (selectedWidget.value) {
+        selectedWidget.value.config = selectedWidget.value.config || {}
+        selectedWidget.value.config.columns = columns.map(col => ({
+          field: col.FieldName || col.fieldName,
+          label: col.DisplayName || col.displayName || col.FieldName || col.fieldName,
+          width: col.Width || col.width || 100
+        }))
+      }
     }
-  } catch {
-    availableFields.value = []
+
+    // 获取报表预览数据（最多显示 10 条）
+    const dataRes = await reportApi.executeReport(reportId, { pageSize: 10 })
+    if (dataRes.success && dataRes.data) {
+      const data = dataRes.data?.Data || dataRes.data?.data || dataRes.data || []
+      widgetDataMap.value[reportId] = Array.isArray(data) ? data.slice(0, 10) : []
+    }
+  } catch (err) {
+    console.error('加载报表信息失败:', err)
+    ElMessage.error('加载报表信息失败')
   }
+}
+
+// 获取组件预览数据
+const getWidgetPreviewData = (widget) => {
+  const data = widgetDataMap.value[widget.i]
+  if (data && Array.isArray(data)) {
+    return data
+  }
+  return []
 }
 
 // 添加条件样式
@@ -669,89 +998,175 @@ const handleSave = async () => {
     return
   }
 
+  // 检查是否有组件未绑定报表
+  const unboundWidgets = layout.value.filter(w => !w.reportId)
+  if (unboundWidgets.length > 0) {
+    const widgetNames = unboundWidgets.map(w => w.title || w.widgetType).join(', ')
+    const confirmed = await ElMessageBox.confirm(
+      `以下组件未绑定报表，将不会被保存：${widgetNames}。是否继续保存其他组件？`,
+      '提示',
+      {
+        confirmButtonText: '继续保存',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    ).catch(() => false)
+
+    if (!confirmed) {
+      return
+    }
+  }
+
   saving.value = true
   try {
     const dashboardId = route.params.id
 
-    // 保存大屏基本配置
-    const dashboardData = {
-      name: dashboardForm.name,
-      description: dashboardForm.description,
+    // 保存大屏基本配置 - 使用后端期望的字段名 (PascalCase)
+    // 注意：Width/Height/BackgroundColor/BackgroundImage 存储在 ThemeConfig 中
+    const themeConfig = JSON.stringify({
       width: dashboardForm.width,
       height: dashboardForm.height,
       backgroundColor: dashboardForm.backgroundColor,
       backgroundImage: dashboardForm.backgroundImage,
-      isPublic: false,
-      settings: {
-        theme: dashboardForm.theme,
-        refreshInterval: dashboardForm.refreshInterval
-      }
+      theme: dashboardForm.theme
+    })
+
+    const dashboardData = {
+      Name: dashboardForm.name,
+      Description: dashboardForm.description,
+      Theme: dashboardForm.theme,
+      RefreshInterval: dashboardForm.refreshInterval,
+      IsPublic: false,
+      ThemeConfig: themeConfig
     }
 
     let savedDashboardId = dashboardId
 
     if (dashboardId) {
       // 更新大屏
+      console.log('Updating dashboard:', dashboardId, dashboardData)
       await updateDashboard(dashboardId, dashboardData)
     } else {
       // 创建大屏
+      console.log('Creating dashboard:', dashboardData)
       const res = await createDashboard(dashboardData)
       if (res.success) {
-        savedDashboardId = res.data.dashboardId || res.data.id
+        savedDashboardId = res.data.DashboardId || res.data.dashboardId || res.data.id
         // 更新 URL
         router.replace(`/dashboard/designer/${savedDashboardId}`)
       }
     }
 
-    // 保存组件位置和配置
-    if (savedDashboardId && layout.value.length > 0) {
-      // 先获取现有组件
-      const existingWidgets = layout.value.filter(w => !w.i.startsWith('widget-'))
+    // 保存组件
+    if (savedDashboardId) {
+      // 获取数据库中已有的组件 ID 列表
+      console.log('Fetching existing widgets for dashboard:', savedDashboardId)
+      const existingRes = await getDashboard(savedDashboardId)
+      const existingDbWidgets = existingRes.data?.Widgets || existingRes.data?.widgets || []
+      const existingWidgetIds = existingDbWidgets.map(w => w.WidgetId || w.widgetId || w.id)
+
+      // 只处理已绑定报表的组件
+      const boundWidgets = layout.value.filter(w => w.reportId)
+      const currentWidgetIds = boundWidgets.map(w => w.i)
+      const existingWidgets = boundWidgets.filter(w => !String(w.i).startsWith('widget-'))
+      const newWidgets = boundWidgets.filter(w => String(w.i).startsWith('widget-'))
+
+      console.log('Widget classification:', {
+        existingWidgetIds,
+        currentWidgetIds,
+        existingWidgets: existingWidgets.length,
+        newWidgets: newWidgets.length,
+        skipped: layout.value.length - boundWidgets.length
+      })
+
+      // 删除不再存在的组件（包括未绑定报表的组件）
+      for (const widgetId of existingWidgetIds) {
+        if (!currentWidgetIds.includes(widgetId)) {
+          console.log('Deleting widget:', widgetId)
+          await deleteWidget(savedDashboardId, widgetId)
+        }
+      }
 
       // 更新现有组件
       for (const widget of existingWidgets) {
-        await updateWidget(savedDashboardId, widget.i, {
-          widgetType: widget.widgetType,
-          title: widget.title,
-          x: widget.x,
-          y: widget.y,
-          width: widget.w,
-          height: widget.h,
-          reportId: widget.reportId,
-          config: widget.config,
-          conditionStyles: widget.conditionStyles
-        })
+        const widgetData = {
+          WidgetType: widget.widgetType,
+          Title: widget.title,
+          PositionX: widget.x,
+          PositionY: widget.y,
+          Width: widget.w,
+          Height: widget.h,
+          ReportId: widget.reportId,  // 已经确保有 reportId
+          DataConfig: JSON.stringify(widget.config || {}),
+          StyleConfig: JSON.stringify({ conditionStyles: widget.conditionStyles || [] })
+        }
+        console.log('Updating widget:', widget.i, widgetData)
+        await updateWidget(savedDashboardId, widget.i, widgetData)
       }
 
-      // 添加新组件
-      const newWidgets = layout.value.filter(w => w.i.startsWith('widget-'))
+      // 添加新组件，并更新 layout 中的 ID 为真实 ID
       for (const widget of newWidgets) {
-        await addWidget(savedDashboardId, {
-          widgetType: widget.widgetType,
-          title: widget.title,
-          x: widget.x,
-          y: widget.y,
-          width: widget.w,
-          height: widget.h,
-          reportId: widget.reportId,
-          config: widget.config,
-          conditionStyles: widget.conditionStyles
+        console.log('Adding widget:', widget.widgetType)
+        const res = await addWidget(savedDashboardId, {
+          WidgetType: widget.widgetType,
+          Title: widget.title,
+          PositionX: widget.x,
+          PositionY: widget.y,
+          Width: widget.w,
+          Height: widget.h,
+          ReportId: widget.reportId,  // 已经确保有 reportId
+          DataConfig: JSON.stringify(widget.config || {}),
+          StyleConfig: JSON.stringify({ conditionStyles: widget.conditionStyles || [] })
         })
+
+        // 更新 layout 中的组件 ID 为后端返回的真实 ID
+        if (res.success && res.data) {
+          const realId = res.data.WidgetId || res.data.widgetId || res.data.id
+          if (realId) {
+            const widgetIndex = layout.value.findIndex(w => w.i === widget.i)
+            if (widgetIndex !== -1) {
+              layout.value[widgetIndex].i = realId
+              console.log('Updated widget ID from', widget.i, 'to', realId)
+            }
+          }
+        }
       }
 
-      // 批量更新组件位置
-      const positions = layout.value.map(w => ({
-        widgetId: w.i,
-        x: w.x,
-        y: w.y,
-        width: w.w,
-        height: w.h
-      }))
-      await updateWidgetPositions(savedDashboardId, positions)
+      // 只有当有组件时才更新位置
+      if (boundWidgets.length > 0) {
+        // 重新获取更新后的组件列表，用于批量更新位置
+        const updatedRes = await getDashboard(savedDashboardId)
+        const updatedWidgets = updatedRes.data?.Widgets || updatedRes.data?.widgets || []
+
+        // 构建位置数组，确保使用正确的数据库 ID
+        const positions = []
+        for (const w of boundWidgets) {
+          // 找到对应的数据库组件
+          const dbWidget = updatedWidgets.find(uw =>
+            (uw.WidgetId || uw.widgetId) === w.i ||
+            (uw.WidgetId || uw.widgetId) === parseInt(w.i)
+          )
+          if (dbWidget) {
+            positions.push({
+              WidgetId: dbWidget.WidgetId || dbWidget.widgetId,
+              PositionX: w.x,
+              PositionY: w.y,
+              Width: w.w,
+              Height: w.h
+            })
+          }
+        }
+
+        if (positions.length > 0) {
+          console.log('Updating widget positions:', positions)
+          await updateWidgetPositions(savedDashboardId, positions)
+        }
+      }
     }
 
     ElMessage.success('保存成功')
   } catch (error) {
+    console.error('保存失败:', error)
     ElMessage.error('保存失败: ' + (error.message || '未知错误'))
   } finally {
     saving.value = false
@@ -786,14 +1201,51 @@ onMounted(async () => {
     await loadDashboard(dashboardId)
   }
 })
+
+// keep-alive 激活时重置并重新加载数据
+onActivated(async () => {
+  const dashboardId = route.params.id
+
+  // 重置状态
+  layout.value = []
+  selectedWidgetId.value = null
+  activeTab.value = 'dashboard'
+  dashboardForm.name = ''
+  dashboardForm.description = ''
+  dashboardForm.width = 1920
+  dashboardForm.height = 1080
+  dashboardForm.backgroundColor = '#0d1b2a'
+  dashboardForm.backgroundImage = ''
+  dashboardForm.theme = 'dark'
+  dashboardForm.refreshInterval = 0
+
+  // 重新加载大屏数据
+  if (dashboardId) {
+    await loadDashboard(dashboardId)
+  }
+})
 </script>
 
 <style scoped>
+/* ==================== 科技蓝主题变量 ==================== */
 .dashboard-designer {
-  height: 100vh;
+  --tech-bg-primary: #0a1628;
+  --tech-bg-secondary: rgba(0, 30, 60, 0.6);
+  --tech-bg-card: rgba(0, 40, 80, 0.4);
+  --tech-primary: #00d4ff;
+  --tech-primary-light: #00e5ff;
+  --tech-secondary: #0099ff;
+  --tech-accent: #00ffcc;
+  --tech-border: rgba(0, 212, 255, 0.3);
+  --tech-border-glow: rgba(0, 212, 255, 0.5);
+  --tech-text: #e0f7ff;
+  --tech-text-muted: rgba(0, 212, 255, 0.7);
+  --tech-shadow: 0 0 20px rgba(0, 212, 255, 0.15);
+
+  height: 100%;
   display: flex;
   flex-direction: column;
-  background-color: #1a1a2e;
+  background: linear-gradient(135deg, #0a1628 0%, #0d1f3c 50%, #0a1628 100%);
   overflow: hidden;
 }
 
@@ -801,8 +1253,8 @@ onMounted(async () => {
 .designer-toolbar {
   height: 56px;
   min-height: 56px;
-  background-color: #16213e;
-  border-bottom: 1px solid #0f3460;
+  background: linear-gradient(90deg, rgba(0, 20, 40, 0.95) 0%, rgba(0, 30, 60, 0.8) 100%);
+  border-bottom: 1px solid var(--tech-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -854,12 +1306,13 @@ onMounted(async () => {
 
 /* 左侧组件面板 */
 .widget-panel {
-  width: 240px;
-  min-width: 240px;
-  background-color: #16213e;
-  border-right: 1px solid #0f3460;
+  width: 280px;
+  min-width: 280px;
+  background: linear-gradient(180deg, rgba(0, 20, 40, 0.9) 0%, rgba(0, 30, 60, 0.8) 100%);
+  border-right: 1px solid var(--tech-border);
   display: flex;
   flex-direction: column;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
 }
 
 .panel-header {
@@ -867,7 +1320,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   padding: 0 16px;
-  color: #fff;
+  color: var(--tech-text);
   font-weight: 500;
   border-bottom: 1px solid #0f3460;
 }
@@ -883,10 +1336,13 @@ onMounted(async () => {
 }
 
 .category-title {
-  color: #909399;
+  color: var(--tech-primary);
   font-size: 12px;
   margin-bottom: 8px;
   padding-left: 4px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-shadow: 0 0 5px var(--tech-primary);
 }
 
 .widget-list {
@@ -901,17 +1357,18 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   padding: 12px 8px;
-  background-color: #1a1a2e;
-  border: 1px solid #0f3460;
+  background: rgba(0, 40, 80, 0.3);
+  border: 1px solid var(--tech-border);
   border-radius: 6px;
-  color: #fff;
+  color: var(--tech-text);
   cursor: grab;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
 }
 
 .widget-item:hover {
-  background-color: #0f3460;
-  border-color: #e94560;
+  background: rgba(0, 212, 255, 0.15);
+  border-color: var(--tech-primary);
+  box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
 }
 
 .widget-item span {
@@ -919,57 +1376,150 @@ onMounted(async () => {
   font-size: 12px;
 }
 
+/* 预置模板样式 */
+.template-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 8px;
+}
+
+.template-item {
+  cursor: pointer;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #0f3460;
+  transition: all 0.3s ease;
+  background: rgba(26, 26, 46, 0.8);
+}
+
+.template-item:hover {
+  border-color: #00d4ff;
+  box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.template-preview {
+  height: 60px;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.template-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 3px;
+  width: 100%;
+  height: 100%;
+}
+
+.preview-cell {
+  border-radius: 2px;
+  transition: all 0.3s;
+}
+
+.template-item:hover .preview-cell {
+  transform: scale(1.02);
+}
+
+.template-name {
+  padding: 6px 8px;
+  font-size: 12px;
+  color: #e0f7ff;
+  text-align: center;
+  background: rgba(0, 20, 40, 0.6);
+  border-top: 1px solid rgba(0, 212, 255, 0.2);
+}
+
 /* 中间画布区域 */
 .canvas-container {
   flex: 1;
   overflow: auto;
-  background-color: #0f0f1a;
+  background: linear-gradient(135deg, #050d18 0%, #0a1628 50%, #050d18 100%);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   padding: 20px;
 }
 
+.canvas-container::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.canvas-container::-webkit-scrollbar-thumb {
+  background: var(--tech-border);
+  border-radius: 4px;
+}
+
+.canvas-container::-webkit-scrollbar-track {
+  background: rgba(0, 20, 40, 0.5);
+}
+
 .canvas-wrapper {
   position: relative;
-  border: 2px solid #0f3460;
-  border-radius: 4px;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+  border: 2px solid var(--tech-border);
+  border-radius: 8px;
+  box-shadow: 0 0 30px rgba(0, 212, 255, 0.15);
   overflow: hidden;
+  padding: 10px;  /* 画布内边距，防止组件贴边被裁剪 */
+  box-sizing: border-box;
 }
 
 /* 组件样式 */
 .widget-content {
   height: 100%;
-  background-color: rgba(22, 33, 62, 0.9);
-  border: 1px solid #0f3460;
-  border-radius: 4px;
+  background: linear-gradient(135deg, rgba(0, 40, 80, 0.4) 0%, rgba(0, 60, 100, 0.3) 100%);
+  border: 1px solid var(--tech-border);
+  border-radius: 8px;
   padding: 10px;
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: blur(5px);
 }
 
 .grid-item.selected .widget-content {
-  border-color: #e94560;
-  box-shadow: 0 0 10px rgba(233, 69, 96, 0.3);
+  border-color: var(--tech-primary);
+  box-shadow: 0 0 15px rgba(0, 212, 255, 0.4);
 }
 
 .widget-title {
-  color: #fff;
+  color: var(--tech-text);
   font-size: 14px;
   font-weight: 500;
   margin-bottom: 8px;
+  flex-shrink: 0;
+  text-shadow: 0 0 5px var(--tech-primary);
 }
 
 .widget-preview {
-  height: calc(100% - 24px);
+  flex: 1;
+  min-height: 0;  /* 允许 flex 子项收缩 */
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: auto;  /* 内容过多时可滚动 */
 }
 
 .table-preview {
   display: block;
+  position: relative;
+}
+
+.no-data-hint {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #909399;
+  font-size: 12px;
+  text-align: center;
+  padding: 8px;
 }
 
 .card-preview {
@@ -1028,6 +1578,16 @@ onMounted(async () => {
   font-size: 12px;
 }
 
+.unknown-preview {
+  flex-direction: column;
+  gap: 8px;
+  color: #909399;
+}
+
+.unknown-preview span {
+  font-size: 12px;
+}
+
 .widget-delete-btn {
   position: absolute;
   top: 4px;
@@ -1044,24 +1604,31 @@ onMounted(async () => {
 .property-panel {
   width: 320px;
   min-width: 320px;
-  background-color: #16213e;
-  border-left: 1px solid #0f3460;
+  background: linear-gradient(180deg, rgba(0, 20, 40, 0.9) 0%, rgba(0, 30, 60, 0.8) 100%);
+  border-left: 1px solid var(--tech-border);
   display: flex;
   flex-direction: column;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.3);
 }
 
 .property-panel :deep(.el-tabs__header) {
   margin: 0;
   padding: 0 16px;
-  background-color: #1a1a2e;
+  background: rgba(0, 30, 60, 0.5);
+  border-bottom: 1px solid var(--tech-border);
 }
 
 .property-panel :deep(.el-tabs__item) {
-  color: #909399;
+  color: var(--tech-text-muted);
 }
 
 .property-panel :deep(.el-tabs__item.is-active) {
-  color: #fff;
+  color: var(--tech-primary);
+  text-shadow: 0 0 5px var(--tech-primary);
+}
+
+.property-panel :deep(.el-tabs__active-bar) {
+  background-color: var(--tech-primary);
 }
 
 .property-panel :deep(.el-tabs__content) {
@@ -1070,18 +1637,30 @@ onMounted(async () => {
 }
 
 .property-panel :deep(.el-form-item__label) {
-  color: #909399;
+  color: var(--tech-text-muted);
 }
 
 .property-panel :deep(.el-input__wrapper),
 .property-panel :deep(.el-textarea__inner) {
-  background-color: #1a1a2e;
-  border-color: #0f3460;
+  background-color: rgba(0, 30, 60, 0.5);
+  border: 1px solid var(--tech-border);
   box-shadow: none;
+  transition: all 0.3s;
+}
+
+.property-panel :deep(.el-input__wrapper:hover),
+.property-panel :deep(.el-textarea__inner:hover) {
+  border-color: var(--tech-primary);
+}
+
+.property-panel :deep(.el-input__wrapper:focus-within),
+.property-panel :deep(.el-textarea__inner:focus) {
+  border-color: var(--tech-primary);
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.2);
 }
 
 .property-panel :deep(.el-input__inner) {
-  color: #fff;
+  color: var(--tech-text);
 }
 
 /* 条件样式 */
@@ -1105,5 +1684,52 @@ onMounted(async () => {
 
 :deep(.el-empty__description) {
   color: #909399;
+}
+
+/* vue-grid-layout 样式 */
+:deep(.vue-grid-layout) {
+  min-height: 100%;
+}
+
+:deep(.vue-grid-item) {
+  transition: all 0.2s ease;
+  transition-property: left, top, width, height;
+}
+
+:deep(.vue-grid-item > div) {
+  height: 100%;
+}
+
+:deep(.vue-grid-item.vue-grid-placeholder) {
+  background-color: #e94560 !important;
+  opacity: 0.4;
+  border-radius: 4px;
+}
+
+:deep(.vue-grid-item.vue-draggable-dragging) {
+  opacity: 0.8;
+  z-index: 10;
+}
+
+:deep(.vue-grid-item.resizing) {
+  opacity: 0.9;
+}
+
+:deep(.vue-resizable) {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+:deep(.vue-resizable-handle) {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  bottom: 0;
+  right: 0;
+  cursor: se-resize;
+  z-index: 10;
+  background: linear-gradient(-45deg, transparent 50%, #e94560 50%);
+  border-radius: 0 0 4px 0;
 }
 </style>
