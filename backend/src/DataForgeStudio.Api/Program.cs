@@ -173,11 +173,6 @@ builder.Services.AddScoped<ISqlValidationService, SqlValidationService>();
 builder.Services.AddScoped<IReportCacheService, ReportCacheService>();
 builder.Services.AddScoped<IExportService, ExportService>();
 builder.Services.AddScoped<IDirectoryService, DirectoryService>();
-builder.Services.AddScoped<IKanbanService, KanbanService>();
-builder.Services.AddScoped<IDashboardService, DashboardService>();
-builder.Services.AddScoped<IDisplayService, DisplayService>();
-
-// 注册大屏服务
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 // 试用期追踪器（用于防止试用期重置）
