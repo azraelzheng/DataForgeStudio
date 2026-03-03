@@ -913,9 +913,46 @@ const getDefaultConfig = (type) => {
 }
 
 // 选择组件
-const handleSelectWidget = (item) => {
+const handleSelectWidget = async (item) => {
   selectedWidgetId.value = item.i
   activeTab.value = 'widget'
+
+  // 获取选中的组件
+  const widget = layout.value.find(w => w.i === item.i)
+
+  // 加载已保存的查询条件值
+  if (widget?.config?.queryConditionValues) {
+    queryConditionValues.value = { ...widget.config.queryConditionValues }
+  } else {
+    queryConditionValues.value = {}
+  }
+
+  // 如果有报表ID，加载查询条件定义
+  if (widget?.reportId) {
+    await loadQueryConditionsForWidget(widget.reportId)
+  } else {
+    widgetQueryConditions.value = []
+  }
+}
+
+// 加载组件的查询条件定义
+const loadQueryConditionsForWidget = async (reportId) => {
+  try {
+    const res = await reportApi.getReport(reportId)
+    if (res.success) {
+      const reportData = res.data
+      const conditions = reportData.QueryConditions || reportData.queryConditions || []
+      widgetQueryConditions.value = conditions.map(qc => ({
+        fieldName: qc.FieldName || qc.fieldName,
+        displayName: qc.DisplayName || qc.displayName || qc.FieldName || qc.fieldName,
+        dataType: qc.DataType || qc.dataType || 'String',
+        operator: qc.Operator || qc.operator || 'eq',
+        defaultValue: qc.DefaultValue || qc.defaultValue
+      }))
+    }
+  } catch (error) {
+    console.error('加载查询条件失败:', error)
+  }
 }
 
 // 删除组件
@@ -1281,6 +1318,22 @@ const handleBack = () => {
 // 监听画布尺寸变化，调整缩放
 watch([() => dashboardForm.width, () => dashboardForm.height], () => {
   // 可以在这里添加画布缩放逻辑
+})
+
+// 同步查询条件值到组件配置
+watch(queryConditionValues, (newValues) => {
+  if (selectedWidget.value) {
+    selectedWidget.value.config = selectedWidget.value.config || {}
+    selectedWidget.value.config.queryConditionValues = { ...newValues }
+  }
+}, { deep: true })
+
+// 组件选择变化时重置查询条件
+watch(selectedWidgetId, (newId) => {
+  if (!newId) {
+    widgetQueryConditions.value = []
+    queryConditionValues.value = {}
+  }
 })
 
 onMounted(async () => {
