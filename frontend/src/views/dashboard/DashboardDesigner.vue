@@ -280,6 +280,96 @@
                   </el-select>
                 </el-form-item>
 
+                <!-- 查询条件配置 (绑定报表后显示) -->
+                <template v-if="widgetQueryConditions.length > 0">
+                  <el-divider>查询条件</el-divider>
+                  <div class="query-conditions-config">
+                    <div v-for="qc in widgetQueryConditions" :key="qc.fieldName + qc.operator" class="condition-item">
+                      <el-form-item :label="qc.displayName">
+                        <!-- 不需要输入值的操作符 -->
+                        <template v-if="['null', 'notnull', 'true', 'false'].includes(qc.operator)">
+                          <span class="operator-label">{{ getOperatorLabel(qc.operator) }}</span>
+                        </template>
+
+                        <!-- DateTime between: 日期范围选择器 -->
+                        <template v-else-if="qc.operator === 'between' && qc.dataType === 'DateTime'">
+                          <el-date-picker
+                            v-model="queryConditionValues[getFieldKey(qc)]"
+                            type="daterange"
+                            range-separator="至"
+                            start-placeholder="开始日期"
+                            end-placeholder="结束日期"
+                            value-format="YYYY-MM-DD"
+                            style="width: 100%;"
+                          />
+                        </template>
+
+                        <!-- Number between: 两个数字输入框 -->
+                        <template v-else-if="qc.operator === 'between' && qc.dataType === 'Number'">
+                          <div class="number-range-input">
+                            <el-input-number
+                              v-model="queryConditionValues[getFieldKey(qc) + '_start']"
+                              placeholder="最小值"
+                              :controls-position="'right'"
+                              style="flex: 1;"
+                            />
+                            <span style="margin: 0 8px;">~</span>
+                            <el-input-number
+                              v-model="queryConditionValues[getFieldKey(qc) + '_end']"
+                              placeholder="最大值"
+                              :controls-position="'right'"
+                              style="flex: 1;"
+                            />
+                          </div>
+                        </template>
+
+                        <!-- String 类型 -->
+                        <template v-else-if="qc.dataType === 'String'">
+                          <el-input
+                            v-model="queryConditionValues[getFieldKey(qc)]"
+                            :placeholder="getOperatorPlaceholder(qc.operator)"
+                            clearable
+                          />
+                        </template>
+
+                        <!-- Number 类型 -->
+                        <template v-else-if="qc.dataType === 'Number'">
+                          <el-input-number
+                            v-model="queryConditionValues[getFieldKey(qc)]"
+                            :placeholder="getOperatorPlaceholder(qc.operator)"
+                            :controls-position="'right'"
+                            style="width: 100%;"
+                          />
+                        </template>
+
+                        <!-- DateTime 类型 -->
+                        <template v-else-if="qc.dataType === 'DateTime'">
+                          <el-date-picker
+                            v-model="queryConditionValues[getFieldKey(qc)]"
+                            type="date"
+                            :placeholder="getOperatorPlaceholder(qc.operator)"
+                            value-format="YYYY-MM-DD"
+                            style="width: 100%;"
+                          />
+                        </template>
+
+                        <!-- Boolean 类型 -->
+                        <template v-else-if="qc.dataType === 'Boolean'">
+                          <el-select
+                            v-model="queryConditionValues[getFieldKey(qc)]"
+                            placeholder="请选择"
+                            clearable
+                            style="width: 100%;"
+                          >
+                            <el-option label="是" :value="true" />
+                            <el-option label="否" :value="false" />
+                          </el-select>
+                        </template>
+                      </el-form-item>
+                    </div>
+                  </div>
+                </template>
+
                 <!-- 条件样式配置 -->
                 <el-divider>条件样式</el-divider>
                 <div class="condition-styles">
@@ -1731,5 +1821,25 @@ onActivated(async () => {
   z-index: 10;
   background: linear-gradient(-45deg, transparent 50%, #e94560 50%);
   border-radius: 0 0 4px 0;
+}
+
+/* 查询条件配置样式 */
+.query-conditions-config {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.query-conditions-config .condition-item {
+  margin-bottom: 8px;
+}
+
+.query-conditions-config .operator-label {
+  color: #909399;
+  font-size: 12px;
+}
+
+.query-conditions-config .number-range-input {
+  display: flex;
+  align-items: center;
 }
 </style>
