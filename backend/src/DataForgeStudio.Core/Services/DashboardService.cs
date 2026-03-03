@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using DataForgeStudio.Core.Interfaces;
@@ -626,7 +627,31 @@ public class DashboardService : IDashboardService
     {
         try
         {
-            var executeRequest = new ExecuteReportRequest();
+            // 解析查询条件值
+            Dictionary<string, object> conditionValues = new();
+            if (!string.IsNullOrEmpty(widget.DataConfig))
+            {
+                try
+                {
+                    var dataConfig = JsonSerializer.Deserialize<WidgetDataConfig>(widget.DataConfig, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+                    if (dataConfig?.QueryConditionValues != null)
+                    {
+                        conditionValues = dataConfig.QueryConditionValues;
+                    }
+                }
+                catch (JsonException ex)
+                {
+                    _logger.LogWarning(ex, "解析组件 DataConfig 失败: WidgetId={WidgetId}", widget.WidgetId);
+                }
+            }
+
+            var executeRequest = new ExecuteReportRequest
+            {
+                Parameters = conditionValues
+            };
             var reportResult = await _reportService.ExecuteReportAsync(widget.ReportId, executeRequest);
 
             return new WidgetDataResult
@@ -760,6 +785,19 @@ public class DashboardService : IDashboardService
                 CreatedTime = r.CreatedTime
             }).ToList() ?? new List<WidgetRuleDto>()
         };
+    }
+
+    #endregion
+
+    #region 辅助类
+
+    /// <summary>
+    /// 组件数据配置辅助类
+    /// </summary>
+    private class WidgetDataConfig
+    {
+        public int? ReportId { get; set; }
+        public Dictionary<string, object>? QueryConditionValues { get; set; }
     }
 
     #endregion
