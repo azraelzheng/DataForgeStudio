@@ -8,9 +8,7 @@ const LICENSE_REQUIRED_ROUTES = [
   '/report/design',
   '/report/designer',
   '/report/list',
-  '/system/datasource',
-  '/dashboard',
-  '/display'
+  '/system/datasource'
 ]
 
 const routes = [
@@ -34,7 +32,7 @@ const routes = [
     path: '/report/list',
     name: 'ReportQuery',
     component: () => import('../views/report/ReportQuery.vue'),
-    meta: { title: '报表查询', requiresAuth: true, permission: 'report:query' }
+    meta: { title: '报表查询', requiresAuth: true, permission: 'report:execute' }
   },
   // 报表设计列表 - 设计管理页面
   {
@@ -92,26 +90,35 @@ const routes = [
     component: () => import('../views/system/BackupManagement.vue'),
     meta: { title: '备份管理', requiresAuth: true, permission: 'backup:view' }
   },
-  // 看板管理
+  // 大屏模块
   {
     path: '/dashboard',
     name: 'Dashboard',
-    component: () => import('../views/dashboard/DashboardManagement.vue'),
-    meta: { title: '看板管理', requiresAuth: true, permission: 'dashboard:view' }
+    redirect: '/dashboard/list'
   },
-  // 车间大屏配置
   {
-    path: '/display',
-    name: 'DisplayConfig',
-    component: () => import('../display/views/DisplayConfig.vue'),
-    meta: { title: '车间大屏', requiresAuth: true, permission: 'display:view' }
+    path: '/dashboard/list',
+    name: 'DashboardList',
+    component: () => import('../views/dashboard/DashboardList.vue'),
+    meta: { title: '大屏管理', requiresAuth: true, permission: 'dashboard:view' }
   },
-  // 全屏展示（不显示在菜单中）
   {
-    path: '/display/fullscreen',
-    name: 'FullscreenView',
-    component: () => import('../display/views/FullscreenView.vue'),
-    meta: { title: '全屏展示', requiresAuth: true, permission: 'display:view' }
+    path: '/dashboard/designer/:id?',
+    name: 'DashboardDesigner',
+    component: () => import('../views/dashboard/DashboardDesigner.vue'),
+    meta: { title: '大屏设计器', requiresAuth: true, permission: 'dashboard:edit' }
+  },
+  {
+    path: '/dashboard/view/:id',
+    name: 'DashboardView',
+    component: () => import('../views/dashboard/DashboardView.vue'),
+    meta: { title: '大屏展示', requiresAuth: true, permission: 'dashboard:view' }
+  },
+  {
+    path: '/public/d/:id',
+    name: 'PublicDashboard',
+    component: () => import('../views/dashboard/PublicDashboard.vue'),
+    meta: { title: '大屏', requiresAuth: false }
   },
   {
     path: '/login',
@@ -174,8 +181,7 @@ router.beforeEach(async (to, from, next) => {
   if (LICENSE_REQUIRED_ROUTES.some(route => to.path.startsWith(route))) {
     const licenseStore = useLicenseStore()
 
-    // 确保许可证已加载（等待异步操作完成）
-    if (!licenseStore.license) {
+    if (!licenseStore.license && !licenseStore.licenseStatus) {
       await licenseStore.loadLicense()
     }
 
@@ -185,8 +191,7 @@ router.beforeEach(async (to, from, next) => {
       return
     }
 
-    // 只有当许可证确实无效时才阻止访问
-    if (licenseStore.licenseStatus === 'invalid') {
+    if (licenseStore.licenseStatus === 'invalid' || !licenseStore.license) {
       ElMessage.error('许可证无效，请先激活许可证。')
       next('/license')
       return

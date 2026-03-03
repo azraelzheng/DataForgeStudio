@@ -1,0 +1,117 @@
+select.vue:388 Invalid vnode type when creating vnode: undefined. Proxy(Object) {…} at <DashboardDesigner>
+at <KeepAlive>
+at <RouterView>
+at <ElMain>
+at <ElContainer>
+at <ElContainer>
+at <ErrorBoundary>
+at <App> (8) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+（匿名） @ select.vue:388
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+warn$1 @ runtime-core.esm-bundler.js:27
+_createVNode @ runtime-core.esm-bundler.js:7621
+createVNodeWithArgsTransform @ runtime-core.esm-bundler.js:7548
+_sfc_render @ DashboardDesigner.vue:89
+renderComponentRoot @ runtime-core.esm-bundler.js:4497
+componentUpdateFn @ runtime-core.esm-bundler.js:6044
+run @ reactivity.esm-bundler.js:237
+setupRenderEffect @ runtime-core.esm-bundler.js:6179
+mountComponent @ runtime-core.esm-bundler.js:5953
+processComponent @ runtime-core.esm-bundler.js:5905
+patch @ runtime-core.esm-bundler.js:5403
+componentUpdateFn @ runtime-core.esm-bundler.js:6131
+run @ reactivity.esm-bundler.js:237
+updateComponent @ runtime-core.esm-bundler.js:5982
+processComponent @ runtime-core.esm-bundler.js:5916
+patch @ runtime-core.esm-bundler.js:5403
+componentUpdateFn @ runtime-core.esm-bundler.js:6131
+run @ reactivity.esm-bundler.js:237
+runIfDirty @ reactivity.esm-bundler.js:275
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+flushJobs @ runtime-core.esm-bundler.js:408
+Promise.then
+queueFlush @ runtime-core.esm-bundler.js:322
+queueJob @ runtime-core.esm-bundler.js:317
+effect2.scheduler @ runtime-core.esm-bundler.js:6173
+trigger @ reactivity.esm-bundler.js:265
+endBatch @ reactivity.esm-bundler.js:323
+notify @ reactivity.esm-bundler.js:614
+trigger @ reactivity.esm-bundler.js:588
+set value @ reactivity.esm-bundler.js:1512
+finalizeNavigation @ vue-router.mjs:1389
+（匿名） @ vue-router.mjs:1317
+Promise.then
+pushWithRedirect @ vue-router.mjs:1305
+push @ vue-router.mjs:1258
+handleEdit @ DashboardList.vue:294
+onClick @ DashboardList.vue:71
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+emit @ runtime-core.esm-bundler.js:4380
+（匿名） @ runtime-core.esm-bundler.js:8232
+handleClick @ use-button.ts:85
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+invoker @ runtime-dom.esm-bundler.js:730
+select.vue:388 Invalid vnode type when creating vnode: undefined. Proxy(Object) {…} at <DashboardDesigner>
+at <KeepAlive>
+at <RouterView>
+at <ElMain>
+at <ElContainer>
+at <ElContainer>
+at <ErrorBoundary>
+at <App> (8) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+（匿名） @ select.vue:388
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+warn$1 @ runtime-core.esm-bundler.js:27
+_createVNode @ runtime-core.esm-bundler.js:7621
+createVNodeWithArgsTransform @ runtime-core.esm-bundler.js:7548
+_sfc_render @ DashboardDesigner.vue:89
+renderComponentRoot @ runtime-core.esm-bundler.js:4497
+componentUpdateFn @ runtime-core.esm-bundler.js:6122
+run @ reactivity.esm-bundler.js:237
+runIfDirty @ reactivity.esm-bundler.js:275
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+flushJobs @ runtime-core.esm-bundler.js:408
+Promise.then
+queueFlush @ runtime-core.esm-bundler.js:322
+queueJob @ runtime-core.esm-bundler.js:317
+effect2.scheduler @ runtime-core.esm-bundler.js:6173
+trigger @ reactivity.esm-bundler.js:265
+endBatch @ reactivity.esm-bundler.js:323
+trigger @ reactivity.esm-bundler.js:741
+set @ reactivity.esm-bundler.js:1059
+loadDashboard @ DashboardDesigner.vue:502
+await in loadDashboard
+（匿名） @ DashboardDesigner.vue:842
+await in （匿名）
+（匿名） @ runtime-core.esm-bundler.js:3056
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+hook.__weh.hook.__weh @ runtime-core.esm-bundler.js:3036
+flushPostFlushCbs @ runtime-core.esm-bundler.js:385
+flushJobs @ runtime-core.esm-bundler.js:427
+Promise.then
+queueFlush @ runtime-core.esm-bundler.js:322
+queueJob @ runtime-core.esm-bundler.js:317
+effect2.scheduler @ runtime-core.esm-bundler.js:6173
+trigger @ reactivity.esm-bundler.js:265
+endBatch @ reactivity.esm-bundler.js:323
+notify @ reactivity.esm-bundler.js:614
+trigger @ reactivity.esm-bundler.js:588
+set value @ reactivity.esm-bundler.js:1512
+finalizeNavigation @ vue-router.mjs:1389
+（匿名） @ vue-router.mjs:1317
+Promise.then
+pushWithRedirect @ vue-router.mjs:1305
+push @ vue-router.mjs:1258
+handleEdit @ DashboardList.vue:294
+onClick @ DashboardList.vue:71
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+emit @ runtime-core.esm-bundler.js:4380
+（匿名） @ runtime-core.esm-bundler.js:8232
+handleClick @ use-button.ts:85
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+invoker @ runtime-dom.esm-bundler.js:730

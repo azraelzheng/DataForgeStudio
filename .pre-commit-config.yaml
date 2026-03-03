@@ -1,0 +1,53 @@
+# Pre-commit 配置文件
+# 安装: pre-commit install
+# 手动运行: pre-commit run --all-files
+
+repos:
+  # Ruff - 快速 Python Linter 和格式化工具
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.9.0
+    hooks:
+      # Linter
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      # 格式化
+      - id: ruff-format
+
+  # 基础检查
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      # 移除行尾空白
+      - id: trailing-whitespace
+      # 确保文件以换行符结尾
+      - id: end-of-file-fixer
+      # 检查 YAML 文件语法
+      - id: check-yaml
+        args: [--unsafe]
+      # 检查 JSON 文件语法
+      - id: check-json
+      # 检查是否有大文件（默认 500KB）
+      - id: check-added-large-files
+      # 检查合并冲突标记
+      - id: check-merge-conflict
+      # 防止直接提交到主分支
+      - id: no-commit-to-branch
+        args: [--branch, master, --branch, main]
+        stages: [commit]
+
+# 全局设置
+default_language_version:
+  python: python3.11
+
+# CI 设置
+ci:
+  autofix_commit_msg: |
+    [pre-commit.ci] auto fixes from pre-commit.com hooks
+
+    for more information, see https://pre-commit.ci
+  autofix_prs: true
+  autoupdate_branch: ''
+  autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
+  autoupdate_schedule: weekly
+  skip: []
+  submodules: false

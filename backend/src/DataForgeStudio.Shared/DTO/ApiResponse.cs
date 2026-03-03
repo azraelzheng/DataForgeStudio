@@ -615,6 +615,12 @@ public class LicenseInfoDto
     public int? MaxUsers { get; set; }
     public int? MaxReports { get; set; }
     public int? MaxDataSources { get; set; }
+
+    /// <summary>
+    /// 最大大屏数量
+    /// </summary>
+    public int? MaxDashboards { get; set; }
+
     public List<string>? Features { get; set; }
 }
 
@@ -821,6 +827,11 @@ public class LicenseUsageStatsDto
     /// 当前数据源数量
     /// </summary>
     public int CurrentDataSources { get; set; }
+
+    /// <summary>
+    /// 当前大屏数量
+    /// </summary>
+    public int CurrentDashboards { get; set; }
 }
 
 /// <summary>

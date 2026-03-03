@@ -1,0 +1,93 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace DataForgeStudio.Domain.Entities;
+
+/// <summary>
+/// 大屏组件配置表
+/// </summary>
+[Table("DashboardWidgets")]
+public class DashboardWidget
+{
+    /// <summary>
+    /// 组件ID
+    /// </summary>
+    [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public int WidgetId { get; set; }
+
+    /// <summary>
+    /// 所属大屏ID
+    /// </summary>
+    public int DashboardId { get; set; }
+
+    /// <summary>
+    /// 关联的报表ID（组件必须绑定报表）
+    /// </summary>
+    public int ReportId { get; set; }
+
+    /// <summary>
+    /// 组件类型：chart（图表）, table（表格）, statistics（统计卡片）, text（文本）等
+    /// </summary>
+    [Required]
+    [MaxLength(50)]
+    public string WidgetType { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 组件标题
+    /// </summary>
+    [MaxLength(100)]
+    public string? Title { get; set; }
+
+    /// <summary>
+    /// 组件位置X坐标（网格单位）
+    /// </summary>
+    public int PositionX { get; set; }
+
+    /// <summary>
+    /// 组件位置Y坐标（网格单位）
+    /// </summary>
+    public int PositionY { get; set; }
+
+    /// <summary>
+    /// 组件宽度（网格单位）
+    /// </summary>
+    public int Width { get; set; }
+
+    /// <summary>
+    /// 组件高度（网格单位）
+    /// </summary>
+    public int Height { get; set; }
+
+    /// <summary>
+    /// 数据配置 (JSON)
+    /// </summary>
+    public string? DataConfig { get; set; }
+
+    /// <summary>
+    /// 样式配置 (JSON)
+    /// </summary>
+    public string? StyleConfig { get; set; }
+
+    /// <summary>
+    /// 创建时间
+    /// </summary>
+    public DateTime CreatedTime { get; set; }
+
+    /// <summary>
+    /// 导航属性 - 所属大屏
+    /// </summary>
+    [ForeignKey(nameof(DashboardId))]
+    public virtual Dashboard Dashboard { get; set; } = null!;
+
+    /// <summary>
+    /// 导航属性 - 关联报表
+    /// </summary>
+    [ForeignKey(nameof(ReportId))]
+    public virtual Report Report { get; set; } = null!;
+
+    /// <summary>
+    /// 导航属性 - 组件规则集合
+    /// </summary>
+    public virtual ICollection<WidgetRule> Rules { get; set; } = new List<WidgetRule>();
+}

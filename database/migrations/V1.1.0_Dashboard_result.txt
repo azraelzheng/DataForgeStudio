@@ -1,0 +1,2 @@
+Sqlcmd: 错误: Microsoft ODBC Driver 13 for SQL Server : 用户 'MicrosoftAccount\azraelnice@hotmail.com' 登录失败。。
+Sqlcmd: 错误: Microsoft ODBC Driver 13 for SQL Server : 无法打开登录所请求的数据库 "DataForgeStudio_V4"。登录失败。。

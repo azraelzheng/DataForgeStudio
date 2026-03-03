@@ -18,7 +18,8 @@ class Program
     private static readonly string[] AvailableFeatures =
     {
         "报表设计", "报表查询", "图表展示", "Excel导出", "PDF导出",
-        "数据源管理", "用户管理", "角色管理"
+        "数据源管理", "用户管理", "角色管理",
+        "大屏设计", "大屏展示", "全屏模式"
     };
 
     // 密钥配置（从外部文件读取）
@@ -213,6 +214,14 @@ class Program
             info.MaxDataSources = maxDataSources;
         }
 
+        // 最大大屏数
+        Console.Write($"最大大屏数 (默认: {info.MaxDashboards}, 输入 0 表示无限制): ");
+        var dashboardsInput = Console.ReadLine()?.Trim();
+        if (!string.IsNullOrEmpty(dashboardsInput) && int.TryParse(dashboardsInput, out var maxDashboards) && maxDashboards >= 0)
+        {
+            info.MaxDashboards = maxDashboards;
+        }
+
         // 功能选择
         Console.WriteLine();
         Console.WriteLine("可用功能:");
@@ -264,6 +273,7 @@ class Program
         Console.WriteLine($"  最大用户数: {info.MaxUsers}");
         Console.WriteLine($"  最大报表数: {(info.MaxReports == 0 ? "无限制" : info.MaxReports.ToString())}");
         Console.WriteLine($"  最大数据源数: {(info.MaxDataSources == 0 ? "无限制" : info.MaxDataSources.ToString())}");
+        Console.WriteLine($"  最大大屏数: {(info.MaxDashboards == 0 ? "无限制" : info.MaxDashboards.ToString())}");
         Console.WriteLine($"  启用功能: {string.Join(", ", info.Features)}");
         Console.WriteLine($"  绑定机器码: {(string.IsNullOrEmpty(info.MachineCode) ? "不绑定" : info.MachineCode)}");
         Console.WriteLine("====================================================");
@@ -295,7 +305,8 @@ class Program
                 info.MaxUsers = 5;
                 info.MaxReports = 10;
                 info.MaxDataSources = 2;
-                info.Features = AvailableFeatures.Take(4).ToList(); // 基础功能
+                info.MaxDashboards = 3;
+                info.Features = AvailableFeatures.Take(10).ToList(); // 基础功能（含大屏）
                 break;
 
             case "Standard":
@@ -303,7 +314,8 @@ class Program
                 info.MaxUsers = 20;
                 info.MaxReports = 50;
                 info.MaxDataSources = 5;
-                info.Features = AvailableFeatures.Take(6).ToList(); // 标准功能
+                info.MaxDashboards = 10;
+                info.Features = AvailableFeatures.Take(10).ToList(); // 标准功能（含大屏）
                 break;
 
             case "Professional":
@@ -311,6 +323,7 @@ class Program
                 info.MaxUsers = 100;
                 info.MaxReports = 0; // 无限制
                 info.MaxDataSources = 0; // 无限制
+                info.MaxDashboards = 50;
                 info.Features = AvailableFeatures.ToList(); // 所有功能
                 break;
 
@@ -319,6 +332,7 @@ class Program
                 info.MaxUsers = 0; // 无限制
                 info.MaxReports = 0; // 无限制
                 info.MaxDataSources = 0; // 无限制
+                info.MaxDashboards = 0; // 无限制
                 info.Features = AvailableFeatures.ToList(); // 所有功能
                 break;
         }
@@ -343,6 +357,7 @@ class Program
             MaxUsers = info.MaxUsers,
             MaxReports = info.MaxReports,
             MaxDataSources = info.MaxDataSources,
+            MaxDashboards = info.MaxDashboards,
             Features = info.Features,
             MachineCode = info.MachineCode,
             IssuedDate = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"),
@@ -366,6 +381,7 @@ class Program
             MaxUsers = info.MaxUsers,
             MaxReports = info.MaxReports,
             MaxDataSources = info.MaxDataSources,
+            MaxDashboards = info.MaxDashboards,
             Features = info.Features,
             MachineCode = info.MachineCode,
             IssuedDate = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"),
@@ -389,6 +405,7 @@ class Program
             MaxUsers = info.MaxUsers,
             MaxReports = info.MaxReports,
             MaxDataSources = info.MaxDataSources,
+            MaxDashboards = info.MaxDashboards,
             Features = info.Features,
             MachineCode = info.MachineCode,
             IssuedDate = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"),
@@ -439,6 +456,7 @@ class Program
         public int MaxUsers { get; set; }
         public int MaxReports { get; set; }
         public int MaxDataSources { get; set; }
+        public int MaxDashboards { get; set; }
         public List<string> Features { get; set; } = new();
         public string MachineCode { get; set; } = string.Empty;
     }

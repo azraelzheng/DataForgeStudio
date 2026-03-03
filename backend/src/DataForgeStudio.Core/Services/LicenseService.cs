@@ -50,20 +50,7 @@ public class LicenseService : ILicenseService
 
         if (license == null)
         {
-            // 自动生成试用许可证（如果试用期有效）
-            _logger.LogInformation("未找到许可证，尝试自动生成试用许可证");
-            var trialResult = await GenerateTrialLicenseAsync();
-
-            if (trialResult.Success && trialResult.Data != null)
-            {
-                return trialResult;
-            }
-
-            // 试用许可证生成失败（可能已过期）
-            var errorMessage = trialResult.ErrorCode == "TRIAL_EXPIRED"
-                ? trialResult.Message
-                : "未激活许可证";
-            return ApiResponse<LicenseInfoDto>.Fail(errorMessage, trialResult.ErrorCode ?? "NO_LICENSE");
+            return ApiResponse<LicenseInfoDto>.Fail("未激活许可证", "NO_LICENSE");
         }
 
         // 解密许可证数据
@@ -92,6 +79,7 @@ public class LicenseService : ILicenseService
             MaxUsers = licenseData.MaxUsers,
             MaxReports = licenseData.MaxReports,
             MaxDataSources = licenseData.MaxDataSources,
+            MaxDashboards = licenseData.MaxDashboards,
             Features = licenseData.Features
         };
     }
@@ -137,14 +125,25 @@ public class LicenseService : ILicenseService
             }
 
             // 3. 使用 KeyManagementService 获取公钥验证签名
-            // 注意：正式许可证必须使用 RSA 签名，试用许可证（TRIAL_LOCAL 标记）不允许通过激活导入
-            if (licenseData.Signature == "TRIAL_LOCAL")
+            // 重新构建不含 Signature 的 JSON（与 LicenseGenerator 签名时的格式一致）
+            var jsonForVerification = JsonSerializer.Serialize(new
             {
-                return ApiResponse<LicenseInfoDto>.Fail("试用许可证无法通过激活导入。试用许可证由系统自动生成。", "TRIAL_IMPORT_NOT_ALLOWED");
-            }
-
-            // 使用与生成时相同的序列化格式
-            var jsonForVerification = SerializeForSignature(licenseData);
+                LicenseId = licenseData.LicenseId,
+                CustomerName = licenseData.CustomerName,
+                ExpiryDate = licenseData.ExpiryDate.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+                MaxUsers = licenseData.MaxUsers,
+                MaxReports = licenseData.MaxReports,
+                MaxDataSources = licenseData.MaxDataSources,
+                MaxDashboards = licenseData.MaxDashboards,
+                Features = licenseData.Features,
+                MachineCode = licenseData.MachineCode,
+                IssuedDate = licenseData.IssuedDate,
+                LicenseType = licenseData.LicenseType
+            }, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                WriteIndented = false
+            });
 
             var publicKey = await _keyManagementService.GetPublicKeyAsync();
             bool isValid = EncryptionHelper.RsaVerifyData(
@@ -278,34 +277,42 @@ public class LicenseService : ILicenseService
             return response;
         }
 
-        // 验证签名 - 使用与生成时相同的序列化格式
-        // 注意：试用许可证使用特殊标记 "TRIAL_LOCAL"，跳过 RSA 验证
-        // 只有正式许可证需要 RSA 签名验证
-        if (licenseData.Signature != "TRIAL_LOCAL")
+        // 验证签名 - 重新构建不含 Signature 的 JSON（与 LicenseGenerator 签名时的格式一致）
+        var jsonForVerification = JsonSerializer.Serialize(new
         {
-            var jsonForVerification = SerializeForSignature(licenseData);
+            LicenseId = licenseData.LicenseId,
+            CustomerName = licenseData.CustomerName,
+            ExpiryDate = licenseData.ExpiryDate.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+            MaxUsers = licenseData.MaxUsers,
+            MaxReports = licenseData.MaxReports,
+            MaxDataSources = licenseData.MaxDataSources,
+            MaxDashboards = licenseData.MaxDashboards,
+            Features = licenseData.Features,
+            MachineCode = licenseData.MachineCode,
+            IssuedDate = licenseData.IssuedDate,
+            LicenseType = licenseData.LicenseType
+        }, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = false
+        });
 
-            var publicKey = await _keyManagementService.GetPublicKeyAsync();
-            bool isValid = EncryptionHelper.RsaVerifyData(
-                jsonForVerification,
-                licenseData.Signature,
-                publicKey
-            );
+        var publicKey = await _keyManagementService.GetPublicKeyAsync();
+        bool isValid = EncryptionHelper.RsaVerifyData(
+            jsonForVerification,
+            licenseData.Signature,
+            publicKey
+        );
 
-            if (!isValid)
+        if (!isValid)
+        {
+            var response = ApiResponse<LicenseValidationResponse>.Ok(new LicenseValidationResponse
             {
-                var response = ApiResponse<LicenseValidationResponse>.Ok(new LicenseValidationResponse
-                {
-                    Valid = false,
-                    Message = "许可证已被篡改"
-                });
-                _memoryCache.Set(CACHE_KEY, response, TimeSpan.FromMinutes(CACHE_DURATION_MINUTES));
-                return response;
-            }
-        }
-        else
-        {
-            _logger.LogDebug("试用许可证，跳过 RSA 签名验证");
+                Valid = false,
+                Message = "许可证已被篡改"
+            });
+            _memoryCache.Set(CACHE_KEY, response, TimeSpan.FromMinutes(CACHE_DURATION_MINUTES));
+            return response;
         }
 
         // 检查过期
@@ -423,19 +430,25 @@ public class LicenseService : ILicenseService
                 MaxUsers = 5,
                 MaxReports = 10,
                 MaxDataSources = 2,
-                Features = new List<string> { "报表设计", "报表查询", "数据源管理" },
+                MaxDashboards = 3,
+                Features = new List<string> { "报表设计", "报表查询", "数据源管理", "大屏设计" },
                 MachineCode = machineCode,
                 IssuedDate = DateTime.UtcNow.ToString("yyyy-MM-dd"),
                 LicenseType = LICENSE_TYPE_TRIAL,
-                Signature = "TRIAL_LOCAL" // 试用许可证使用特殊标记，不需要 RSA 签名
+                Signature = "" // 稍后生成签名
             };
 
-            // 注意：试用许可证不需要 RSA 签名
-            // 试用许可证的验证依赖于：
-            // 1. TrialLicenseTracker 跟踪试用期
-            // 2. 机器码绑定
-            // 3. 数据库记录
-            // 只有正式许可证才需要 RSA 签名验证（确保由公司签发）
+            // 序列化为 JSON（不包含 Signature）
+            var licenseJson = JsonSerializer.Serialize(licenseData);
+
+            // 使用私钥签名
+            using var rsa = await _keyManagementService.GetRsaWithPrivateKeyAsync();
+            var signatureBytes = rsa.SignData(
+                System.Text.Encoding.UTF8.GetBytes(licenseJson),
+                HashAlgorithmName.SHA256,
+                RSASignaturePadding.Pkcs1
+            );
+            licenseData.Signature = Convert.ToBase64String(signatureBytes);
 
             // 重新序列化包含签名的完整数据
             var fullLicenseJson = JsonSerializer.Serialize(licenseData);
@@ -494,11 +507,16 @@ public class LicenseService : ILicenseService
             var currentDataSources = await _context.DataSources
                 .CountAsync();
 
+            // 统计大屏数量
+            var currentDashboards = await _context.Dashboards
+                .CountAsync();
+
             var stats = new LicenseUsageStatsDto
             {
                 CurrentUsers = currentUsers,
                 CurrentReports = currentReports,
-                CurrentDataSources = currentDataSources
+                CurrentDataSources = currentDataSources,
+                CurrentDashboards = currentDashboards
             };
 
             return ApiResponse<LicenseUsageStatsDto>.Ok(stats);
@@ -648,34 +666,47 @@ public class LicenseService : ILicenseService
     }
 
     /// <summary>
-    /// 用于签名/验证的 JSON 序列化选项（确保一致性）
+    /// 检查是否可以创建新的大屏
     /// </summary>
-    private static readonly JsonSerializerOptions SignatureJsonOptions = new()
+    public async Task<ApiResponse> CheckDashboardLimitAsync()
     {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = false
-    };
-
-    /// <summary>
-    /// 序列化许可证数据用于签名（不包含 Signature 字段）
-    /// 签名生成和验证必须使用完全相同的格式
-    /// </summary>
-    private static string SerializeForSignature(LicenseData data)
-    {
-        // 创建不包含 Signature 的匿名对象，确保格式一致
-        var dataForSignature = new
+        try
         {
-            licenseId = data.LicenseId,
-            customerName = data.CustomerName,
-            expiryDate = data.ExpiryDate.ToString("yyyy-MM-ddTHH:mm:ssZ"),
-            maxUsers = data.MaxUsers,
-            maxReports = data.MaxReports,
-            maxDataSources = data.MaxDataSources,
-            features = data.Features,
-            machineCode = data.MachineCode,
-            issuedDate = data.IssuedDate,
-            licenseType = data.LicenseType
-        };
-        return JsonSerializer.Serialize(dataForSignature, SignatureJsonOptions);
+            // 验证许可证是否有效
+            var validationResult = await ValidateLicenseAsync();
+            if (!validationResult.Success || validationResult.Data == null || !validationResult.Data.Valid)
+            {
+                return ApiResponse.Fail(validationResult.Data?.Message ?? "许可证无效", "LICENSE_INVALID");
+            }
+
+            var licenseInfo = validationResult.Data.LicenseInfo;
+            if (licenseInfo == null)
+            {
+                return ApiResponse.Fail("无法获取许可证信息", "LICENSE_INFO_MISSING");
+            }
+
+            // 如果 MaxDashboards 为 0 或 null，表示无限制
+            if (licenseInfo.MaxDashboards == null || licenseInfo.MaxDashboards == 0)
+            {
+                return ApiResponse.Ok();
+            }
+
+            // 统计当前大屏数量
+            var currentDashboards = await _context.Dashboards.CountAsync();
+
+            if (currentDashboards >= licenseInfo.MaxDashboards)
+            {
+                return ApiResponse.Fail(
+                    $"已达到许可证大屏数量限制（当前: {currentDashboards}，最大: {licenseInfo.MaxDashboards}），无法创建新大屏",
+                    "DASHBOARD_LIMIT_EXCEEDED");
+            }
+
+            return ApiResponse.Ok();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "检查大屏数量限制失败");
+            return ApiResponse.Fail($"检查大屏限制失败: {ex.Message}", "CHECK_LIMIT_FAILED");
+        }
     }
 }

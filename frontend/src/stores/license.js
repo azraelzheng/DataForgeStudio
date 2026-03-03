@@ -12,6 +12,7 @@ export const useLicenseStore = defineStore('license', () => {
     maxUsers: null,
     maxReports: null,
     maxDataSources: null,
+    maxDashboards: 0,
     allowedFeatures: []
   })
   const warningMessage = ref('')
@@ -108,6 +109,7 @@ export const useLicenseStore = defineStore('license', () => {
         maxUsers: null,
         maxReports: null,
         maxDataSources: null,
+        maxDashboards: 0,
         allowedFeatures: []
       }
       return
@@ -118,6 +120,7 @@ export const useLicenseStore = defineStore('license', () => {
       maxUsers: licenseData.maxUsers || null,
       maxReports: licenseData.maxReports || null,
       maxDataSources: licenseData.maxDataSources || null,
+      maxDashboards: licenseData.maxDashboards || licenseData.MaxDashboards || 0,
       allowedFeatures: licenseData.features || []
     }
 
