@@ -58,17 +58,21 @@
           </el-menu-item>
         </el-sub-menu>
 
-        <!-- 看板管理 -->
-        <el-menu-item index="/dashboard" v-if="userStore.hasPermission('dashboard:view')">
-          <el-icon><DataBoard /></el-icon>
-          <span>看板管理</span>
-        </el-menu-item>
-
-        <!-- 车间大屏 -->
-        <el-menu-item index="/display" v-if="userStore.hasPermission('display:view')">
-          <el-icon><Monitor /></el-icon>
-          <span>车间大屏</span>
-        </el-menu-item>
+        <!-- 大屏管理 -->
+        <el-sub-menu index="dashboard" v-if="userStore.hasAnyPermission(['dashboard:view', 'dashboard:edit'])">
+          <template #title>
+            <el-icon><DataBoard /></el-icon>
+            <span>大屏管理</span>
+          </template>
+          <el-menu-item index="/dashboard/list" v-if="userStore.hasPermission('dashboard:view')">
+            <el-icon><List /></el-icon>
+            <span>大屏列表</span>
+          </el-menu-item>
+          <el-menu-item index="/dashboard/designer" v-if="userStore.hasPermission('dashboard:edit')">
+            <el-icon><Edit /></el-icon>
+            <span>大屏设计器</span>
+          </el-menu-item>
+        </el-sub-menu>
 
         <el-menu-item index="/license" v-if="userStore.hasPermission('license:view')">
           <el-icon><Key /></el-icon>
@@ -218,8 +222,7 @@ import {
   FolderOpened,
   Loading,
   QuestionFilled,
-  DataBoard,
-  Monitor
+  DataBoard
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
@@ -236,6 +239,7 @@ const activeMenu = computed(() => {
   // 匹配当前路由到菜单项
   if (path.startsWith('/report')) return '/report'
   if (path.startsWith('/system')) return '/system'
+  if (path.startsWith('/dashboard')) return '/dashboard/list'
   return path
 })
 
