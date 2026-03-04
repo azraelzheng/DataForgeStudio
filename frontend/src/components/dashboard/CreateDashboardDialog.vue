@@ -9,7 +9,7 @@
     <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
       <!-- 大屏名称 -->
       <el-form-item label="大屏名称" prop="name">
-        <el-input v-model="form.name" placeholder="请输入大屏名称" maxlength="100" />
+        <el-input v-model="form.name" placeholder="请输入大屏名称" maxlength="50" />
       </el-form-item>
 
       <!-- 大屏描述 -->
@@ -19,7 +19,7 @@
           type="textarea"
           :rows="2"
           placeholder="请输入描述（可选）"
-          maxlength="500"
+          maxlength="200"
         />
       </el-form-item>
 
@@ -96,6 +96,7 @@
       <!-- 刷新间隔 -->
       <el-form-item label="刷新间隔">
         <el-select v-model="form.refreshInterval" style="width: 200px">
+          <el-option :value="0" label="不刷新" />
           <el-option :value="10" label="10 秒" />
           <el-option :value="30" label="30 秒" />
           <el-option :value="60" label="1 分钟" />
@@ -160,7 +161,7 @@ const form = reactive({
 const rules = {
   name: [
     { required: true, message: '请输入大屏名称', trigger: 'blur' },
-    { min: 2, max: 100, message: '长度在 2 到 100 个字符', trigger: 'blur' }
+    { min: 2, max: 50, message: '长度在 2 到 50 个字符', trigger: 'blur' }
   ]
 }
 
