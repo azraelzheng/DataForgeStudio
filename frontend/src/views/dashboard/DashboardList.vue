@@ -49,16 +49,16 @@
                 </el-tag>
               </template>
             </el-table-column>
+            <el-table-column label="状态" width="100" align="center">
+              <template #default="{ row }">
+                <el-tag v-if="row.status === 'draft'" type="info" size="small">草稿</el-tag>
+                <el-tag v-else-if="row.isPublic" type="success" size="small">公开</el-tag>
+                <el-tag v-else type="primary" size="small">已发布</el-tag>
+              </template>
+            </el-table-column>
             <el-table-column label="组件数" width="80" align="center">
               <template #default="{ row }">
                 {{ row.widgetCount || 0 }}
-              </template>
-            </el-table-column>
-            <el-table-column label="是否公开" width="90" align="center">
-              <template #default="{ row }">
-                <el-tag :type="row.isPublic ? 'success' : 'info'" size="small">
-                  {{ row.isPublic ? '公开' : '私有' }}
-                </el-tag>
               </template>
             </el-table-column>
             <el-table-column prop="createdTime" label="创建时间" width="180">
@@ -66,29 +66,45 @@
                 {{ formatDate(row.createdTime) }}
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="300" fixed="right">
+            <el-table-column label="操作" width="380" fixed="right">
               <template #default="{ row }">
                 <el-button type="primary" link size="small" @click="handleEdit(row)">
                   <el-icon><Edit /></el-icon>
-                  编辑
+                  设计
                 </el-button>
                 <el-button type="info" link size="small" @click="handleView(row)">
                   <el-icon><View /></el-icon>
-                  查看
+                  预览
                 </el-button>
                 <el-button type="success" link size="small" @click="handleCopy(row)">
                   <el-icon><DocumentCopy /></el-icon>
                   复制
                 </el-button>
-                <el-button
-                  :type="row.isPublic ? 'warning' : 'success'"
-                  link
-                  size="small"
-                  @click="handleTogglePublic(row)"
-                >
-                  <el-icon><Unlock v-if="!row.isPublic" /><Lock v-else /></el-icon>
-                  {{ row.isPublic ? '设为私有' : '设为公开' }}
-                </el-button>
+
+                <!-- 草稿状态：显示发布按钮 -->
+                <template v-if="row.status === 'draft'">
+                  <el-button type="success" link size="small" @click="handlePublish(row)">
+                    <el-icon><Promotion /></el-icon>
+                    发布
+                  </el-button>
+                </template>
+
+                <!-- 已发布状态 -->
+                <template v-else>
+                  <el-button type="warning" link size="small" @click="handleAccessSettings(row)">
+                    <el-icon><Setting /></el-icon>
+                    访问设置
+                  </el-button>
+                  <el-button type="warning" link size="small" @click="handleUnpublish(row)">
+                    <el-icon><SwitchButton /></el-icon>
+                    取消发布
+                  </el-button>
+                  <el-button v-if="row.isPublic" type="primary" link size="small" @click="handleCopyLink(row)">
+                    <el-icon><Link /></el-icon>
+                    复制链接
+                  </el-button>
+                </template>
+
                 <el-button type="danger" link size="small" @click="handleDelete(row)">
                   <el-icon><Delete /></el-icon>
                   删除
@@ -153,6 +169,19 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- 新建大屏向导对话框 -->
+    <CreateDashboardDialog
+      v-model="createDialogVisible"
+      @success="handleCreateSuccess"
+    />
+
+    <!-- 访问设置对话框 -->
+    <AccessSettingsDialog
+      v-model="accessDialogVisible"
+      :dashboard-id="currentDashboardId"
+      @success="loadData"
+    />
   </div>
 </template>
 
@@ -160,7 +189,13 @@
 import { ref, reactive, onMounted, onActivated, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getDashboards, deleteDashboard, toggleDashboard, copyDashboard, convertFromReport } from '../../api/dashboard'
+import { Promotion, Setting, SwitchButton, Link } from '@element-plus/icons-vue'
+import CreateDashboardDialog from '../../components/dashboard/CreateDashboardDialog.vue'
+import AccessSettingsDialog from '../../components/dashboard/AccessSettingsDialog.vue'
+import {
+  getDashboards, deleteDashboard, copyDashboard, convertFromReport,
+  publishDashboard, unpublishDashboard, getDashboardAccess
+} from '../../api/dashboard'
 import { reportApi } from '../../api/request'
 
 const router = useRouter()
@@ -168,6 +203,13 @@ const loading = ref(false)
 const tableData = ref([])
 const tableWrapper = ref(null)
 const tableHeight = ref(null)
+
+// 新建大屏对话框
+const createDialogVisible = ref(false)
+
+// 访问设置对话框
+const accessDialogVisible = ref(false)
+const currentDashboardId = ref(null)
 
 // 一键转换相关
 const convertDialogVisible = ref(false)
@@ -284,9 +326,9 @@ const handleReset = () => {
   handleSearch()
 }
 
-// 新建大屏
+// 新建大屏 - 打开向导对话框
 const handleCreate = () => {
-  router.push('/dashboard/designer')
+  createDialogVisible.value = true
 }
 
 // 编辑大屏
@@ -322,26 +364,78 @@ const handleCopy = async (row) => {
   }
 }
 
-// 切换公开状态
-const handleTogglePublic = async (row) => {
+// 发布大屏
+const handlePublish = async (row) => {
   try {
-    const action = row.isPublic ? '设为私有' : '设为公开'
-    await ElMessageBox.confirm(`确定要将大屏"${row.name}"${action}吗？`, '确认操作', {
+    await ElMessageBox.confirm(`确定要发布大屏"${row.name}"吗？`, '确认发布', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'info'
     })
 
-    const res = await toggleDashboard(row.dashboardId || row.id)
+    const res = await publishDashboard(row.dashboardId || row.id)
     if (res.success) {
-      ElMessage.success(res.message || `${action}成功`)
+      ElMessage.success('发布成功')
       loadData()
     } else {
-      ElMessage.error(res.message || '操作失败')
+      ElMessage.error(res.message || '发布失败')
     }
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('操作失败')
+      ElMessage.error('发布失败')
+    }
+  }
+}
+
+// 取消发布大屏
+const handleUnpublish = async (row) => {
+  try {
+    await ElMessageBox.confirm(`确定要取消发布大屏"${row.name}"吗？`, '确认取消发布', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+
+    const res = await unpublishDashboard(row.dashboardId || row.id)
+    if (res.success) {
+      ElMessage.success('已取消发布')
+      loadData()
+    } else {
+      ElMessage.error(res.message || '取消发布失败')
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('取消发布失败')
+    }
+  }
+}
+
+// 打开访问设置对话框
+const handleAccessSettings = (row) => {
+  currentDashboardId.value = row.dashboardId || row.id
+  accessDialogVisible.value = true
+}
+
+// 复制公开链接
+const handleCopyLink = async (row) => {
+  const publicUrl = `${window.location.origin}/public/d/${row.publicUrl}`
+  try {
+    await navigator.clipboard.writeText(publicUrl)
+    ElMessage.success('链接已复制到剪贴板')
+  } catch {
+    // Fallback
+    try {
+      const textArea = document.createElement('textarea')
+      textArea.value = publicUrl
+      textArea.style.position = 'fixed'
+      textArea.style.left = '-9999px'
+      document.body.appendChild(textArea)
+      textArea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textArea)
+      ElMessage.success('链接已复制到剪贴板')
+    } catch {
+      ElMessage.error('复制失败，请手动复制链接')
     }
   }
 }
@@ -424,6 +518,17 @@ const handleConfirmConvert = async () => {
     ElMessage.error('转换失败')
   } finally {
     convertLoading.value = false
+  }
+}
+
+// 创建成功后跳转到设计器
+const handleCreateSuccess = (dashboard) => {
+  createDialogVisible.value = false
+  const dashboardId = dashboard.dashboardId || dashboard.id
+  if (dashboardId) {
+    router.push(`/dashboard/designer/${dashboardId}`)
+  } else {
+    loadData()
   }
 }
 </script>
