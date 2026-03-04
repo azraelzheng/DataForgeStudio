@@ -247,7 +247,7 @@ public class DataForgeStudioDbContext : DbContext
             entity.HasIndex(e => e.IsPublic);
             entity.HasIndex(e => e.CreatedTime);
             entity.HasIndex(e => e.Status);
-            entity.HasIndex(e => e.PublicUrl).HasFilter("[PublicUrl] IS NOT NULL");
+            entity.HasIndex(e => e.PublicUrl).IsUnique().HasFilter("[PublicUrl] IS NOT NULL");
 
             entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
             entity.Property(e => e.Theme).HasMaxLength(20).HasDefaultValue("dark");
