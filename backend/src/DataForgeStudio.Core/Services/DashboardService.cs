@@ -768,7 +768,9 @@ public class DashboardService : IDashboardService
             .Include(d => d.Creator)
             .FirstOrDefaultAsync(d => d.DashboardId == dashboardId);
 
-        return ApiResponse<DashboardDto>.Ok(MapToDto(updatedDashboard!));
+        if (updatedDashboard == null)
+            return ApiResponse<DashboardDto>.Fail("大屏数据获取失败", "FETCH_ERROR");
+        return ApiResponse<DashboardDto>.Ok(MapToDto(updatedDashboard));
     }
 
     /// <summary>
@@ -790,7 +792,9 @@ public class DashboardService : IDashboardService
             .Include(d => d.Creator)
             .FirstOrDefaultAsync(d => d.DashboardId == dashboardId);
 
-        return ApiResponse<DashboardDto>.Ok(MapToDto(updatedDashboard!));
+        if (updatedDashboard == null)
+            return ApiResponse<DashboardDto>.Fail("大屏数据获取失败", "FETCH_ERROR");
+        return ApiResponse<DashboardDto>.Ok(MapToDto(updatedDashboard));
     }
 
     /// <summary>
@@ -837,9 +841,7 @@ public class DashboardService : IDashboardService
             IsPublic = dashboard.IsPublic,
             PublicUrl = dashboard.IsPublic ? $"/public/d/{dashboard.PublicUrl}" : null,
             Status = dashboard.Status,
-            AuthorizedUserIds = !string.IsNullOrEmpty(dashboard.AuthorizedUserIds)
-                ? JsonSerializer.Deserialize<List<int>>(dashboard.AuthorizedUserIds)
-                : new List<int>()
+            AuthorizedUserIds = DeserializeUserIds(dashboard.AuthorizedUserIds)
         };
 
         return ApiResponse<DashboardAccessDto>.Ok(accessDto);
@@ -848,6 +850,24 @@ public class DashboardService : IDashboardService
     #endregion
 
     #region 私有辅助方法
+
+    /// <summary>
+    /// 反序列化授权用户ID列表
+    /// </summary>
+    private List<int> DeserializeUserIds(string? json)
+    {
+        if (string.IsNullOrEmpty(json))
+            return new List<int>();
+
+        try
+        {
+            return JsonSerializer.Deserialize<List<int>>(json) ?? new List<int>();
+        }
+        catch (JsonException)
+        {
+            return new List<int>();
+        }
+    }
 
     /// <summary>
     /// 将 Dashboard 实体映射为 DashboardDto
