@@ -56,6 +56,45 @@ public class Dashboard
     public string? ThemeConfig { get; set; }
 
     /// <summary>
+    /// 大屏状态：draft（草稿）/ published（已发布）
+    /// </summary>
+    [MaxLength(20)]
+    public string Status { get; set; } = "draft";
+
+    /// <summary>
+    /// 公开访问URL标识（GUID短码）
+    /// </summary>
+    [MaxLength(50)]
+    public string? PublicUrl { get; set; }
+
+    /// <summary>
+    /// 授权用户ID列表（JSON数组）
+    /// </summary>
+    public string? AuthorizedUserIds { get; set; }
+
+    /// <summary>
+    /// 画布宽度
+    /// </summary>
+    public int Width { get; set; } = 1920;
+
+    /// <summary>
+    /// 画布高度
+    /// </summary>
+    public int Height { get; set; } = 1080;
+
+    /// <summary>
+    /// 背景颜色
+    /// </summary>
+    [MaxLength(20)]
+    public string BackgroundColor { get; set; } = "#0a1628";
+
+    /// <summary>
+    /// 背景图片URL
+    /// </summary>
+    [MaxLength(500)]
+    public string? BackgroundImage { get; set; }
+
+    /// <summary>
     /// 创建人ID
     /// </summary>
     public int? CreatedBy { get; set; }
