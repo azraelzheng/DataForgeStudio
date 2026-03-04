@@ -174,6 +174,110 @@ public class DashboardController : ControllerBase
 
     #endregion
 
+    #region 发布管理
+
+    /// <summary>
+    /// 发布大屏
+    /// </summary>
+    /// <param name="id">大屏ID</param>
+    /// <returns>更新后的大屏信息</returns>
+    [HttpPost("{id}/publish")]
+    [ProducesResponseType(typeof(ApiResponse<DashboardDto>), StatusCodes.Status200OK)]
+    public async Task<ApiResponse<DashboardDto>> PublishDashboard(int id)
+    {
+        // 验证许可证
+        var licenseError = await ValidateLicenseAsync();
+        if (licenseError != null)
+        {
+            return ApiResponse<DashboardDto>.Fail(licenseError.Message, licenseError.ErrorCode);
+        }
+
+        var userId = GetCurrentUserId();
+        if (!userId.HasValue)
+        {
+            return ApiResponse<DashboardDto>.Fail("无效的用户信息", "UNAUTHORIZED");
+        }
+
+        return await _dashboardService.PublishDashboardAsync(id, userId.Value);
+    }
+
+    /// <summary>
+    /// 取消发布大屏
+    /// </summary>
+    /// <param name="id">大屏ID</param>
+    /// <returns>更新后的大屏信息</returns>
+    [HttpDelete("{id}/publish")]
+    [ProducesResponseType(typeof(ApiResponse<DashboardDto>), StatusCodes.Status200OK)]
+    public async Task<ApiResponse<DashboardDto>> UnpublishDashboard(int id)
+    {
+        // 验证许可证
+        var licenseError = await ValidateLicenseAsync();
+        if (licenseError != null)
+        {
+            return ApiResponse<DashboardDto>.Fail(licenseError.Message, licenseError.ErrorCode);
+        }
+
+        var userId = GetCurrentUserId();
+        if (!userId.HasValue)
+        {
+            return ApiResponse<DashboardDto>.Fail("无效的用户信息", "UNAUTHORIZED");
+        }
+
+        return await _dashboardService.UnpublishDashboardAsync(id, userId.Value);
+    }
+
+    #endregion
+
+    #region 访问设置
+
+    /// <summary>
+    /// 更新大屏访问设置
+    /// </summary>
+    /// <param name="id">大屏ID</param>
+    /// <param name="request">访问设置请求</param>
+    /// <returns>访问设置信息</returns>
+    [HttpPut("{id}/access")]
+    [ProducesResponseType(typeof(ApiResponse<DashboardAccessDto>), StatusCodes.Status200OK)]
+    public async Task<ApiResponse<DashboardAccessDto>> UpdateDashboardAccess(
+        int id, [FromBody] UpdateDashboardAccessRequest request)
+    {
+        // 验证许可证
+        var licenseError = await ValidateLicenseAsync();
+        if (licenseError != null)
+        {
+            return ApiResponse<DashboardAccessDto>.Fail(licenseError.Message, licenseError.ErrorCode);
+        }
+
+        var userId = GetCurrentUserId();
+        if (!userId.HasValue)
+        {
+            return ApiResponse<DashboardAccessDto>.Fail("无效的用户信息", "UNAUTHORIZED");
+        }
+
+        return await _dashboardService.UpdateDashboardAccessAsync(id, request, userId.Value);
+    }
+
+    /// <summary>
+    /// 获取大屏访问设置
+    /// </summary>
+    /// <param name="id">大屏ID</param>
+    /// <returns>访问设置信息</returns>
+    [HttpGet("{id}/access")]
+    [ProducesResponseType(typeof(ApiResponse<DashboardAccessDto>), StatusCodes.Status200OK)]
+    public async Task<ApiResponse<DashboardAccessDto>> GetDashboardAccess(int id)
+    {
+        // 验证许可证
+        var licenseError = await ValidateLicenseAsync();
+        if (licenseError != null)
+        {
+            return ApiResponse<DashboardAccessDto>.Fail(licenseError.Message, licenseError.ErrorCode);
+        }
+
+        return await _dashboardService.GetDashboardAccessAsync(id);
+    }
+
+    #endregion
+
     #region 组件管理
 
     /// <summary>
