@@ -96,6 +96,45 @@ export async function copyDashboard(id) {
   return request.post('/dashboards', newDashboard)
 }
 
+/**
+ * 发布大屏
+ * @param {number|string} id - 大屏ID
+ * @returns {Promise}
+ */
+export function publishDashboard(id) {
+  return request.post(`/dashboards/${id}/publish`)
+}
+
+/**
+ * 取消发布大屏
+ * @param {number|string} id - 大屏ID
+ * @returns {Promise}
+ */
+export function unpublishDashboard(id) {
+  return request.delete(`/dashboards/${id}/publish`)
+}
+
+/**
+ * 更新大屏访问设置
+ * @param {number|string} id - 大屏ID
+ * @param {Object} data - 访问设置
+ * @param {boolean} data.isPublic - 是否公开访问
+ * @param {Array<number>} data.authorizedUserIds - 授权用户ID列表
+ * @returns {Promise}
+ */
+export function updateDashboardAccess(id, data) {
+  return request.put(`/dashboards/${id}/access`, data)
+}
+
+/**
+ * 获取大屏访问设置
+ * @param {number|string} id - 大屏ID
+ * @returns {Promise}
+ */
+export function getDashboardAccess(id) {
+  return request.get(`/dashboards/${id}/access`)
+}
+
 // ==================== 组件管理 ====================
 
 /**
@@ -402,6 +441,12 @@ export const dashboardApi = {
   deleteDashboard,
   toggleDashboard,
   copyDashboard,
+
+  // 发布管理
+  publishDashboard,
+  unpublishDashboard,
+  updateDashboardAccess,
+  getDashboardAccess,
 
   // 组件管理
   addWidget,
