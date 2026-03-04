@@ -126,5 +126,37 @@ public interface IDashboardService
     /// <returns>大屏数据（仅限公开大屏）</returns>
     Task<ApiResponse<DashboardDataDto>> GetPublicDashboardDataAsync(int dashboardId);
 
+    /// <summary>
+    /// 发布大屏
+    /// </summary>
+    /// <param name="dashboardId">大屏ID</param>
+    /// <param name="userId">操作用户ID</param>
+    /// <returns>更新后的大屏信息</returns>
+    Task<ApiResponse<DashboardDto>> PublishDashboardAsync(int dashboardId, int userId);
+
+    /// <summary>
+    /// 取消发布大屏
+    /// </summary>
+    /// <param name="dashboardId">大屏ID</param>
+    /// <param name="userId">操作用户ID</param>
+    /// <returns>更新后的大屏信息</returns>
+    Task<ApiResponse<DashboardDto>> UnpublishDashboardAsync(int dashboardId, int userId);
+
+    /// <summary>
+    /// 更新大屏访问设置
+    /// </summary>
+    /// <param name="dashboardId">大屏ID</param>
+    /// <param name="request">访问设置请求</param>
+    /// <param name="userId">操作用户ID</param>
+    /// <returns>访问设置信息</returns>
+    Task<ApiResponse<DashboardAccessDto>> UpdateDashboardAccessAsync(int dashboardId, UpdateDashboardAccessRequest request, int userId);
+
+    /// <summary>
+    /// 获取大屏访问设置
+    /// </summary>
+    /// <param name="dashboardId">大屏ID</param>
+    /// <returns>访问设置信息</returns>
+    Task<ApiResponse<DashboardAccessDto>> GetDashboardAccessAsync(int dashboardId);
+
     #endregion
 }

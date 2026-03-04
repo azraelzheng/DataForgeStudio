@@ -63,6 +63,12 @@ public class DashboardService : IDashboardService
                 Theme = d.Theme,
                 RefreshInterval = d.RefreshInterval,
                 IsPublic = d.IsPublic,
+                Status = d.Status,
+                PublicUrl = d.PublicUrl,
+                Width = d.Width,
+                Height = d.Height,
+                BackgroundColor = d.BackgroundColor,
+                BackgroundImage = d.BackgroundImage,
                 CreatedTime = d.CreatedTime,
                 UpdatedTime = d.UpdatedTime,
                 CreatorName = d.Creator != null ? d.Creator.Username : null,
@@ -121,6 +127,10 @@ public class DashboardService : IDashboardService
             IsPublic = request.IsPublic,
             LayoutConfig = request.LayoutConfig,
             ThemeConfig = request.ThemeConfig,
+            Width = request.Width,
+            Height = request.Height,
+            BackgroundColor = request.BackgroundColor,
+            BackgroundImage = request.BackgroundImage,
             CreatedBy = createdBy,
             CreatedTime = DateTime.UtcNow
         };
@@ -141,6 +151,12 @@ public class DashboardService : IDashboardService
             Theme = dashboard.Theme,
             RefreshInterval = dashboard.RefreshInterval,
             IsPublic = dashboard.IsPublic,
+            Status = dashboard.Status,
+            PublicUrl = dashboard.PublicUrl,
+            Width = dashboard.Width,
+            Height = dashboard.Height,
+            BackgroundColor = dashboard.BackgroundColor,
+            BackgroundImage = dashboard.BackgroundImage,
             CreatedTime = dashboard.CreatedTime,
             CreatorName = createdDashboard?.Creator?.Username,
             WidgetCount = 0
@@ -167,6 +183,10 @@ public class DashboardService : IDashboardService
         dashboard.IsPublic = request.IsPublic;
         dashboard.LayoutConfig = request.LayoutConfig;
         dashboard.ThemeConfig = request.ThemeConfig;
+        dashboard.Width = request.Width;
+        dashboard.Height = request.Height;
+        dashboard.BackgroundColor = request.BackgroundColor;
+        dashboard.BackgroundImage = request.BackgroundImage;
         dashboard.UpdatedTime = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
@@ -596,6 +616,12 @@ public class DashboardService : IDashboardService
                 Theme = dashboard.Theme,
                 RefreshInterval = dashboard.RefreshInterval,
                 IsPublic = dashboard.IsPublic,
+                Status = dashboard.Status,
+                PublicUrl = dashboard.PublicUrl,
+                Width = dashboard.Width,
+                Height = dashboard.Height,
+                BackgroundColor = dashboard.BackgroundColor,
+                BackgroundImage = dashboard.BackgroundImage,
                 CreatedTime = dashboard.CreatedTime,
                 UpdatedTime = dashboard.UpdatedTime,
                 CreatorName = dashboard.Creator?.Username,
@@ -724,9 +750,130 @@ public class DashboardService : IDashboardService
         return await GetDashboardDataAsync(dashboardId);
     }
 
+    /// <summary>
+    /// 发布大屏
+    /// </summary>
+    public async Task<ApiResponse<DashboardDto>> PublishDashboardAsync(int dashboardId, int userId)
+    {
+        var dashboard = await _context.Dashboards.FindAsync(dashboardId);
+        if (dashboard == null)
+            return ApiResponse<DashboardDto>.Fail("大屏不存在", "NOT_FOUND");
+
+        dashboard.Status = "published";
+        dashboard.UpdatedTime = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        // 返回更新后的大屏信息
+        var updatedDashboard = await _context.Dashboards
+            .Include(d => d.Creator)
+            .FirstOrDefaultAsync(d => d.DashboardId == dashboardId);
+
+        return ApiResponse<DashboardDto>.Ok(MapToDto(updatedDashboard!));
+    }
+
+    /// <summary>
+    /// 取消发布大屏
+    /// </summary>
+    public async Task<ApiResponse<DashboardDto>> UnpublishDashboardAsync(int dashboardId, int userId)
+    {
+        var dashboard = await _context.Dashboards.FindAsync(dashboardId);
+        if (dashboard == null)
+            return ApiResponse<DashboardDto>.Fail("大屏不存在", "NOT_FOUND");
+
+        dashboard.Status = "draft";
+        dashboard.IsPublic = false;
+        dashboard.UpdatedTime = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        // 返回更新后的大屏信息
+        var updatedDashboard = await _context.Dashboards
+            .Include(d => d.Creator)
+            .FirstOrDefaultAsync(d => d.DashboardId == dashboardId);
+
+        return ApiResponse<DashboardDto>.Ok(MapToDto(updatedDashboard!));
+    }
+
+    /// <summary>
+    /// 更新大屏访问设置
+    /// </summary>
+    public async Task<ApiResponse<DashboardAccessDto>> UpdateDashboardAccessAsync(
+        int dashboardId, UpdateDashboardAccessRequest request, int userId)
+    {
+        var dashboard = await _context.Dashboards.FindAsync(dashboardId);
+        if (dashboard == null)
+            return ApiResponse<DashboardAccessDto>.Fail("大屏不存在", "NOT_FOUND");
+
+        dashboard.IsPublic = request.IsPublic;
+
+        // 如果设置为公开且没有 PublicUrl，生成一个
+        if (request.IsPublic && string.IsNullOrEmpty(dashboard.PublicUrl))
+        {
+            dashboard.PublicUrl = Guid.NewGuid().ToString("N").Substring(0, 8);
+        }
+
+        // 序列化授权用户ID列表
+        dashboard.AuthorizedUserIds = request.AuthorizedUserIds != null
+            ? JsonSerializer.Serialize(request.AuthorizedUserIds)
+            : null;
+
+        dashboard.UpdatedTime = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        return await GetDashboardAccessAsync(dashboardId);
+    }
+
+    /// <summary>
+    /// 获取大屏访问设置
+    /// </summary>
+    public async Task<ApiResponse<DashboardAccessDto>> GetDashboardAccessAsync(int dashboardId)
+    {
+        var dashboard = await _context.Dashboards.FindAsync(dashboardId);
+        if (dashboard == null)
+            return ApiResponse<DashboardAccessDto>.Fail("大屏不存在", "NOT_FOUND");
+
+        var accessDto = new DashboardAccessDto
+        {
+            DashboardId = dashboard.DashboardId,
+            IsPublic = dashboard.IsPublic,
+            PublicUrl = dashboard.IsPublic ? $"/public/d/{dashboard.PublicUrl}" : null,
+            Status = dashboard.Status,
+            AuthorizedUserIds = !string.IsNullOrEmpty(dashboard.AuthorizedUserIds)
+                ? JsonSerializer.Deserialize<List<int>>(dashboard.AuthorizedUserIds)
+                : new List<int>()
+        };
+
+        return ApiResponse<DashboardAccessDto>.Ok(accessDto);
+    }
+
     #endregion
 
     #region 私有辅助方法
+
+    /// <summary>
+    /// 将 Dashboard 实体映射为 DashboardDto
+    /// </summary>
+    private DashboardDto MapToDto(Dashboard dashboard)
+    {
+        return new DashboardDto
+        {
+            DashboardId = dashboard.DashboardId,
+            Name = dashboard.Name,
+            Description = dashboard.Description,
+            Theme = dashboard.Theme,
+            RefreshInterval = dashboard.RefreshInterval,
+            IsPublic = dashboard.IsPublic,
+            Status = dashboard.Status,
+            PublicUrl = dashboard.PublicUrl,
+            Width = dashboard.Width,
+            Height = dashboard.Height,
+            BackgroundColor = dashboard.BackgroundColor,
+            BackgroundImage = dashboard.BackgroundImage,
+            CreatedTime = dashboard.CreatedTime,
+            UpdatedTime = dashboard.UpdatedTime,
+            CreatorName = dashboard.Creator?.Username,
+            WidgetCount = dashboard.Widgets?.Count ?? 0
+        };
+    }
 
     /// <summary>
     /// 将 Dashboard 实体映射为 DashboardDetailDto
@@ -741,6 +888,12 @@ public class DashboardService : IDashboardService
             Theme = dashboard.Theme,
             RefreshInterval = dashboard.RefreshInterval,
             IsPublic = dashboard.IsPublic,
+            Status = dashboard.Status,
+            PublicUrl = dashboard.PublicUrl,
+            Width = dashboard.Width,
+            Height = dashboard.Height,
+            BackgroundColor = dashboard.BackgroundColor,
+            BackgroundImage = dashboard.BackgroundImage,
             LayoutConfig = dashboard.LayoutConfig,
             ThemeConfig = dashboard.ThemeConfig,
             CreatedTime = dashboard.CreatedTime,
