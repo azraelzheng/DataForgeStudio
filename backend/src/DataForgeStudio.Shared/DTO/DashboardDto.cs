@@ -38,6 +38,36 @@ public class DashboardDto
     public bool IsPublic { get; set; }
 
     /// <summary>
+    /// 大屏状态：draft（草稿）/ published（已发布）
+    /// </summary>
+    public string Status { get; set; } = "draft";
+
+    /// <summary>
+    /// 公开访问URL标识
+    /// </summary>
+    public string? PublicUrl { get; set; }
+
+    /// <summary>
+    /// 画布宽度
+    /// </summary>
+    public int Width { get; set; } = 1920;
+
+    /// <summary>
+    /// 画布高度
+    /// </summary>
+    public int Height { get; set; } = 1080;
+
+    /// <summary>
+    /// 背景颜色
+    /// </summary>
+    public string BackgroundColor { get; set; } = "#0a1628";
+
+    /// <summary>
+    /// 背景图片URL
+    /// </summary>
+    public string? BackgroundImage { get; set; }
+
+    /// <summary>
     /// 创建时间
     /// </summary>
     public DateTime CreatedTime { get; set; }
@@ -123,6 +153,78 @@ public class CreateDashboardRequest
     /// 主题配置 (JSON)
     /// </summary>
     public string? ThemeConfig { get; set; }
+
+    /// <summary>
+    /// 画布宽度
+    /// </summary>
+    public int Width { get; set; } = 1920;
+
+    /// <summary>
+    /// 画布高度
+    /// </summary>
+    public int Height { get; set; } = 1080;
+
+    /// <summary>
+    /// 背景颜色
+    /// </summary>
+    public string BackgroundColor { get; set; } = "#0a1628";
+
+    /// <summary>
+    /// 背景图片URL
+    /// </summary>
+    public string? BackgroundImage { get; set; }
+
+    /// <summary>
+    /// 模板ID（可选，用于从模板创建）
+    /// </summary>
+    public string? TemplateId { get; set; }
+}
+
+/// <summary>
+/// 更新大屏访问设置请求
+/// </summary>
+public class UpdateDashboardAccessRequest
+{
+    /// <summary>
+    /// 是否公开访问
+    /// </summary>
+    public bool IsPublic { get; set; }
+
+    /// <summary>
+    /// 授权用户ID列表
+    /// </summary>
+    public List<int>? AuthorizedUserIds { get; set; }
+}
+
+/// <summary>
+/// 大屏访问设置DTO
+/// </summary>
+public class DashboardAccessDto
+{
+    /// <summary>
+    /// 大屏ID
+    /// </summary>
+    public int DashboardId { get; set; }
+
+    /// <summary>
+    /// 是否公开访问
+    /// </summary>
+    public bool IsPublic { get; set; }
+
+    /// <summary>
+    /// 公开访问URL标识
+    /// </summary>
+    public string? PublicUrl { get; set; }
+
+    /// <summary>
+    /// 授权用户ID列表
+    /// </summary>
+    public List<int>? AuthorizedUserIds { get; set; }
+
+    /// <summary>
+    /// 大屏状态
+    /// </summary>
+    public string Status { get; set; } = "draft";
 }
 
 #endregion
