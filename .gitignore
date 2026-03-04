@@ -2,6 +2,9 @@
 # DataForgeStudio V4
 # ====================
 
+# ------------- Worktrees -------------
+.worktrees/
+
 # ------------- IDE -------------
 .vscode/
 .idea/
