@@ -32,6 +32,14 @@ export type { ProgressType, ProgressColorScheme, ThresholdConfig } from './Progr
 export { default as StatusIndicatorWidget } from './StatusIndicatorWidget.vue'
 export type { StatusMapping, StatusLayout, StatusMappingItem } from './StatusIndicatorWidget.vue'
 
+// 文本组件
+export { default as TextWidget } from './TextWidget.vue'
+export type { TextAlign, TextDecoration } from './TextWidget.vue'
+
+// 图片组件
+export { default as ImageWidget } from './ImageWidget.vue'
+export type { ObjectFit } from './ImageWidget.vue'
+
 // 组件包装器
 export { default as WidgetWrapper } from './WidgetWrapper.vue'
 
@@ -44,6 +52,12 @@ export type { NumberCardConfigData } from './config/NumberCardConfig.vue'
 
 export { default as TableConfig } from './config/TableConfig.vue'
 export type { TableConfigData } from './config/TableConfig.vue'
+
+export { default as TextConfig } from './config/TextConfig.vue'
+export type { TextConfigData } from './config/TextConfig.vue'
+
+export { default as ImageConfig } from './config/ImageConfig.vue'
+export type { ImageConfigData } from './config/ImageConfig.vue'
 
 // ============================================
 // 组件定义
@@ -120,6 +134,34 @@ export const statusIndicatorWidgetDefinition: WidgetDefinitionInternal = {
 }
 
 /**
+ * 文本组件定义
+ */
+export const textWidgetDefinition: WidgetDefinitionInternal = {
+  type: 'text' as WidgetType,
+  name: '文本',
+  icon: 'Document',
+  category: 'display' as WidgetCategory,
+  defaultSize: { x: 0, y: 0, width: 4, height: 3 } as GridPosition,
+  minSize: { x: 0, y: 0, width: 2, height: 2 } as GridPosition,
+  maxSize: { x: 0, y: 0, width: 12, height: 8 } as GridPosition,
+  component: () => import('./TextWidget.vue')
+}
+
+/**
+ * 图片组件定义
+ */
+export const imageWidgetDefinition: WidgetDefinitionInternal = {
+  type: 'image' as WidgetType,
+  name: '图片',
+  icon: 'Picture',
+  category: 'display' as WidgetCategory,
+  defaultSize: { x: 0, y: 0, width: 4, height: 4 } as GridPosition,
+  minSize: { x: 0, y: 0, width: 2, height: 2 } as GridPosition,
+  maxSize: { x: 0, y: 0, width: 12, height: 10 } as GridPosition,
+  component: () => import('./ImageWidget.vue')
+}
+
+/**
  * 所有组件定义列表
  */
 export const allWidgetDefinitions: WidgetDefinitionInternal[] = [
@@ -127,7 +169,9 @@ export const allWidgetDefinitions: WidgetDefinitionInternal[] = [
   numberCardWidgetDefinition,
   dataTableWidgetDefinition,
   progressBarWidgetDefinition,
-  statusIndicatorWidgetDefinition
+  statusIndicatorWidgetDefinition,
+  textWidgetDefinition,
+  imageWidgetDefinition
 ]
 
 // ============================================
