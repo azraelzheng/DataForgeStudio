@@ -73,13 +73,13 @@
           <div class="widget-header" v-if="widget.title">
             {{ widget.title }}
           </div>
-          <div class="widget-body">
+          <div class="widget-body" :class="`table-style-${widget.styleConfig?.tableStyle || 'default'}`">
             <el-table
               :data="getWidgetData(widget.widgetId)"
               :style="{ width: '100%', height: widget.title ? 'calc(100% - 32px)' : '100%' }"
               size="small"
               border
-              :header-cell-style="tableHeaderStyle"
+              :header-cell-style="getTableHeaderStyle(widget)"
               :cell-style="getCellStyle(widget)"
             >
               <el-table-column
@@ -238,22 +238,176 @@ const chartRefs = ref({})
 let refreshTimer = null
 let toolbarHideTimer = null
 
-// 计算画布样式
-const canvasStyle = computed(() => ({
-  width: `${dashboardInfo.width}px`,
-  height: `${dashboardInfo.height}px`,
-  backgroundColor: dashboardInfo.backgroundColor,
-  backgroundImage: dashboardInfo.backgroundImage ? `url(${dashboardInfo.backgroundImage})` : 'none',
-  backgroundSize: 'cover',
-  backgroundPosition: 'center'
-}))
+// 计算缩放比例（根据屏幕大小自动缩放)
+const calculateScale = () => {
+  // 获取视口尺寸（减去工具栏高度)
+  const viewportWidth = window.innerWidth
+  const viewportHeight = window.innerHeight - 60  // 预留工具栏空间
+
+  // 计算缩放比例，保持宽高比
+  const scaleX = viewportWidth / dashboardInfo.width
+  const scaleY = viewportHeight / dashboardInfo.height
+
+  // 取较小的比例，确保画布完整显示
+  canvasScale.value = Math.min(scaleX, scaleY, 1)  // 最大不超过1，避免放大模糊
+}
+
+// 计算画布样式(支持自动缩放)
+const canvasStyle = computed(() => {
+  const scale = canvasScale.value
+  return {
+    width: `${dashboardInfo.width}px`,
+    height: `${dashboardInfo.height}px`,
+    backgroundColor: dashboardInfo.backgroundColor,
+    backgroundImage: dashboardInfo.backgroundImage ? `url(${dashboardInfo.backgroundImage})` : 'none',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    transform: `translate(-50%, -50%) scale(${scale})`,
+    transformOrigin: 'center center'
+  }
+})
 
 // 表格表头样式
 const tableHeaderStyle = computed(() => ({
   backgroundColor: dashboardInfo.settings?.theme === 'dark' ? '#1a1a2e' : '#f5f7fa',
   color: dashboardInfo.settings?.theme === 'dark' ? '#fff' : '#303133',
-  fontWeight: 'bold'
+    fontWeight: 'bold'
 }))
+
+// 4种表格样式预设（字体大小使用相对单位以支持缩放）
+const tableStylePresets = {
+  // 深蓝色系 - 流程类数据（工序进度等)
+  'deep-blue': {
+    headerBg: 'linear-gradient(135deg, #1a3a5c 0%, #0d2847 100%)',
+    headerColor: '#ffffff',
+    borderColor: '#22d3ee',
+    borderWidth: '2px',
+    cellBg: 'rgba(13, 40, 71, 0.8)',
+    cellColor: '#cffafe',
+    rowHoverBg: 'rgba(34, 211, 238, 0.15)',
+    shadowColor: 'rgba(34, 211, 238, 0.3)',
+    headerFontSize: '1rem',
+    cellFontSize: '0.875rem'
+  },
+  // 深紫色系 - 结果类数据（质检、订单进度等)
+  'deep-purple': {
+    headerBg: 'linear-gradient(135deg, #6b21a8 0%, #4c1d95 100%)',
+    headerColor: '#ffffff',
+    borderColor: '#a855f7',
+    borderWidth: '2px',
+    cellBg: 'rgba(88, 28, 135, 0.8)',
+    cellColor: '#f3e8ff',
+    rowHoverBg: 'rgba(139, 92, 246, 0.15)',
+    shadowColor: 'rgba(139, 92, 246, 0.3)',
+    headerFontSize: '1rem',
+    cellFontSize: '0.875rem'
+  },
+  // 青色系 - 特殊强调
+  'cyan': {
+    headerBg: 'linear-gradient(135deg, #0e7490 0%, #064e5e 100%)',
+    headerColor: '#ffffff',
+    borderColor: '#06b6d4',
+    borderWidth: '2px',
+    cellBg: 'rgba(6, 78, 94, 0.8)',
+    cellColor: '#cffafe',
+    rowHoverBg: 'rgba(6, 182, 212, 0.15)',
+    shadowColor: 'rgba(6, 182, 212, 0.3)',
+    headerFontSize: '1rem',
+    cellFontSize: '0.875rem'
+  },
+  // 橙色系 - 警告/重点数据
+  'orange': {
+    headerBg: 'linear-gradient(135deg, #c2410c 0%, #7c2d12 100%)',
+    headerColor: '#ffffff',
+    borderColor: '#f97316',
+    borderWidth: '2px',
+    cellBg: 'rgba(124, 45, 18, 0.8)',
+    cellColor: '#fed7aa',
+    rowHoverBg: 'rgba(249, 115, 22, 0.15)',
+    shadowColor: 'rgba(249, 115, 22, 0.3)',
+    headerFontSize: '1rem',
+    cellFontSize: '0.875rem'
+  },
+  // 默认样式
+  'default': {
+    headerBg: dashboardInfo.settings?.theme === 'dark' ? '#1a1a2e' : '#f5f7fa',
+    headerColor: dashboardInfo.settings?.theme === 'dark' ? '#fff' : '#303133',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderWidth: '1px',
+    cellBg: 'transparent',
+    cellColor: dashboardInfo.settings?.theme === 'dark' ? '#fff' : '#303133',
+    rowHoverBg: 'rgba(255, 255, 255, 0.05)',
+    shadowColor: 'transparent',
+    headerFontSize: '0.875rem',
+    cellFontSize: '0.875rem'
+  }
+}
+
+// 获取表格容器样式（支持多种风格)
+const getTableContainerStyle = (widget) => {
+  const styleName = widget.styleConfig?.tableStyle || 'default'
+  const preset = tableStylePresets[styleName] || tableStylePresets.default
+  return {
+    border: `${preset.borderWidth} solid ${preset.borderColor}`,
+    borderRadius: '4px',
+    overflow: 'hidden',
+    boxShadow: `0 4px 20px ${preset.shadowColor}`,
+    backgroundColor: preset.cellBg
+  }
+}
+
+// 获取表格表头样式（支持多种风格)
+const getTableHeaderStyle = (widget) => {
+  const styleName = widget.styleConfig?.tableStyle || 'default'
+  const preset = tableStylePresets[styleName] || tableStylePresets.default
+
+  return {
+    background: preset.headerBg,
+    color: preset.headerColor,
+    fontWeight: 'bold',
+    fontSize: preset.headerFontSize,
+    borderBottom: `${preset.borderWidth} solid ${preset.borderColor}`
+  }
+}
+
+// 获取单元格样式（支持多种风格)
+const getCellStyle = (widget) => {
+  const styleName = widget.styleConfig?.tableStyle || 'default'
+  const preset = tableStylePresets[styleName] || tableStylePresets.default
+
+  return ({ row, column, rowIndex }) => {
+    const baseStyle = {
+      backgroundColor: preset.cellBg,
+      color: preset.cellColor,
+      fontSize: preset.cellFontSize
+    }
+
+    // 检查条件样式
+    if (widget.conditionStyles && widget.conditionStyles.length > 0) {
+      const value = row[column.property]
+      for (const condition of widget.conditionStyles) {
+        if (matchCondition(value, condition)) {
+          return {
+            ...baseStyle,
+            backgroundColor: condition.backgroundColor || baseStyle.backgroundColor,
+            color: condition.textColor || baseStyle.color,
+            fontWeight: condition.textColor ? 'bold' : 'normal'
+          }
+        }
+      }
+    }
+
+    // 斑马纹效果（可选)
+    if (widget.styleConfig?.zebra && rowIndex % 2 === 1) {
+      return {
+        ...baseStyle,
+        backgroundColor: `rgba(255, 255, 255, 0.03)`
+      }
+    }
+
+    return baseStyle
+  }
+}
 
 // 获取组件位置样式
 const getWidgetStyle = (widget) => {
@@ -300,26 +454,6 @@ const getTableColumns = (widget) => {
     label: key,
     width: 100
   }))
-}
-
-// 获取单元格样式（支持条件样式）
-const getCellStyle = (widget) => {
-  return ({ row, column }) => {
-    if (!widget.conditionStyles || widget.conditionStyles.length === 0) {
-      return {}
-    }
-
-    const value = row[column.property]
-    for (const condition of widget.conditionStyles) {
-      if (matchCondition(value, condition)) {
-        return {
-          backgroundColor: condition.backgroundColor || 'transparent',
-          color: condition.textColor || 'inherit'
-        }
-      }
-    }
-    return {}
-  }
 }
 
 // 匹配条件
@@ -891,8 +1025,9 @@ const handleMouseMove = () => {
   }, 3000)
 }
 
-// 窗口大小变化时重新初始化图表
+// 窗口大小变化时重新初始化图表和计算缩放
 const handleResize = () => {
+  calculateScale()
   initAllCharts()
 }
 
@@ -1184,5 +1319,109 @@ onUnmounted(() => {
 
 :deep(.el-progress__text) {
   color: #fff !important;
+}
+
+/* 表格样式 - 深蓝色系 */
+.table-style-deep-blue :deep(.el-table) {
+  --el-table-bg-color: rgba(13, 40, 71, 0.8);
+  --el-table-tr-bg-color: transparent;
+  --el-table-header-bg-color: linear-gradient(135deg, #1a3a5c 0%, #0d2847 100%);
+  --el-table-row-hover-bg-color: rgba(34, 211, 238, 0.15);
+  --el-table-border-color: #22d3ee;
+  --el-table-text-color: #cffafe;
+  --el-table-header-text-color: #ffffff;
+  border: 2px solid #22d3ee;
+  box-shadow: 0 4px 20px rgba(34, 211, 238, 0.3);
+}
+
+.table-style-deep-blue :deep(.el-table th.el-table__cell) {
+  background: linear-gradient(135deg, #1a3a5c 0%, #0d2847 100%) !important;
+  font-size: 16px;
+  font-weight: bold;
+  border-bottom: 2px solid #22d3ee !important;
+}
+
+.table-style-deep-blue :deep(.el-table td.el-table__cell) {
+  background-color: rgba(13, 40, 71, 0.8);
+  color: #cffafe;
+  font-size: 14px;
+}
+
+/* 表格样式 - 深紫色系 */
+.table-style-deep-purple :deep(.el-table) {
+  --el-table-bg-color: rgba(88, 28, 135, 0.8);
+  --el-table-tr-bg-color: transparent;
+  --el-table-header-bg-color: linear-gradient(135deg, #6b21a8 0%, #4c1d95 100%);
+  --el-table-row-hover-bg-color: rgba(139, 92, 246, 0.15);
+  --el-table-border-color: #a855f7;
+  --el-table-text-color: #f3e8ff;
+  --el-table-header-text-color: #ffffff;
+  border: 2px solid #a855f7;
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);
+}
+
+.table-style-deep-purple :deep(.el-table th.el-table__cell) {
+  background: linear-gradient(135deg, #6b21a8 0%, #4c1d95 100%) !important;
+  font-size: 16px;
+  font-weight: bold;
+  border-bottom: 2px solid #a855f7 !important;
+}
+
+.table-style-deep-purple :deep(.el-table td.el-table__cell) {
+  background-color: rgba(88, 28, 135, 0.8);
+  color: #f3e8ff;
+  font-size: 14px;
+}
+
+/* 表格样式 - 青色系 */
+.table-style-cyan :deep(.el-table) {
+  --el-table-bg-color: rgba(6, 78, 94, 0.8);
+  --el-table-tr-bg-color: transparent;
+  --el-table-header-bg-color: linear-gradient(135deg, #0e7490 0%, #064e5e 100%);
+  --el-table-row-hover-bg-color: rgba(6, 182, 212, 0.15);
+  --el-table-border-color: #06b6d4;
+  --el-table-text-color: #cffafe;
+  --el-table-header-text-color: #ffffff;
+  border: 2px solid #06b6d4;
+  box-shadow: 0 4px 20px rgba(6, 182, 212, 0.3);
+}
+
+.table-style-cyan :deep(.el-table th.el-table__cell) {
+  background: linear-gradient(135deg, #0e7490 0%, #064e5e 100%) !important;
+  font-size: 16px;
+  font-weight: bold;
+  border-bottom: 2px solid #06b6d4 !important;
+}
+
+.table-style-cyan :deep(.el-table td.el-table__cell) {
+  background-color: rgba(6, 78, 94, 0.8);
+  color: #cffafe;
+  font-size: 14px;
+}
+
+/* 表格样式 - 橙色系 */
+.table-style-orange :deep(.el-table) {
+  --el-table-bg-color: rgba(124, 45, 18, 0.8);
+  --el-table-tr-bg-color: transparent;
+  --el-table-header-bg-color: linear-gradient(135deg, #c2410c 0%, #7c2d12 100%);
+  --el-table-row-hover-bg-color: rgba(249, 115, 22, 0.15);
+  --el-table-border-color: #f97316;
+  --el-table-text-color: #fed7aa;
+  --el-table-header-text-color: #ffffff;
+  border: 2px solid #f97316;
+  box-shadow: 0 4px 20px rgba(249, 115, 22, 0.3);
+}
+
+.table-style-orange :deep(.el-table th.el-table__cell) {
+  background: linear-gradient(135deg, #c2410c 0%, #7c2d12 100%) !important;
+  font-size: 16px;
+  font-weight: bold;
+  border-bottom: 2px solid #f97316 !important;
+}
+
+.table-style-orange :deep(.el-table td.el-table__cell) {
+  background-color: rgba(124, 45, 18, 0.8);
+  color: #fed7aa;
+  font-size: 14px;
 }
 </style>

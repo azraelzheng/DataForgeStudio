@@ -370,6 +370,23 @@
                   </div>
                 </template>
 
+                <!-- 表格样式配置 -->
+                <template v-if="selectedWidget.widgetType === 'table'">
+                  <el-divider>表格样式</el-divider>
+                  <el-form-item label="表格风格">
+                    <el-select v-model="selectedWidget.styleConfig.tableStyle" placeholder="选择表格风格" style="width: 100%">
+                      <el-option label="默认" value="default" />
+                      <el-option label="深蓝色系（流程数据）" value="deep-blue" />
+                      <el-option label="深紫色系（结果数据）" value="deep-purple" />
+                      <el-option label="青色系（强调）" value="cyan" />
+                      <el-option label="橙色系（警告/重点）" value="orange" />
+                    </el-select>
+                  </el-form-item>
+                  <el-form-item label="斑马纹">
+                    <el-switch v-model="selectedWidget.styleConfig.zebra" />
+                  </el-form-item>
+                </template>
+
                 <!-- 条件样式配置 -->
                 <el-divider>条件样式</el-divider>
                 <div class="condition-styles">
@@ -504,6 +521,7 @@ import {
   Histogram, PieChart, Stopwatch
 } from '@element-plus/icons-vue'
 // vue-grid-layout 已在 main.js 中全局注册
+import { useDashboardStore } from '@/stores/dashboard'
 import {
   getDashboard,
   createDashboard,
@@ -523,18 +541,21 @@ const iconMap = {
 
 const router = useRouter()
 const route = useRoute()
+const store = useDashboardStore()
 
-// 状态
+// 本地组件状态
 const saving = ref(false)
 const isEditingName = ref(false)
 const activeTab = ref('dashboard')
-const selectedWidgetId = ref(null)
 const canvasContainer = ref(null)
 const reportList = ref([])
 const availableFields = ref([])
 const widgetDataMap = ref({})  // 存储组件预览数据
+
 const widgetQueryConditions = ref([])  // 当前选中组件的查询条件定义
 const queryConditionValues = ref({})   // 当前选中组件的查询条件值
+
+const isLocalDirty = ref(false)  // 用于追踪本地修改状态
 
 // 大屏表单
 const dashboardForm = reactive({
@@ -547,9 +568,6 @@ const dashboardForm = reactive({
   theme: 'dark',
   refreshInterval: 0
 })
-
-// 布局数据
-const layout = ref([])
 
 // 计算属性
 const canvasStyle = computed(() => ({
@@ -566,9 +584,41 @@ const rowHeight = computed(() => {
   return Math.floor((dashboardForm.height - 120) / 12)
 })
 
-const selectedWidget = computed(() => {
-  if (!selectedWidgetId.value) return null
-  return layout.value.find(item => item.i === selectedWidgetId.value)
+// 使用 store 中的计算属性
+const selectedWidget = computed(() => store.selectedWidget)
+
+// 布局数据与 store 同步
+const layout = computed({
+  get: () => store.widgets.map(w => ({
+    i: w.widgetId || w.id,
+    x: w.positionX ?? 0,
+    y: w.positionY ?? 0,
+    w: w.width ?? 3,
+    h: w.height ?? 3,
+    widgetType: w.widgetType,
+    title: w.title,
+    reportId: w.reportId,
+    config: w.config || {},
+    conditionStyles: w.conditionStyles || [],
+    styleConfig: w.styleConfig || { tableStyle: 'default', zebra: false, conditionStyles: [] }
+  })),
+  set: (val) => {
+    // 将布局变化同步回 store
+    const widgets = val.map(item => ({
+      widgetId: item.i,
+      positionX: item.x,
+      positionY: item.y,
+      width: item.w,
+      height: item.h,
+      widgetType: item.widgetType,
+      title: item.title,
+      reportId: item.reportId,
+      config: item.config,
+      conditionStyles: item.conditionStyles,
+      styleConfig: item.styleConfig
+    }))
+    store.widgets = widgets
+  }
 })
 
 // 基础组件列表
@@ -859,7 +909,12 @@ const handleDrop = (event) => {
     title: widgetName,
     reportId: null,
     config: getDefaultConfig(widgetType),
-    conditionStyles: []
+    conditionStyles: [],
+    styleConfig: {
+      tableStyle: 'default',
+      zebra: false,
+      conditionStyles: []
+    }
   }
 
   layout.value.push(newWidget)
@@ -1225,7 +1280,11 @@ const handleSave = async () => {
           Height: widget.h,
           ReportId: widget.reportId,  // 已经确保有 reportId
           DataConfig: JSON.stringify(widget.config || {}),
-          StyleConfig: JSON.stringify({ conditionStyles: widget.conditionStyles || [] })
+          StyleConfig: JSON.stringify({
+            conditionStyles: widget.conditionStyles || [],
+            tableStyle: widget.styleConfig?.tableStyle || 'default',
+            zebra: widget.styleConfig?.zebra || false
+          })
         }
         console.log('Updating widget:', widget.i, widgetData)
         await updateWidget(savedDashboardId, widget.i, widgetData)
@@ -1243,7 +1302,11 @@ const handleSave = async () => {
           Height: widget.h,
           ReportId: widget.reportId,  // 已经确保有 reportId
           DataConfig: JSON.stringify(widget.config || {}),
-          StyleConfig: JSON.stringify({ conditionStyles: widget.conditionStyles || [] })
+          StyleConfig: JSON.stringify({
+            conditionStyles: widget.conditionStyles || [],
+            tableStyle: widget.styleConfig?.tableStyle || 'default',
+            zebra: widget.styleConfig?.zebra || false
+          })
         })
 
         // 更新 layout 中的组件 ID 为后端返回的真实 ID
@@ -1304,7 +1367,8 @@ const handleSave = async () => {
 const handlePreview = () => {
   const dashboardId = route.params.id
   if (dashboardId) {
-    window.open(`/dashboard/view/${dashboardId}`, '_blank')
+    // 打开新窗口并传递 fullscreen 参数
+    window.open(`/dashboard/view/${dashboardId}?fullscreen=true`, '_blank', 'fullscreen=yes')
   } else {
     ElMessage.warning('请先保存大屏后再预览')
   }
