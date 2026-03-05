@@ -24,6 +24,36 @@
         </span>
       </div>
       <div class="toolbar-right">
+        <!-- Zoom Control -->
+        <ZoomControl :scale="scale" @scale-change="handleScaleChange" />
+
+        <!-- Grid Toggle -->
+        <el-button
+          :type="showGrid ? 'primary' : 'default'"
+          @click="$emit('toggle-grid')"
+        title="显示网格"
+        >
+          <el-icon><Grid /></el-icon>
+        </el-button>
+
+        <!-- Undo/Redo buttons -->
+        <el-button-group style="margin-left: 8px">
+          <el-button
+            @click="handleUndo"
+            :disabled="!canUndo"
+            title="撤销 (Ctrl+Z)"
+          >
+            <el-icon><RefreshLeft /></el-icon>
+          </el-button>
+          <el-button
+            @click="handleRedo"
+            :disabled="!canRedo"
+            title="重做 (Ctrl+Y)"
+          >
+            <el-icon><RefreshRight /></el-icon>
+          </el-button>
+        </el-button-group>
+
         <el-button-group>
           <el-button @click="handlePreview">
             <el-icon><View /></el-icon>
@@ -518,8 +548,10 @@ import {
   ArrowLeft, Edit, View, Check, Delete, Plus,
   TrendCharts, QuestionFilled,
   Grid, Odometer, DataLine, Sunrise,
-  Histogram, PieChart, Stopwatch
-} from '@element-plus/icons-vue'
+  Histogram, PieChart, Stopwatch, RefreshLeft, RefreshRight, Grid
+ Aim '@element-plus/icons-vue'
+import { useDashboardStore } from '@/stores/dashboard'
+import { useKeyboard } from '@/composables/useKeyboard'
 // vue-grid-layout 已在 main.js 中全局注册
 import { useDashboardStore } from '@/stores/dashboard'
 import {
@@ -542,6 +574,9 @@ const iconMap = {
 const router = useRouter()
 const route = useRoute()
 const store = useDashboardStore()
+
+// 初始化键盘快捷键
+useKeyboard()
 
 // 本地组件状态
 const saving = ref(false)
@@ -586,6 +621,35 @@ const rowHeight = computed(() => {
 
 // 使用 store 中的计算属性
 const selectedWidget = computed(() => store.selectedWidget)
+const canUndo = computed(() => store.canUndo)
+const canRedo = computed(() => store.canRedo)
+const scale = computed({
+  get: () => store.scale,
+  set: (val) => store.setScale(val)
+})
+const showGrid = computed(() => store.showGrid)
+
+// 撤销
+const handleUndo = () => {
+  store.undo()
+}
+
+}
+
+// 重做
+const handleRedo = () => {
+  store.redo()
+}
+
+// 缩放变化
+const handleScaleChange = (newScale) => {
+  scale.value = newScale
+}
+
+// 切换网格
+const handleToggleGrid = () => {
+  store.toggleGrid()
+}
 
 // 布局数据与 store 同步
 const layout = computed({
