@@ -751,6 +751,55 @@ public class DashboardService : IDashboardService
     }
 
     /// <summary>
+    /// 根据公开URL获取大屏详情（无需登录）
+    /// </summary>
+    public async Task<ApiResponse<DashboardDetailDto>> GetPublicDashboardByUrlAsync(string publicUrl)
+    {
+        if (string.IsNullOrEmpty(publicUrl))
+        {
+            return ApiResponse<DashboardDetailDto>.Fail("公开URL不能为空", "INVALID_URL");
+        }
+
+        var dashboard = await _context.Dashboards
+            .Include(d => d.Widgets)
+                .ThenInclude(w => w.Report)
+            .Include(d => d.Widgets)
+                .ThenInclude(w => w.Rules)
+            .FirstOrDefaultAsync(d => d.PublicUrl == publicUrl && d.IsPublic);
+
+        if (dashboard == null)
+        {
+            return ApiResponse<DashboardDetailDto>.Fail("大屏不存在或未公开", "NOT_FOUND");
+        }
+
+        var dashboardDetail = MapToDetailDto(dashboard);
+        return ApiResponse<DashboardDetailDto>.Ok(dashboardDetail);
+    }
+
+    /// <summary>
+    /// 根据公开URL获取大屏数据（无需登录）
+    /// </summary>
+    public async Task<ApiResponse<DashboardDataDto>> GetPublicDashboardDataByUrlAsync(string publicUrl)
+    {
+        if (string.IsNullOrEmpty(publicUrl))
+        {
+            return ApiResponse<DashboardDataDto>.Fail("公开URL不能为空", "INVALID_URL");
+        }
+
+        // 查找公开大屏
+        var dashboard = await _context.Dashboards
+            .FirstOrDefaultAsync(d => d.PublicUrl == publicUrl && d.IsPublic);
+
+        if (dashboard == null)
+        {
+            return ApiResponse<DashboardDataDto>.Fail("大屏不存在或未公开", "NOT_FOUND");
+        }
+
+        // 调用现有的数据获取逻辑
+        return await GetDashboardDataAsync(dashboard.DashboardId);
+    }
+
+    /// <summary>
     /// 发布大屏
     /// </summary>
     public async Task<ApiResponse<DashboardDto>> PublishDashboardAsync(int dashboardId, int userId)

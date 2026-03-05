@@ -127,6 +127,20 @@ public interface IDashboardService
     Task<ApiResponse<DashboardDataDto>> GetPublicDashboardDataAsync(int dashboardId);
 
     /// <summary>
+    /// 根据公开URL获取大屏详情（无需登录）
+    /// </summary>
+    /// <param name="publicUrl">公开URL标识（GUID）</param>
+    /// <returns>大屏详情（仅限公开大屏）</returns>
+    Task<ApiResponse<DashboardDetailDto>> GetPublicDashboardByUrlAsync(string publicUrl);
+
+    /// <summary>
+    /// 根据公开URL获取大屏数据（无需登录）
+    /// </summary>
+    /// <param name="publicUrl">公开URL标识（GUID）</param>
+    /// <returns>大屏数据（仅限公开大屏）</returns>
+    Task<ApiResponse<DashboardDataDto>> GetPublicDashboardDataByUrlAsync(string publicUrl);
+
+    /// <summary>
     /// 发布大屏
     /// </summary>
     /// <param name="dashboardId">大屏ID</param>

@@ -115,7 +115,7 @@ const routes = [
     meta: { title: '大屏展示', requiresAuth: true, permission: 'dashboard:view' }
   },
   {
-    path: '/public/d/:id',
+    path: '/public/d/:publicUrl',
     name: 'PublicDashboard',
     component: () => import('../views/dashboard/PublicDashboard.vue'),
     meta: { title: '大屏', requiresAuth: false }

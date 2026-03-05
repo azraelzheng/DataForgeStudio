@@ -269,6 +269,25 @@ export function getPublicDashboardData(id, params) {
   return request.get(`/public/d/${id}/data`, { params })
 }
 
+/**
+ * 根据公开URL获取大屏配置和数据（无需登录）
+ * @param {string} publicUrl - 公开URL标识（GUID）
+ * @returns {Promise}
+ */
+export function getPublicDashboardByUrl(publicUrl) {
+  return request.get(`/public/url/${publicUrl}`)
+}
+
+/**
+ * 根据公开URL获取大屏数据（无需登录，用于刷新）
+ * @param {string} publicUrl - 公开URL标识（GUID）
+ * @param {Object} params - 查询参数
+ * @returns {Promise}
+ */
+export function getPublicDashboardDataByUrl(publicUrl, params) {
+  return request.get(`/public/url/${publicUrl}/data`, { params })
+}
+
 // ==================== 模板管理 ====================
 
 /**
@@ -466,6 +485,8 @@ export const dashboardApi = {
   // 公开访问
   getPublicDashboard,
   getPublicDashboardData,
+  getPublicDashboardByUrl,
+  getPublicDashboardDataByUrl,
 
   // 模板管理
   getDashboardTemplates,

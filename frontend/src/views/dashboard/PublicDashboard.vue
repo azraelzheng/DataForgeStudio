@@ -196,7 +196,7 @@
 import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { getPublicDashboard, getPublicDashboardData } from '../../api/dashboard'
+import { getPublicDashboardByUrl, getPublicDashboardDataByUrl } from '../../api/dashboard'
 
 const route = useRoute()
 
@@ -212,7 +212,7 @@ const canvasRef = ref(null)
 // 大屏信息
 const dashboardInfo = reactive({
   id: null,
-  publicId: null,
+  publicUrl: null,
   name: '',
   width: 1920,
   height: 1080,
@@ -821,9 +821,9 @@ const initAllCharts = async () => {
 
 // 加载公开大屏配置
 const loadDashboard = async () => {
-  // 从路由参数获取 publicId
-  const publicId = route.params.publicId
-  if (!publicId) {
+  // 从路由参数获取 publicUrl（GUID格式）
+  const publicUrl = route.params.publicUrl
+  if (!publicUrl) {
     error.value = '大屏访问链接无效'
     loading.value = false
     return
@@ -833,8 +833,8 @@ const loadDashboard = async () => {
   error.value = null
 
   try {
-    // 使用公开 API 加载大屏配置
-    const res = await getPublicDashboard(publicId)
+    // 使用公开 URL API 加载大屏配置
+    const res = await getPublicDashboardByUrl(publicUrl)
 
     // 处理错误响应
     if (!res.success) {
@@ -852,7 +852,7 @@ const loadDashboard = async () => {
 
     const data = res.data
     dashboardInfo.id = data.dashboardId || data.id
-    dashboardInfo.publicId = publicId
+    dashboardInfo.publicUrl = publicUrl
     dashboardInfo.name = data.name || ''
     dashboardInfo.width = data.width || 1920
     dashboardInfo.height = data.height || 1080
@@ -907,12 +907,12 @@ const loadDashboard = async () => {
 
 // 加载大屏数据（使用公开 API）
 const loadDashboardData = async () => {
-  const publicId = route.params.publicId
-  if (!publicId) return
+  const publicUrl = route.params.publicUrl
+  if (!publicUrl) return
 
   try {
-    // 使用公开 API 获取数据
-    const res = await getPublicDashboardData(publicId)
+    // 使用公开 URL API 获取数据
+    const res = await getPublicDashboardDataByUrl(publicUrl)
     if (res.success && res.data) {
       // 数据格式可能是 { widgetId: data } 的映射
       if (typeof res.data === 'object') {
