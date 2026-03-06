@@ -10,7 +10,8 @@
       class="table-wrapper"
       :class="{
         'is-scrolling': isScrollMode,
-        'is-paused': isPaused
+        'is-paused': isPaused,
+        'is-virtual': useVirtualScroll
       }"
       @mouseenter="handleMouseEnter"
       @mouseleave="handleMouseLeave"
@@ -56,7 +57,32 @@
         </div>
       </div>
 
-      <!-- 分页模式 -->
+      <!-- 虚拟滚动模式（大数据量） -->
+      <template v-else-if="useVirtualScroll">
+        <el-table-v2
+          ref="virtualTableRef"
+          :columns="virtualColumns"
+          :data="processedData"
+          :width="tableWidth"
+          :height="virtualTableHeight"
+          :row-height="virtualRowHeight"
+          :header-height="virtualHeaderHeight"
+          :row-class="virtualRowClass"
+          :header-class="virtualHeaderClass"
+          fixed
+          class="virtual-table"
+        >
+          <!-- 空数据状态 -->
+          <template #empty>
+            <div class="empty-data">
+              <el-icon :size="32"><Document /></el-icon>
+              <span>暂无数据</span>
+            </div>
+          </template>
+        </el-table-v2>
+      </template>
+
+      <!-- 分页模式（普通表格） -->
       <template v-else>
         <el-table
           ref="tableRef"
@@ -114,6 +140,11 @@
     <!-- 暂停指示器 -->
     <div v-if="isPaused && (isScrollMode || isAutoPageMode)" class="pause-indicator">
       <el-icon><VideoPause /></el-icon>
+    </div>
+
+    <!-- 数据量指示器（虚拟模式） -->
+    <div v-if="useVirtualScroll && showDataCount" class="data-count-indicator">
+      共 {{ processedData.length }} 条数据
     </div>
   </div>
 </template>
