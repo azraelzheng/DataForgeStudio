@@ -3,11 +3,13 @@
  * 负责管理数据源和组件之间的绑定关系，支持自动刷新
  * 使用 requestAnimationFrame 替代 setInterval，实现与浏览器刷新率同步
  * 支持局部更新，避免完整重绘图表
+ * 集成数据缓存，支持 TTL 过期、请求去重、LRU 淘汰
  * @module dashboard/core/DataBinder
  */
 
 import { ref, type Ref, readonly } from 'vue'
 import { RAFTimerController } from '../../display/composables/useAnimationFrame'
+import { globalDataCache, type DataCacheOptions } from './DataCache'
 import type {
   DataSourceConfig,
   DataBindingConfig,
@@ -46,6 +48,10 @@ interface DataSource {
   id: string
   config: DataSourceConfig
   fetcher: () => Promise<unknown>
+  /** 是否启用缓存 */
+  enableCache?: boolean
+  /** 缓存 TTL（毫秒） */
+  cacheTtl?: number
 }
 
 /**
@@ -106,8 +112,18 @@ export class DataBinder {
    *
    * @param config - 数据源配置
    * @param fetcher - 数据获取函数
+   * @param options - 可选配置（缓存相关）
    */
-  registerSource(config: DataSourceConfig & { id: string }, fetcher: () => Promise<unknown>): void {
+  registerSource(
+    config: DataSourceConfig & { id: string },
+    fetcher: () => Promise<unknown>,
+    options?: {
+      /** 是否启用缓存，默认 true */
+      enableCache?: boolean
+      /** 缓存 TTL（毫秒），默认 60000 */
+      cacheTtl?: number
+    }
+  ): void {
     if (this.sources.has(config.id)) {
       console.warn(`[DataBinder] 数据源 "${config.id}" 已存在，将被覆盖`)
     }
@@ -115,7 +131,9 @@ export class DataBinder {
     this.sources.set(config.id, {
       id: config.id,
       config,
-      fetcher
+      fetcher,
+      enableCache: options?.enableCache ?? true,
+      cacheTtl: options?.cacheTtl ?? 60000
     })
   }
 
@@ -232,8 +250,9 @@ export class DataBinder {
    *
    * @param widgetId - 组件 ID
    * @param forceFullUpdate - 是否强制完整更新（忽略局部更新优化）
+   * @param forceRefresh - 是否强制刷新（忽略缓存）
    */
-  async refresh(widgetId: string, forceFullUpdate: boolean = false): Promise<void> {
+  async refresh(widgetId: string, forceFullUpdate: boolean = false, forceRefresh: boolean = false): Promise<void> {
     const binding = this.bindings.get(widgetId)
     if (!binding) return
 
@@ -244,7 +263,28 @@ export class DataBinder {
     binding.state.value.error = null
 
     try {
-      const data = await source.fetcher()
+      // 生成缓存键
+      const cacheKey = this.generateCacheKey(binding.sourceId, binding.fieldMapping)
+
+      // 获取数据（使用缓存或直接请求）
+      let data: unknown
+
+      if (source.enableCache && !forceRefresh) {
+        // 使用缓存
+        data = await globalDataCache.fetch(
+          cacheKey,
+          source.fetcher,
+          source.cacheTtl
+        )
+      } else {
+        // 直接请求（不使用缓存）
+        if (forceRefresh) {
+          // 强制刷新时清除缓存
+          globalDataCache.clear(cacheKey)
+        }
+        data = await source.fetcher()
+      }
+
       const mappedData = this.applyFieldMapping(data, binding.fieldMapping)
 
       // 检测数据变化并触发局部更新
@@ -269,6 +309,23 @@ export class DataBinder {
     } finally {
       binding.state.value.isLoading = false
     }
+  }
+
+  /**
+   * 生成缓存键
+   *
+   * @param sourceId - 数据源 ID
+   * @param fieldMapping - 字段映射
+   * @returns 缓存键
+   */
+  private generateCacheKey(sourceId: string, fieldMapping: Record<string, string>): string {
+    // 使用稳定的键排序确保相同映射生成相同键
+    const sortedMapping = Object.keys(fieldMapping)
+      .sort()
+      .map(key => `${key}:${fieldMapping[key]}`)
+      .join(',')
+
+    return `${sourceId}:{${sortedMapping}}`
   }
 
   /**
@@ -431,13 +488,14 @@ export class DataBinder {
    *
    * @param sourceId - 数据源 ID
    * @param forceFullUpdate - 是否强制完整更新
+   * @param forceRefresh - 是否强制刷新（忽略缓存）
    */
-  async refreshSource(sourceId: string, forceFullUpdate: boolean = false): Promise<void> {
+  async refreshSource(sourceId: string, forceFullUpdate: boolean = false, forceRefresh: boolean = false): Promise<void> {
     const promises: Promise<void>[] = []
 
     this.bindings.forEach((binding, widgetId) => {
       if (binding.sourceId === sourceId) {
-        promises.push(this.refresh(widgetId, forceFullUpdate))
+        promises.push(this.refresh(widgetId, forceFullUpdate, forceRefresh))
       }
     })
 
@@ -559,6 +617,50 @@ export class DataBinder {
    */
   get sourceCount(): number {
     return this.sources.size
+  }
+
+  /**
+   * 获取缓存统计信息
+   *
+   * @returns 缓存统计
+   */
+  getCacheStats() {
+    return globalDataCache.getStats()
+  }
+
+  /**
+   * 清除指定数据源的缓存
+   *
+   * @param sourceId - 数据源 ID
+   */
+  clearSourceCache(sourceId: string): void {
+    // 清除该数据源相关的所有缓存
+    const keysToDelete: string[] = []
+    globalDataCache.getStats().keys.forEach(key => {
+      if (key.startsWith(`${sourceId}:`)) {
+        keysToDelete.push(key)
+      }
+    })
+    keysToDelete.forEach(key => globalDataCache.clear(key))
+  }
+
+  /**
+   * 清除所有缓存
+   */
+  clearAllCache(): void {
+    globalDataCache.clear()
+  }
+
+  /**
+   * 强制刷新数据源（忽略缓存）
+   *
+   * @param sourceId - 数据源 ID
+   */
+  async forceRefreshSource(sourceId: string): Promise<void> {
+    // 先清除该数据源的缓存
+    this.clearSourceCache(sourceId)
+    // 然后刷新
+    await this.refreshSource(sourceId, false, true)
   }
 
   /**
