@@ -309,6 +309,47 @@ const isAutoPageMode = computed(() => {
   return config.value.overflowMode === 'auto-page'
 })
 
+/** 虚拟滚动模式（大数据量自动启用） */
+const VIRTUAL_SCROLL_THRESHOLD = 100
+
+const useVirtualScroll = computed(() => {
+  // 当数据量超过阈值且不是滚动模式时启用虚拟滚动
+  return !isScrollMode.value && processedData.value.length > VIRTUAL_SCROLL_THRESHOLD
+})
+
+/** 虚拟表格相关配置 */
+const virtualTableRef = ref<any>(null)
+const tableWidth = computed(() => {
+  return tableContainerRef.value?.clientWidth || 800
+})
+
+const virtualTableHeight = computed(() => {
+  return tableHeight.value || 400
+})
+
+const virtualRowHeight = 48
+const virtualHeaderHeight = 48
+
+const virtualColumns = computed(() => {
+  return normalizedColumns.value.map(col => ({
+    key: col.prop,
+    title: col.label,
+    width: typeof col.width === 'number' ? col.width : 150,
+    align: col.align || 'center'
+  }))
+})
+
+const virtualRowClass = ({ rowIndex }: { rowIndex: number }) => {
+  return rowIndex % 2 === 0 ? 'virtual-row-even' : 'virtual-row-odd'
+}
+
+const virtualHeaderClass = 'virtual-header'
+
+/** 是否显示数据量指示器 */
+const showDataCount = computed(() => {
+  return config.value.showPagination !== false
+})
+
 /** 是否显示分页 */
 const showPagination = computed(() => {
   return config.value.showPagination !== false && !isScrollMode.value
