@@ -210,6 +210,7 @@ const isFullscreen = ref(false)
 const showToolbar = ref(true)
 const lastRefreshTime = ref(null)
 const canvasRef = ref(null)
+const canvasScale = ref(1)
 
 // 大屏信息
 const dashboardInfo = reactive({

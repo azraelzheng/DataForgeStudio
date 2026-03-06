@@ -54,10 +54,11 @@ export function useAnimationFrame() {
    * 停止动画帧循环
    */
   function stop(): void {
+    // 安全停止：先保存 ID，    const id = frameId.value
+    frameId.value = null
     isRunning.value = false
-    if (frameId.value !== null) {
-      cancelAnimationFrame(frameId.value)
-      frameId.value = null
+    if (id !== null) {
+      cancelAnimationFrame(id)
     }
   }
 
@@ -135,6 +136,11 @@ export function useRAFTimer(
     stopRAF()
     elapsed = 0
   }
+
+  // 显式清理，确保组件卸载时停止定时器
+  onUnmounted(() => {
+    stop()
+  })
 
   return { start, stop, isRunning }
 }
