@@ -13,6 +13,7 @@ import type {
   CustomChartOption
 } from 'echarts/core'
 import type { RefElement } from '../types/internal'
+import { usePartialUpdate, type PartialUpdateOptions, type UpdateResult } from './usePartialUpdate'
 
 /**
  * 主题类型
@@ -37,6 +38,8 @@ export interface UseEChartsOptions {
   resizeDelay?: number
   /** 销毁时是否清除实例 */
   disposeOnUnmount?: boolean
+  /** 局部更新选项 */
+  partialUpdate?: PartialUpdateOptions
 }
 
 /**
@@ -69,6 +72,14 @@ export interface UseEChartsReturn {
     pixelRatio?: number
     backgroundColor?: string
   }) => string
+  /** 局部更新 - 更新系列数据 */
+  updateSeriesData: (seriesIndex: number, data: unknown[]) => UpdateResult
+  /** 局部更新 - 追加数据 */
+  appendSeriesData: (seriesIndex: number, newData: unknown | unknown[], maxPoints?: number) => UpdateResult
+  /** 局部更新 - 增量更新 */
+  deltaUpdate: (changes: Array<{ index: number; value: unknown }>, seriesIndex?: number) => UpdateResult
+  /** 局部更新状态 */
+  isPartialUpdating: Ref<boolean>
 }
 
 /**
@@ -154,7 +165,8 @@ export function useECharts(options: UseEChartsOptions = {}): UseEChartsReturn {
     initOpts,
     autoResize = true,
     resizeDelay = 200,
-    disposeOnUnmount = true
+    disposeOnUnmount = true,
+    partialUpdate: partialUpdateOptions
   } = options
 
   // 状态
@@ -165,6 +177,9 @@ export function useECharts(options: UseEChartsOptions = {}): UseEChartsReturn {
 
   // Resize 管理器
   let resizeManager: ResizeManager | null = null
+
+  // 局部更新 Hook
+  const partialUpdate = usePartialUpdate(chartInstance, partialUpdateOptions)
 
   /**
    * 初始化图表
@@ -335,7 +350,12 @@ export function useECharts(options: UseEChartsOptions = {}): UseEChartsReturn {
     hideLoading,
     resize,
     dispose,
-    getDataURL
+    getDataURL,
+    // 局部更新方法
+    updateSeriesData: partialUpdate.updateSeriesData,
+    appendSeriesData: partialUpdate.appendSeriesData,
+    deltaUpdate: partialUpdate.deltaUpdate,
+    isPartialUpdating: partialUpdate.isUpdating
   }
 }
 

@@ -2,6 +2,7 @@
  * DataBinder - 数据绑定系统
  * 负责管理数据源和组件之间的绑定关系，支持自动刷新
  * 使用 requestAnimationFrame 替代 setInterval，实现与浏览器刷新率同步
+ * 支持局部更新，避免完整重绘图表
  * @module dashboard/core/DataBinder
  */
 
@@ -12,6 +13,31 @@ import type {
   DataBindingConfig,
   BindingState
 } from '../types/dashboard'
+
+/**
+ * 数据变更回调类型
+ */
+export type DataChangeCallback = (
+  newData: unknown,
+  oldData: unknown,
+  changes?: DataDiffResult
+) => void
+
+/**
+ * 数据差异结果
+ */
+export interface DataDiffResult {
+  /** 是否有变化 */
+  hasChanges: boolean
+  /** 新增的数据点 */
+  added: unknown[]
+  /** 删除的数据点 */
+  removed: unknown[]
+  /** 修改的数据点 */
+  modified: Array<{ index: number; oldValue: unknown; newValue: unknown }>
+  /** 是否建议使用增量更新 */
+  shouldPartialUpdate: boolean
+}
 
 /**
  * 数据源注册信息
@@ -31,6 +57,12 @@ interface Binding {
   fieldMapping: Record<string, string>
   refreshInterval?: number
   state: Ref<BindingState>
+  /** 上一次的数据（用于增量更新） */
+  previousData: unknown
+  /** 数据变更回调（用于局部更新） */
+  onDataChange?: DataChangeCallback
+  /** 是否启用局部更新 */
+  enablePartialUpdate: boolean
 }
 
 /**
@@ -114,9 +146,19 @@ export class DataBinder {
    * 绑定组件到数据源
    *
    * @param config - 绑定配置
+   * @param options - 额外选项
    */
-  bind(config: DataBindingConfig & { widgetId: string }): void {
+  bind(
+    config: DataBindingConfig & { widgetId: string },
+    options?: {
+      /** 是否启用局部更新 */
+      enablePartialUpdate?: boolean
+      /** 数据变更回调 */
+      onDataChange?: DataChangeCallback
+    }
+  ): void {
     const { widgetId, sourceId, fieldMapping, refreshInterval } = config
+    const { enablePartialUpdate = true, onDataChange } = options || {}
 
     // 验证数据源存在
     if (!this.sources.has(sourceId)) {
@@ -141,7 +183,10 @@ export class DataBinder {
       widgetId,
       fieldMapping,
       refreshInterval,
-      state
+      state,
+      previousData: null,
+      onDataChange,
+      enablePartialUpdate
     })
 
     // 设置单独刷新定时器（如果有自定义刷新间隔）
@@ -186,8 +231,9 @@ export class DataBinder {
    * 刷新单个组件的数据
    *
    * @param widgetId - 组件 ID
+   * @param forceFullUpdate - 是否强制完整更新（忽略局部更新优化）
    */
-  async refresh(widgetId: string): Promise<void> {
+  async refresh(widgetId: string, forceFullUpdate: boolean = false): Promise<void> {
     const binding = this.bindings.get(widgetId)
     if (!binding) return
 
@@ -199,8 +245,24 @@ export class DataBinder {
 
     try {
       const data = await source.fetcher()
-      binding.state.value.data = this.applyFieldMapping(data, binding.fieldMapping)
+      const mappedData = this.applyFieldMapping(data, binding.fieldMapping)
+
+      // 检测数据变化并触发局部更新
+      if (binding.enablePartialUpdate && !forceFullUpdate && binding.previousData !== null) {
+        const diff = this.diffData(binding.previousData, mappedData)
+
+        if (diff.hasChanges && binding.onDataChange) {
+          // 调用数据变更回调，让组件决定如何更新
+          binding.onDataChange(mappedData, binding.previousData, diff)
+        }
+      }
+
+      // 更新状态
+      binding.state.value.data = mappedData
       binding.state.value.lastRefresh = new Date()
+
+      // 保存当前数据用于下次比较
+      binding.previousData = this.cloneData(mappedData)
     } catch (error) {
       binding.state.value.error = error instanceof Error ? error : new Error(String(error))
       console.error(`[DataBinder] 刷新组件 "${widgetId}" 数据失败:`, error)
@@ -210,16 +272,172 @@ export class DataBinder {
   }
 
   /**
+   * 比较数据差异
+   *
+   * @param oldData - 旧数据
+   * @param newData - 新数据
+   * @returns 数据差异结果
+   */
+  private diffData(oldData: unknown, newData: unknown): DataDiffResult {
+    const result: DataDiffResult = {
+      hasChanges: false,
+      added: [],
+      removed: [],
+      modified: [],
+      shouldPartialUpdate: true
+    }
+
+    // 如果类型不同，需要完整更新
+    if (typeof oldData !== typeof newData) {
+      result.hasChanges = true
+      result.shouldPartialUpdate = false
+      return result
+    }
+
+    // 如果是数组
+    if (Array.isArray(oldData) && Array.isArray(newData)) {
+      // 如果长度差异太大，建议完整更新
+      const lengthDiff = Math.abs(oldData.length - newData.length)
+      if (lengthDiff > oldData.length * 0.5) {
+        result.hasChanges = true
+        result.shouldPartialUpdate = false
+        return result
+      }
+
+      // 比较数组元素
+      const maxLen = Math.max(oldData.length, newData.length)
+      for (let i = 0; i < maxLen; i++) {
+        if (i >= oldData.length) {
+          // 新增的元素
+          result.added.push(newData[i])
+          result.hasChanges = true
+        } else if (i >= newData.length) {
+          // 删除的元素
+          result.removed.push(oldData[i])
+          result.hasChanges = true
+        } else if (!this.isEqual(oldData[i], newData[i])) {
+          // 修改的元素
+          result.modified.push({
+            index: i,
+            oldValue: oldData[i],
+            newValue: newData[i]
+          })
+          result.hasChanges = true
+        }
+      }
+
+      // 如果修改超过 50%，建议完整更新
+      if (result.modified.length > maxLen * 0.5) {
+        result.shouldPartialUpdate = false
+      }
+
+      return result
+    }
+
+    // 如果是对象
+    if (typeof oldData === 'object' && typeof newData === 'object' && oldData !== null && newData !== null) {
+      const oldObj = oldData as Record<string, unknown>
+      const newObj = newData as Record<string, unknown>
+      const allKeys = new Set([...Object.keys(oldObj), ...Object.keys(newObj)])
+
+      let changeCount = 0
+      allKeys.forEach(key => {
+        if (!(key in oldObj)) {
+          result.added.push({ key, value: newObj[key] })
+          result.hasChanges = true
+          changeCount++
+        } else if (!(key in newObj)) {
+          result.removed.push({ key, value: oldObj[key] })
+          result.hasChanges = true
+          changeCount++
+        } else if (!this.isEqual(oldObj[key], newObj[key])) {
+          result.modified.push({
+            index: 0,
+            oldValue: { key, value: oldObj[key] },
+            newValue: { key, value: newObj[key] }
+          })
+          result.hasChanges = true
+          changeCount++
+        }
+      })
+
+      // 如果修改超过 50%，建议完整更新
+      if (changeCount > allKeys.size * 0.5) {
+        result.shouldPartialUpdate = false
+      }
+
+      return result
+    }
+
+    // 简单类型比较
+    result.hasChanges = oldData !== newData
+    result.shouldPartialUpdate = false
+    return result
+  }
+
+  /**
+   * 深度比较两个值是否相等
+   */
+  private isEqual(a: unknown, b: unknown): boolean {
+    if (a === b) return true
+    if (typeof a !== typeof b) return false
+    if (a === null || b === null) return a === b
+
+    if (Array.isArray(a) && Array.isArray(b)) {
+      if (a.length !== b.length) return false
+      return a.every((item, index) => this.isEqual(item, b[index]))
+    }
+
+    if (typeof a === 'object' && typeof b === 'object') {
+      const objA = a as Record<string, unknown>
+      const objB = b as Record<string, unknown>
+      const keysA = Object.keys(objA)
+      const keysB = Object.keys(objB)
+
+      if (keysA.length !== keysB.length) return false
+      return keysA.every(key => this.isEqual(objA[key], objB[key]))
+    }
+
+    return false
+  }
+
+  /**
+   * 深度克隆数据
+   */
+  private cloneData(data: unknown): unknown {
+    if (data === null || data === undefined) {
+      return data
+    }
+
+    if (Array.isArray(data)) {
+      return data.map(item => this.cloneData(item))
+    }
+
+    if (typeof data === 'object') {
+      const result: Record<string, unknown> = {}
+      for (const key in data) {
+        if (Object.prototype.hasOwnProperty.call(data, key)) {
+          result[key] = this.cloneData((data as Record<string, unknown>)[key])
+        }
+      }
+      return result
+    }
+
+    return data
+  }
+
+  /**
    * 刷新数据源的所有绑定组件
    *
    * @param sourceId - 数据源 ID
+   * @param forceFullUpdate - 是否强制完整更新
    */
-  async refreshSource(sourceId: string): Promise<void> {
+  async refreshSource(sourceId: string, forceFullUpdate: boolean = false): Promise<void> {
     const promises: Promise<void>[] = []
 
     this.bindings.forEach((binding, widgetId) => {
       if (binding.sourceId === sourceId) {
-        promises.push(this.refresh(widgetId))
+        promises.push(this.refresh(widgetId, forceFullUpdate))
       }
     })
 
@@ -228,9 +446,13 @@ export class DataBinder {
 
   /**
    * 刷新所有绑定组件
+   *
+   * @param forceFullUpdate - 是否强制完整更新
    */
-  async refreshAll(): Promise<void> {
-    const promises = Array.from(this.bindings.keys()).map(widgetId => this.refresh(widgetId))
+  async refreshAll(forceFullUpdate: boolean = false): Promise<void> {
+    const promises = Array.from(this.bindings.keys()).map(widgetId =>
+      this.refresh(widgetId, forceFullUpdate)
+    )
     await Promise.allSettled(promises)
   }
 
