@@ -1,0 +1,247 @@
+// Glassmorphism 样式 - 玻璃拟态效果
+// 用于大屏可视化组件，提升视觉质感
+
+// ============================================
+// 基础玻璃拟态样式
+// ============================================
+
+.glass-panel {
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  box-shadow:
+    0 4px 30px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+// ============================================
+// 玻璃拟态变体
+// ============================================
+
+// 深色变体 - 更强的模糊和更深的背景
+.glass-panel--dark {
+  background: rgba(10, 15, 30, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow:
+    0 4px 30px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+// 浅色变体 - 用于亮色主题
+.glass-panel--light {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 4px 30px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+// ============================================
+// 特殊效果变体
+// ============================================
+
+// 高亮边框效果 - 用于重点组件
+.glass-panel--highlight {
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 217, 255, 0.3);
+  border-radius: 12px;
+  box-shadow:
+    0 4px 30px rgba(0, 217, 255, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+// 动态发光效果 - 用于重要指标
+.glass-panel--glow {
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 217, 255, 0.3);
+  border-radius: 12px;
+  animation: glass-glow 3s ease-in-out infinite;
+}
+
+@keyframes glass-glow {
+  0%, 100% {
+    box-shadow:
+      0 4px 30px rgba(0, 217, 255, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+  50% {
+    box-shadow:
+      0 4px 40px rgba(0, 217, 255, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+}
+
+// ============================================
+// 组件专用玻璃拟态样式
+// ============================================
+
+// 组件容器玻璃效果
+.glass-widget {
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+
+  // 悬停效果
+  &:hover {
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow:
+      0 8px 40px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+  }
+}
+
+// 数字卡片专用 - 带有微妙的内发光
+.glass-card-number {
+  background: linear-gradient(
+    135deg,
+    rgba(15, 23, 42, 0.7) 0%,
+    rgba(15, 23, 42, 0.5) 100%
+  );
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 217, 255, 0.2);
+  border-radius: 16px;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 2px 0 rgba(0, 217, 255, 0.1);
+}
+
+// 图表容器专用
+.glass-chart {
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+// 表格容器专用 - 更深的背景以增强可读性
+.glass-table {
+  background: rgba(10, 20, 40, 0.65);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  box-shadow:
+    0 4px 30px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+// 状态指示器专用 - 带有彩色光晕
+.glass-status {
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  box-shadow:
+    0 0 20px rgba(0, 217, 255, 0.2),
+    inset 0 0 20px rgba(0, 217, 255, 0.1);
+}
+
+// ============================================
+// 响应式模糊强度
+// 高分辨率屏幕使用更强的模糊效果
+// ============================================
+
+@media (min-width: 2560px) {
+  .glass-panel,
+  .glass-widget,
+  .glass-card-number,
+  .glass-chart,
+  .glass-table {
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+}
+
+@media (min-width: 3840px) {
+  .glass-panel,
+  .glass-widget,
+  .glass-card-number,
+  .glass-chart,
+  .glass-table {
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+}
+
+// ============================================
+// 工具栏和悬浮元素
+// ============================================
+
+// 悬浮工具栏玻璃效果
+.glass-toolbar {
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.7) 0%,
+    rgba(0, 0, 0, 0.3) 70%,
+    transparent 100%
+  );
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+// 控制按钮玻璃效果
+.glass-button {
+  background: rgba(0, 0, 0, 0.5) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.7) !important;
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
+  }
+}
+
+// ============================================
+// 混入 (Mixins) - 供其他组件复用
+// ============================================
+
+// 基础玻璃效果混入
+@mixin glass-effect(
+  $bg-color: rgba(15, 23, 42, 0.6),
+  $blur: 12px,
+  $border-color: rgba(255, 255, 255, 0.1),
+  $radius: 12px
+) {
+  background: $bg-color;
+  backdrop-filter: blur($blur);
+  -webkit-backdrop-filter: blur($blur);
+  border: 1px solid $border-color;
+  border-radius: $radius;
+  box-shadow:
+    0 4px 30px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+// 发光效果混入
+@mixin glass-glow-effect($glow-color: rgba(0, 217, 255, 0.3)) {
+  box-shadow:
+    0 4px 30px rgba($glow-color, 0.5),
+    0 0 40px rgba($glow-color, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}

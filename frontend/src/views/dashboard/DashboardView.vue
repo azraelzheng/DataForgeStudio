@@ -1213,14 +1213,20 @@ onUnmounted(() => {
   background: rgba(0, 0, 0, 0.5) !important;
 }
 
-/* 悬浮工具栏 */
+/* 悬浮工具栏 - 玻璃拟态样式 */
 .floating-toolbar {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   height: 50px;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), transparent);
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 4px 30px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1287,9 +1293,25 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
-/* 组件容器 */
+/* 组件容器 - 玻璃拟态样式 */
 .widget-container {
   box-sizing: border-box;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  box-shadow:
+    0 4px 30px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.widget-container:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow:
+    0 8px 40px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .widget-header {
@@ -1394,14 +1416,19 @@ onUnmounted(() => {
   50% { opacity: 0.7; }
 }
 
-/* 图表 */
+/* 图表 - 玻璃拟态样式 */
 .chart-widget {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: rgba(26, 26, 46, 0.6);
-  border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .chart-container {
@@ -1409,7 +1436,7 @@ onUnmounted(() => {
   min-height: 0;
 }
 
-/* 未知组件 */
+/* 未知组件 - 玻璃拟态样式 */
 .unknown-widget {
   height: 100%;
   display: flex;
@@ -1418,8 +1445,14 @@ onUnmounted(() => {
   justify-content: center;
   gap: 8px;
   color: #909399;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 4px;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 /* 淡入淡出动画 */
@@ -1542,5 +1575,93 @@ onUnmounted(() => {
 
 :deep(.el-progress__text) {
   color: #fff !important;
+}
+
+/* ============================================
+   玻璃拟态辅助类
+   ============================================ */
+
+/* 高亮发光效果 */
+.glass-glow {
+  animation: glass-pulse-glow 3s ease-in-out infinite;
+}
+
+@keyframes glass-pulse-glow {
+  0%, 100% {
+    box-shadow:
+      0 4px 30px rgba(0, 217, 255, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    border-color: rgba(0, 217, 255, 0.2);
+  }
+  50% {
+    box-shadow:
+      0 4px 40px rgba(0, 217, 255, 0.3),
+      0 0 60px rgba(0, 217, 255, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    border-color: rgba(0, 217, 255, 0.4);
+  }
+}
+
+/* 数字卡片专用玻璃效果 */
+.widget-container:has(.card-number-widget) {
+  background: linear-gradient(
+    135deg,
+    rgba(15, 23, 42, 0.7) 0%,
+    rgba(15, 23, 42, 0.5) 100%
+  );
+  border: 1px solid rgba(0, 217, 255, 0.2);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 2px 0 rgba(0, 217, 255, 0.1);
+}
+
+/* 状态灯专用玻璃效果 */
+.widget-container:has(.status-widget) {
+  background: rgba(15, 23, 42, 0.5);
+  border: 2px solid rgba(255, 255, 255, 0.08);
+}
+
+/* 表格容器专用 - 更深的背景以增强可读性 */
+.widget-container:has(.table-style-deep-blue),
+.widget-container:has(.table-style-deep-purple),
+.widget-container:has(.table-style-cyan),
+.widget-container:has(.table-style-orange) {
+  background: rgba(10, 20, 40, 0.65);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+/* ============================================
+   响应式模糊强度 (高分辨率屏幕)
+   ============================================ */
+
+/* 2K 屏幕 */
+@media (min-width: 2560px) {
+  .widget-container,
+  .chart-widget,
+  .unknown-widget {
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  .floating-toolbar {
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+}
+
+/* 4K 屏幕 */
+@media (min-width: 3840px) {
+  .widget-container,
+  .chart-widget,
+  .unknown-widget {
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  .floating-toolbar {
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+  }
 }
 </style>
