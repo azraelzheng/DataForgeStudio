@@ -96,10 +96,26 @@
         <!-- 数字卡片组件 -->
         <template v-else-if="widget.widgetType === 'card-number'">
           <div class="card-number-widget">
-            <div class="card-value" :style="{ color: widget.config?.color || '#00d9ff' }">
+            <div
+              class="card-value"
+              :style="{
+                color: widget.config?.color || '#00d9ff',
+                fontSize: getFontStyle('kpi').fontSize,
+                fontWeight: getFontStyle('kpi').fontWeight,
+                lineHeight: getFontStyle('kpi').lineHeight
+              }"
+            >
               {{ formatCardValue(widget) }}
             </div>
-            <div class="card-label">{{ widget.title || '数据' }}</div>
+            <div
+              class="card-label"
+              :style="{
+                fontSize: getFontStyle('label').fontSize,
+                fontWeight: getFontStyle('label').fontWeight
+              }"
+            >
+              {{ widget.title || '数据' }}
+            </div>
             <div v-if="widget.config?.trend" class="card-trend" :class="widget.config.trend > 0 ? 'up' : 'down'">
               <el-icon v-if="widget.config.trend > 0"><CaretTop /></el-icon>
               <el-icon v-else><CaretBottom /></el-icon>
@@ -199,6 +215,7 @@ import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { getPublicDashboardByUrl, getPublicDashboardDataByUrl } from '../../api/dashboard'
 import { useRAFTimer } from '../../display/composables/useAnimationFrame'
+import { useResponsiveFont, type ViewingDistance } from '../../display/composables/useResponsiveFont'
 
 const route = useRoute()
 
@@ -211,19 +228,30 @@ const showToolbar = ref(true)
 const lastRefreshTime = ref(null)
 const canvasRef = ref(null)
 const canvasScale = ref(1)
+const viewportWidth = ref(window.innerWidth)
+
+// 响应式字体配置
+const viewingDistance = ref<ViewingDistance>('medium')
+
+// 使用响应式字体 Hook
+const { fontSize, getFontStyle } = useResponsiveFont(
+  { distance: viewingDistance.value, baseFontSize: 16, designWidth: 1920 },
+  viewportWidth
+)
 
 // 大屏信息
 const dashboardInfo = reactive({
-  id: null,
-  publicUrl: null,
+  id: null as string | null,
+  publicUrl: null as string | null,
   name: '',
   width: 1920,
   height: 1080,
   backgroundColor: '#0d1b2a',
   backgroundImage: '',
   settings: {
-    theme: 'dark',
-    refreshInterval: 0
+    theme: 'dark' as 'dark' | 'light',
+    refreshInterval: 0,
+    viewingDistance: 'medium' as ViewingDistance
   }
 })
 
@@ -252,11 +280,11 @@ let toolbarHideTimer = null
 // 计算缩放比例（根据屏幕大小自动缩放)
 const calculateScale = () => {
   // 获取视口尺寸（减去工具栏高度)
-  const viewportWidth = window.innerWidth
+  viewportWidth.value = window.innerWidth
   const viewportHeight = window.innerHeight - 60  // 预留工具栏空间
 
   // 计算缩放比例，保持宽高比
-  const scaleX = viewportWidth / dashboardInfo.width
+  const scaleX = viewportWidth.value / dashboardInfo.width
   const scaleY = viewportHeight / dashboardInfo.height
 
   // 取较小的比例，确保画布完整显示
@@ -871,7 +899,13 @@ const loadDashboard = async () => {
     dashboardInfo.backgroundImage = data.backgroundImage || ''
     dashboardInfo.settings = {
       theme: data.settings?.theme || 'dark',
-      refreshInterval: data.settings?.refreshInterval || data.refreshInterval || 0
+      refreshInterval: data.settings?.refreshInterval || data.refreshInterval || 0,
+      viewingDistance: data.settings?.viewingDistance || 'medium'
+    }
+
+    // 设置观看距离（用于响应式字体）
+    if (['near', 'medium', 'far'].includes(dashboardInfo.settings.viewingDistance)) {
+      viewingDistance.value = dashboardInfo.settings.viewingDistance
     }
 
     // 加载组件
