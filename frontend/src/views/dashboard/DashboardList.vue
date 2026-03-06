@@ -336,9 +336,9 @@ const handleEdit = (row) => {
   router.push(`/dashboard/designer/${row.dashboardId || row.id}`)
 }
 
-// 查看大屏
+// 查看大屏 - 新窗口打开预览
 const handleView = (row) => {
-  router.push(`/dashboard/view/${row.dashboardId || row.id}`)
+  window.open(`/dashboard/view/${row.dashboardId || row.id}?fullscreen=true`, '_blank', 'fullscreen=yes')
 }
 
 // 复制大屏

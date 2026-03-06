@@ -548,12 +548,11 @@ import {
   ArrowLeft, Edit, View, Check, Delete, Plus,
   TrendCharts, QuestionFilled,
   Grid, Odometer, DataLine, Sunrise,
-  Histogram, PieChart, Stopwatch, RefreshLeft, RefreshRight, Grid
- Aim '@element-plus/icons-vue'
+  Histogram, PieChart, Stopwatch, RefreshLeft, RefreshRight, Aim
+} from '@element-plus/icons-vue'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useKeyboard } from '@/composables/useKeyboard'
 // vue-grid-layout 已在 main.js 中全局注册
-import { useDashboardStore } from '@/stores/dashboard'
 import {
   getDashboard,
   createDashboard,
@@ -632,8 +631,6 @@ const showGrid = computed(() => store.showGrid)
 // 撤销
 const handleUndo = () => {
   store.undo()
-}
-
 }
 
 // 重做
@@ -1498,20 +1495,54 @@ onActivated(async () => {
 </script>
 
 <style scoped>
-/* ==================== 科技蓝主题变量 ==================== */
+/* ==================== 大屏设计器主题变量（符合文档规范） ==================== */
 .dashboard-designer {
-  --tech-bg-primary: #0a1628;
-  --tech-bg-secondary: rgba(0, 30, 60, 0.6);
-  --tech-bg-card: rgba(0, 40, 80, 0.4);
-  --tech-primary: #00d4ff;
-  --tech-primary-light: #00e5ff;
-  --tech-secondary: #0099ff;
-  --tech-accent: #00ffcc;
-  --tech-border: rgba(0, 212, 255, 0.3);
-  --tech-border-glow: rgba(0, 212, 255, 0.5);
-  --tech-text: #e0f7ff;
-  --tech-text-muted: rgba(0, 212, 255, 0.7);
-  --tech-shadow: 0 0 20px rgba(0, 212, 255, 0.15);
+  /* 布局尺寸 */
+  --toolbar-height: 50px;
+  --left-panel-width: 240px;
+  --right-panel-width: 280px;
+  --statusbar-height: 30px;
+
+  /* 动效参数 */
+  --transition-fast: 0.15s ease;
+  --transition-base: 0.3s ease;
+  --transition-slow: 0.5s ease;
+
+  /* 背景色系（保持现有蓝色风格） */
+  --bg-primary: #0a1628;
+  --bg-secondary: rgba(0, 30, 60, 0.6);
+  --bg-tertiary: rgba(0, 40, 80, 0.4);
+  --bg-elevated: rgba(0, 50, 100, 0.3);
+  --bg-hover: rgba(0, 212, 255, 0.15);
+
+  /* 文字色系 */
+  --text-primary: #e0f7ff;
+  --text-secondary: rgba(0, 212, 255, 0.7);
+  --text-tertiary: #909399;
+  --text-disabled: #666666;
+
+  /* 强调色（保持现有蓝色风格） */
+  --accent-primary: #00d4ff;
+  --accent-primary-light: #00e5ff;
+  --accent-secondary: #0099ff;
+  --accent-highlight: #00ffcc;
+  --accent-success: #67c23a;
+  --accent-warning: #e6a23c;
+  --accent-danger: #e94560;
+
+  /* 边框色系 */
+  --border-primary: rgba(0, 212, 255, 0.3);
+  --border-secondary: #0f3460;
+  --border-active: #00d4ff;
+
+  /* 阴影 */
+  --shadow-glow: 0 0 20px rgba(0, 212, 255, 0.15);
+  --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.2);
+
+  /* 圆角 */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
 
   height: 100%;
   display: flex;
@@ -1522,10 +1553,10 @@ onActivated(async () => {
 
 /* 工具栏 */
 .designer-toolbar {
-  height: 56px;
-  min-height: 56px;
+  height: var(--toolbar-height);
+  min-height: var(--toolbar-height);
   background: linear-gradient(90deg, rgba(0, 20, 40, 0.95) 0%, rgba(0, 30, 60, 0.8) 100%);
-  border-bottom: 1px solid var(--tech-border);
+  border-bottom: 1px solid var(--border-primary);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1565,7 +1596,7 @@ onActivated(async () => {
   opacity: 0;
   font-size: 14px;
   color: #909399;
-  transition: opacity 0.2s;
+  transition: opacity var(--transition-base);
 }
 
 /* 主体区域 */
@@ -1577,10 +1608,10 @@ onActivated(async () => {
 
 /* 左侧组件面板 */
 .widget-panel {
-  width: 280px;
-  min-width: 280px;
+  width: var(--left-panel-width);
+  min-width: var(--left-panel-width);
   background: linear-gradient(180deg, rgba(0, 20, 40, 0.9) 0%, rgba(0, 30, 60, 0.8) 100%);
-  border-right: 1px solid var(--tech-border);
+  border-right: 1px solid var(--border-primary);
   display: flex;
   flex-direction: column;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
@@ -1591,7 +1622,7 @@ onActivated(async () => {
   display: flex;
   align-items: center;
   padding: 0 16px;
-  color: var(--tech-text);
+  color: var(--text-primary);
   font-weight: 500;
   border-bottom: 1px solid #0f3460;
 }
@@ -1607,13 +1638,13 @@ onActivated(async () => {
 }
 
 .category-title {
-  color: var(--tech-primary);
+  color: var(--accent-primary);
   font-size: 12px;
   margin-bottom: 8px;
   padding-left: 4px;
   text-transform: uppercase;
   letter-spacing: 1px;
-  text-shadow: 0 0 5px var(--tech-primary);
+  text-shadow: 0 0 5px var(--accent-primary);
 }
 
 .widget-list {
@@ -1629,16 +1660,16 @@ onActivated(async () => {
   justify-content: center;
   padding: 12px 8px;
   background: rgba(0, 40, 80, 0.3);
-  border: 1px solid var(--tech-border);
+  border: 1px solid var(--border-primary);
   border-radius: 6px;
-  color: var(--tech-text);
+  color: var(--text-primary);
   cursor: grab;
   transition: all 0.3s ease;
 }
 
 .widget-item:hover {
   background: rgba(0, 212, 255, 0.15);
-  border-color: var(--tech-primary);
+  border-color: var(--accent-primary);
   box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
 }
 
@@ -1722,7 +1753,7 @@ onActivated(async () => {
 }
 
 .canvas-container::-webkit-scrollbar-thumb {
-  background: var(--tech-border);
+  background: var(--border-primary);
   border-radius: 4px;
 }
 
@@ -1732,7 +1763,7 @@ onActivated(async () => {
 
 .canvas-wrapper {
   position: relative;
-  border: 2px solid var(--tech-border);
+  border: 2px solid var(--border-primary);
   border-radius: 8px;
   box-shadow: 0 0 30px rgba(0, 212, 255, 0.15);
   overflow: hidden;
@@ -1744,7 +1775,7 @@ onActivated(async () => {
 .widget-content {
   height: 100%;
   background: linear-gradient(135deg, rgba(0, 40, 80, 0.4) 0%, rgba(0, 60, 100, 0.3) 100%);
-  border: 1px solid var(--tech-border);
+  border: 1px solid var(--border-primary);
   border-radius: 8px;
   padding: 10px;
   position: relative;
@@ -1755,17 +1786,17 @@ onActivated(async () => {
 }
 
 .grid-item.selected .widget-content {
-  border-color: var(--tech-primary);
+  border-color: var(--accent-primary);
   box-shadow: 0 0 15px rgba(0, 212, 255, 0.4);
 }
 
 .widget-title {
-  color: var(--tech-text);
+  color: var(--text-primary);
   font-size: 14px;
   font-weight: 500;
   margin-bottom: 8px;
   flex-shrink: 0;
-  text-shadow: 0 0 5px var(--tech-primary);
+  text-shadow: 0 0 5px var(--accent-primary);
 }
 
 .widget-preview {
@@ -1864,7 +1895,7 @@ onActivated(async () => {
   top: 4px;
   right: 4px;
   opacity: 0;
-  transition: opacity 0.2s;
+  transition: opacity var(--transition-base);
 }
 
 .widget-content:hover .widget-delete-btn {
@@ -1873,10 +1904,10 @@ onActivated(async () => {
 
 /* 右侧属性面板 */
 .property-panel {
-  width: 320px;
-  min-width: 320px;
+  width: var(--right-panel-width);
+  min-width: var(--right-panel-width);
   background: linear-gradient(180deg, rgba(0, 20, 40, 0.9) 0%, rgba(0, 30, 60, 0.8) 100%);
-  border-left: 1px solid var(--tech-border);
+  border-left: 1px solid var(--border-primary);
   display: flex;
   flex-direction: column;
   box-shadow: -2px 0 10px rgba(0, 0, 0, 0.3);
@@ -1886,20 +1917,20 @@ onActivated(async () => {
   margin: 0;
   padding: 0 16px;
   background: rgba(0, 30, 60, 0.5);
-  border-bottom: 1px solid var(--tech-border);
+  border-bottom: 1px solid var(--border-primary);
 }
 
 .property-panel :deep(.el-tabs__item) {
-  color: var(--tech-text-muted);
+  color: var(--text-secondary);
 }
 
 .property-panel :deep(.el-tabs__item.is-active) {
-  color: var(--tech-primary);
-  text-shadow: 0 0 5px var(--tech-primary);
+  color: var(--accent-primary);
+  text-shadow: 0 0 5px var(--accent-primary);
 }
 
 .property-panel :deep(.el-tabs__active-bar) {
-  background-color: var(--tech-primary);
+  background-color: var(--accent-primary);
 }
 
 .property-panel :deep(.el-tabs__content) {
@@ -1908,30 +1939,30 @@ onActivated(async () => {
 }
 
 .property-panel :deep(.el-form-item__label) {
-  color: var(--tech-text-muted);
+  color: var(--text-secondary);
 }
 
 .property-panel :deep(.el-input__wrapper),
 .property-panel :deep(.el-textarea__inner) {
   background-color: rgba(0, 30, 60, 0.5);
-  border: 1px solid var(--tech-border);
+  border: 1px solid var(--border-primary);
   box-shadow: none;
   transition: all 0.3s;
 }
 
 .property-panel :deep(.el-input__wrapper:hover),
 .property-panel :deep(.el-textarea__inner:hover) {
-  border-color: var(--tech-primary);
+  border-color: var(--accent-primary);
 }
 
 .property-panel :deep(.el-input__wrapper:focus-within),
 .property-panel :deep(.el-textarea__inner:focus) {
-  border-color: var(--tech-primary);
+  border-color: var(--accent-primary);
   box-shadow: 0 0 10px rgba(0, 212, 255, 0.2);
 }
 
 .property-panel :deep(.el-input__inner) {
-  color: var(--tech-text);
+  color: var(--text-primary);
 }
 
 /* 条件样式 */
@@ -1963,7 +1994,7 @@ onActivated(async () => {
 }
 
 :deep(.vue-grid-item) {
-  transition: all 0.2s ease;
+  transition: all var(--transition-base);
   transition-property: left, top, width, height;
 }
 

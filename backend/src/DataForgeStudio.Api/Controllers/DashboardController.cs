@@ -16,7 +16,7 @@ namespace DataForgeStudio.Api.Controllers;
 /// 前端路由已配置权限检查，后端通过 [Authorize] 确保用户已认证
 /// </summary>
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/dashboards")]
 [Authorize]
 public class DashboardController : ControllerBase
 {

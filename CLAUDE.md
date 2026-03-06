@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**DataForgeStudio V4** - Web-based report management system with dynamic SQL query designer, multi-datasource support, and license management.
+**DataForgeStudio** - Web-based report management system with dynamic SQL query designer, multi-datasource support, and license management.
 
 **Tech Stack**: ASP.NET Core 8.0 backend, Vue 3 frontend, SQL Server 2005+
 

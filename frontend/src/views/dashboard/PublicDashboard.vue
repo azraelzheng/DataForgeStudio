@@ -214,8 +214,9 @@ import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { getPublicDashboardByUrl, getPublicDashboardDataByUrl } from '../../api/dashboard'
+import type { ViewingDistance } from '../../display/composables/useResponsiveFont'
 import { useRAFTimer } from '../../display/composables/useAnimationFrame'
-import { useResponsiveFont, type ViewingDistance } from '../../display/composables/useResponsiveFont'
+import { useResponsiveFont } from '../../display/composables/useResponsiveFont'
 
 const route = useRoute()
 

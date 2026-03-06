@@ -9,7 +9,10 @@
     <!-- 登录页或未认证：显示登录组件 -->
     <router-view v-else-if="isLoginPage || !isAuthenticated" />
 
-    <!-- 主应用：带侧边栏和顶部栏（仅认证后显示） -->
+    <!-- 全屏预览模式：只显示路由视图，不显示侧边栏和顶部栏 -->
+    <router-view v-else-if="isFullscreenPreviewMode" />
+
+    <!-- 主应用：带侧边栏和顶部栏（仅认证后显示) -->
     <el-container v-else class="layout-container">
     <!-- 侧边栏 -->
     <el-aside :width="isCollapse ? '64px' : '200px'" class="sidebar">
@@ -255,6 +258,17 @@ const isLoginPage = computed(() => {
 // 判断是否已认证（用于显示布局）
 const isAuthenticated = computed(() => {
   return !!userStore.token && !!userStore.userInfo
+})
+
+// 检测是否为全屏预览模式（隐藏侧边栏和顶部栏）
+const isFullscreenPreviewMode = computed(() => {
+  // 检查当前路由是否是 DashboardView
+  if (route.name === 'DashboardView') {
+    // 检查 URL 参数是否包含 fullscreen=true
+    const urlParams = new URLSearchParams(window.location.search)
+    return urlParams.get('fullscreen') === 'true'
+  }
+  return false
 })
 
 const toggleCollapse = () => {
