@@ -1,10 +1,12 @@
 /**
  * useAutoRefresh - 自动刷新 Composable
  * 提看板数据的定时刷新功能
+ * 使用 requestAnimationFrame 替代 setInterval，实现与浏览器刷新率同步
  * @module display/composables/useAutoRefresh
  */
 
 import { ref, onUnmounted, watch, type Ref } from 'vue'
+import { useRAFTimer } from './useAnimationFrame'
 import type { RefreshState, RefreshOptions } from '../types/display'
 
 const DEFAULT_OPTIONS: Required<RefreshOptions> = {
@@ -58,8 +60,8 @@ export function useAutoRefresh(
   const error = ref<Error | null>(null)
   const retryCount = ref(0)
 
-  // 定时器
-  let timer: ReturnType<typeof setInterval> | null = null
+  // 定时器控制（延迟初始化）
+  let rafTimer: ReturnType<typeof useRAFTimer> | null = null
   let isActive = false
 
   /**
@@ -116,15 +118,16 @@ export function useAutoRefresh(
 
     isActive = true
 
+    // 初始化 rAF 定时器
+    rafTimer = useRAFTimer(refresh, interval)
+
     // 立即执行一次（如果配置了）
     if (opts.immediate) {
       refresh()
     }
 
-    // 设置定时器
-    timer = setInterval(() => {
-      refresh()
-    }, interval.value * 1000)
+    // 使用 rAF 定时器替代 setInterval
+    rafTimer.start()
   }
 
   /**
@@ -133,9 +136,10 @@ export function useAutoRefresh(
   function stop(): void {
     isActive = false
 
-    if (timer) {
-      clearInterval(timer)
-      timer = null
+    // 停止 rAF 定时器
+    if (rafTimer) {
+      rafTimer.stop()
+      rafTimer = null
     }
   }
 

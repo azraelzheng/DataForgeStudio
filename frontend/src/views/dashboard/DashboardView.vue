@@ -1,6 +1,56 @@
 <template>
-  <div class="dashboard-view" :class="{ 'fullscreen': isFullscreen }">
-    <!-- 悬浮工具栏 -->
+  <div class="dashboard-view" :class="{ 'fullscreen': isFullscreen }" @mousemove="handleMouseMove">
+    <!-- 右上角控制按钮（鼠标移入时显示） -->
+    <transition name="fade">
+      <div v-show="showToolbar" class="fullscreen-controls">
+        <!-- 全屏预览模式：只显示关闭窗口按钮 -->
+        <template v-if="isAutoPreviewMode">
+          <el-button
+            type="danger"
+            circle
+            @click="closeWindow"
+            title="关闭窗口"
+            class="control-btn"
+          >
+            <el-icon><Close /></el-icon>
+          </el-button>
+        </template>
+        <!-- 正常模式：显示全屏切换和关闭按钮 -->
+        <template v-else>
+          <el-button
+            v-if="isFullscreen"
+            type="primary"
+            circle
+            @click="exitFullscreen"
+            title="退出全屏"
+            class="control-btn"
+          >
+            <el-icon><FullScreen /></el-icon>
+          </el-button>
+          <el-button
+            v-else
+            type="primary"
+            circle
+            @click="enterFullscreen"
+            title="全屏显示"
+            class="control-btn"
+          >
+            <el-icon><FullScreen /></el-icon>
+          </el-button>
+          <el-button
+            type="danger"
+            circle
+            @click="closeWindow"
+            title="关闭窗口"
+            class="control-btn"
+          >
+            <el-icon><Close /></el-icon>
+          </el-button>
+        </template>
+      </div>
+    </transition>
+
+    <!-- 悬浮工具栏 - 仅在非全屏预览模式下显示 -->
     <transition name="fade">
       <div v-show="showToolbar" class="floating-toolbar">
         <div class="toolbar-left">
@@ -10,41 +60,56 @@
           </span>
         </div>
         <div class="toolbar-right">
-          <el-button
-            v-if="!isFullscreen"
-            type="primary"
-            circle
-            @click="enterFullscreen"
-            title="全屏"
-          >
-            <el-icon><FullScreen /></el-icon>
-          </el-button>
-          <el-button
-            v-else
-            type="primary"
-            circle
-            @click="exitFullscreen"
-            title="退出全屏"
-          >
-            <el-icon><Close /></el-icon>
-          </el-button>
-          <el-button
-            type="primary"
-            circle
-            @click="handleRefresh"
-            :loading="refreshing"
-            title="刷新数据"
-          >
-            <el-icon><Refresh /></el-icon>
-          </el-button>
-          <el-button
-            v-if="dashboardInfo.settings?.theme === 'dark'"
-            circle
-            @click="goBack"
-            title="返回"
-          >
-            <el-icon><ArrowLeft /></el-icon>
-          </el-button>
+          <!-- 自动预览模式：只显示关闭按钮 -->
+          <template v-if="isAutoPreviewMode">
+            <el-button
+              type="danger"
+              circle
+              @click="closeWindow"
+              title="关闭窗口"
+              class="control-btn close-btn"
+            >
+              <el-icon><Close /></el-icon>
+            </el-button>
+          </template>
+          <!-- 正常模式：显示完整工具栏 -->
+          <template v-else>
+            <el-button
+              v-if="!isFullscreen"
+              type="primary"
+              circle
+              @click="enterFullscreen"
+              title="全屏"
+            >
+              <el-icon><FullScreen /></el-icon>
+            </el-button>
+            <el-button
+              v-else
+              type="primary"
+              circle
+              @click="exitFullscreen"
+              title="退出全屏"
+            >
+              <el-icon><Close /></el-icon>
+            </el-button>
+            <el-button
+              type="primary"
+              circle
+              @click="handleRefresh"
+              :loading="refreshing"
+              title="刷新数据"
+            >
+              <el-icon><Refresh /></el-icon>
+            </el-button>
+            <el-button
+              v-if="dashboardInfo.settings?.theme === 'dark'"
+              circle
+              @click="goBack"
+              title="返回"
+            >
+              <el-icon><ArrowLeft /></el-icon>
+            </el-button>
+          </template>
         </div>
       </div>
     </transition>
@@ -81,13 +146,13 @@
           <div class="widget-header" v-if="widget.title">
             {{ widget.title }}
           </div>
-          <div class="widget-body">
+          <div class="widget-body" :class="`table-style-${widget.styleConfig?.tableStyle || 'default'}`">
             <el-table
               :data="getWidgetData(widget.widgetId)"
               :style="{ width: '100%', height: widget.title ? 'calc(100% - 32px)' : '100%' }"
               size="small"
               border
-              :header-cell-style="tableHeaderStyle"
+              :header-cell-style="getTableHeaderStyle(widget)"
               :cell-style="getCellStyle(widget)"
             >
               <el-table-column
@@ -198,6 +263,7 @@ import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } from
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { getDashboard, getDashboardData, refreshDashboardData } from '../../api/dashboard'
+import { useRAFTimer } from '../../display/composables/useAnimationFrame'
 
 const route = useRoute()
 const router = useRouter()
@@ -210,6 +276,12 @@ const isFullscreen = ref(false)
 const showToolbar = ref(true)
 const lastRefreshTime = ref(null)
 const canvasRef = ref(null)
+
+// 缩放比例
+const canvasScale = ref(1)
+
+// 是否是自动全屏预览模式
+const isAutoPreviewMode = ref(false)
 
 // 大屏信息
 const dashboardInfo = reactive({
@@ -235,19 +307,47 @@ const widgetDataMap = ref({})
 const chartInstances = ref({})
 const chartRefs = ref({})
 
-// 自动刷新定时器
-let refreshTimer = null
+// 自动刷新 - 使用 rAF 定时器
+const refreshInterval = ref(0)
+const {
+  start: startRefreshTimer,
+  stop: stopRefreshTimer,
+  isRunning: isRefreshRunning
+} = useRAFTimer(async () => {
+  await loadDashboardData()
+  await initAllCharts()
+  updateLastRefreshTime()
+}, refreshInterval)
 let toolbarHideTimer = null
 
-// 计算画布样式
-const canvasStyle = computed(() => ({
-  width: `${dashboardInfo.width}px`,
-  height: `${dashboardInfo.height}px`,
-  backgroundColor: dashboardInfo.backgroundColor,
-  backgroundImage: dashboardInfo.backgroundImage ? `url(${dashboardInfo.backgroundImage})` : 'none',
-  backgroundSize: 'cover',
-  backgroundPosition: 'center'
-}))
+// 计算缩放比例（根据屏幕大小自动缩放）
+const calculateScale = () => {
+  // 获取视口尺寸（减去工具栏高度）
+  const viewportWidth = window.innerWidth
+  const viewportHeight = window.innerHeight - 60  // 预留工具栏空间
+
+  // 计算缩放比例，保持宽高比
+  const scaleX = viewportWidth / dashboardInfo.width
+  const scaleY = viewportHeight / dashboardInfo.height
+
+  // 取较小的比例，确保画布完整显示
+  canvasScale.value = Math.min(scaleX, scaleY, 1)  // 最大不超过1，避免放大模糊
+}
+
+// 计算画布样式（支持自动缩放）
+const canvasStyle = computed(() => {
+  const scale = canvasScale.value
+  return {
+    width: `${dashboardInfo.width}px`,
+    height: `${dashboardInfo.height}px`,
+    backgroundColor: dashboardInfo.backgroundColor,
+    backgroundImage: dashboardInfo.backgroundImage ? `url(${dashboardInfo.backgroundImage})` : 'none',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    transform: `translate(-50%, -50%) scale(${scale})`,
+    transformOrigin: 'center center'
+  }
+})
 
 // 表格表头样式
 const tableHeaderStyle = computed(() => ({
@@ -255,6 +355,142 @@ const tableHeaderStyle = computed(() => ({
   color: dashboardInfo.settings?.theme === 'dark' ? '#fff' : '#303133',
   fontWeight: 'bold'
 }))
+
+// 4种表格样式预设（字体大小使用相对单位以支持缩放）
+const tableStylePresets = {
+  // 深蓝色系 - 流程类数据（工序进度等）
+  'deep-blue': {
+    headerBg: 'linear-gradient(135deg, #1a3a5c 0%, #0d2847 100%)',
+    headerColor: '#ffffff',
+    borderColor: '#2563eb',
+    borderWidth: '2px',
+    cellBg: 'rgba(13, 39, 71, 0.8)',
+    cellColor: '#e0e7ff',
+    rowHoverBg: 'rgba(37, 99, 235, 0.15)',
+    shadowColor: 'rgba(37, 99, 235, 0.3)',
+    headerFontSize: '1rem',
+    cellFontSize: '0.875rem'
+  },
+  // 深紫色系 - 结果类数据（质检、订单进度等）
+  'deep-purple': {
+    headerBg: 'linear-gradient(135deg, #4c1d95 0%, #2e1065 100%)',
+    headerColor: '#ffffff',
+    borderColor: '#8b5cf6',
+    borderWidth: '2px',
+    cellBg: 'rgba(46, 16, 101, 0.8)',
+    cellColor: '#ede9fe',
+    rowHoverBg: 'rgba(139, 92, 246, 0.15)',
+    shadowColor: 'rgba(139, 92, 246, 0.3)',
+    headerFontSize: '1rem',
+    cellFontSize: '0.875rem'
+  },
+  // 青色系 - 特殊强调
+  'cyan': {
+    headerBg: 'linear-gradient(135deg, #0e7490 0%, #064e5e 100%)',
+    headerColor: '#ffffff',
+    borderColor: '#06b6d4',
+    borderWidth: '2px',
+    cellBg: 'rgba(6, 78, 94, 0.8)',
+    cellColor: '#cffafe',
+    rowHoverBg: 'rgba(6, 182, 212, 0.15)',
+    shadowColor: 'rgba(6, 182, 212, 0.3)',
+    headerFontSize: '1rem',
+    cellFontSize: '0.875rem'
+  },
+  // 橙色系 - 警告/重点数据
+  'orange': {
+    headerBg: 'linear-gradient(135deg, #c2410c 0%, #7c2d12 100%)',
+    headerColor: '#ffffff',
+    borderColor: '#f97316',
+    borderWidth: '2px',
+    cellBg: 'rgba(124, 45, 18, 0.8)',
+    cellColor: '#fed7aa',
+    rowHoverBg: 'rgba(249, 115, 22, 0.15)',
+    shadowColor: 'rgba(249, 115, 22, 0.3)',
+    headerFontSize: '1rem',
+    cellFontSize: '0.875rem'
+  },
+  // 默认样式
+  'default': {
+    headerBg: dashboardInfo.settings?.theme === 'dark' ? '#1a1a2e' : '#f5f7fa',
+    headerColor: dashboardInfo.settings?.theme === 'dark' ? '#fff' : '#303133',
+    borderColor: dashboardInfo.settings?.theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#ebeef5',
+    borderWidth: '1px',
+    cellBg: 'transparent',
+    cellColor: dashboardInfo.settings?.theme === 'dark' ? '#fff' : '#303133',
+    rowHoverBg: dashboardInfo.settings?.theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#f5f7fa',
+    shadowColor: 'transparent',
+    headerFontSize: '0.875rem',
+    cellFontSize: '0.875rem'
+  }
+}
+
+// 获取表格样式
+const getTableStyle = (widget) => {
+  const styleName = widget.styleConfig?.tableStyle || 'default'
+  const preset = tableStylePresets[styleName] || tableStylePresets.default
+
+  return {
+    border: `${preset.borderWidth} solid ${preset.borderColor}`,
+    borderRadius: '8px',
+    overflow: 'hidden',
+    boxShadow: `0 4px 20px ${preset.shadowColor}`,
+    backgroundColor: preset.cellBg
+  }
+}
+
+// 获取表格表头样式（支持多种风格）
+const getTableHeaderStyle = (widget) => {
+  const styleName = widget.styleConfig?.tableStyle || 'default'
+  const preset = tableStylePresets[styleName] || tableStylePresets.default
+
+  return {
+    background: preset.headerBg,
+    color: preset.headerColor,
+    fontWeight: 'bold',
+    fontSize: preset.headerFontSize,
+    borderBottom: `${preset.borderWidth} solid ${preset.borderColor}`
+  }
+}
+
+// 获取单元格样式（支持多种风格）
+const getCellStyle = (widget) => {
+  const styleName = widget.styleConfig?.tableStyle || 'default'
+  const preset = tableStylePresets[styleName] || tableStylePresets.default
+
+  return ({ row, column, rowIndex, columnIndex }) => {
+    const baseStyle = {
+      backgroundColor: preset.cellBg,
+      color: preset.cellColor,
+      fontSize: preset.cellFontSize
+    }
+
+    // 检查条件样式
+    if (widget.conditionStyles && widget.conditionStyles.length > 0) {
+      const value = row[column.property]
+      for (const condition of widget.conditionStyles) {
+        if (matchCondition(value, condition)) {
+          return {
+            ...baseStyle,
+            backgroundColor: condition.backgroundColor || baseStyle.backgroundColor,
+            color: condition.textColor || baseStyle.color,
+            fontWeight: condition.textColor ? 'bold' : 'normal'
+          }
+        }
+      }
+    }
+
+    // 斑马纹效果（可选）
+    if (widget.styleConfig?.zebra && rowIndex % 2 === 1) {
+      return {
+        ...baseStyle,
+        backgroundColor: `rgba(255, 255, 255, 0.03)`
+      }
+    }
+
+    return baseStyle
+  }
+}
 
 // 获取组件位置样式
 const getWidgetStyle = (widget) => {
@@ -274,7 +510,9 @@ const getWidgetStyle = (widget) => {
 
 // 获取组件数据
 const getWidgetData = (widgetId) => {
-  const data = widgetDataMap.value[widgetId]
+  // 确保使用字符串键查找（对象键会被自动转为字符串）
+  const key = String(widgetId)
+  const data = widgetDataMap.value[key]
   if (!data || !Array.isArray(data)) return []
   return data
 }
@@ -301,26 +539,6 @@ const getTableColumns = (widget) => {
     label: key,
     width: 100
   }))
-}
-
-// 获取单元格样式（支持条件样式）
-const getCellStyle = (widget) => {
-  return ({ row, column }) => {
-    if (!widget.conditionStyles || widget.conditionStyles.length === 0) {
-      return {}
-    }
-
-    const value = row[column.property]
-    for (const condition of widget.conditionStyles) {
-      if (matchCondition(value, condition)) {
-        return {
-          backgroundColor: condition.backgroundColor || 'transparent',
-          color: condition.textColor || 'inherit'
-        }
-      }
-    }
-    return {}
-  }
 }
 
 // 匹配条件
@@ -719,10 +937,33 @@ const loadDashboard = async () => {
 
     // 加载组件
     if (data.widgets && data.widgets.length > 0) {
-      widgets.value = data.widgets.map(w => ({
-        ...w,
-        widgetId: w.widgetId || w.id
-      }))
+      widgets.value = data.widgets.map(w => {
+        // 解析 dataConfig 和 styleConfig JSON 字符串
+        let config = {}
+        if (w.dataConfig) {
+          try {
+            config = typeof w.dataConfig === 'string' ? JSON.parse(w.dataConfig) : w.dataConfig
+          } catch (e) {
+            console.warn('解析 dataConfig 失败:', e)
+          }
+        }
+
+        let styleConfig = {}
+        if (w.styleConfig) {
+          try {
+            styleConfig = typeof w.styleConfig === 'string' ? JSON.parse(w.styleConfig) : w.styleConfig
+          } catch (e) {
+            console.warn('解析 styleConfig 失败:', e)
+          }
+        }
+
+        return {
+          ...w,
+          widgetId: w.widgetId || w.id,
+          config,  // 解析后的数据配置
+          styleConfig  // 解析后的样式配置
+        }
+      })
     }
 
     // 加载数据
@@ -752,9 +993,26 @@ const loadDashboardData = async () => {
   try {
     const res = await getDashboardData(dashboardId)
     if (res.success && res.data) {
-      // 数据格式可能是 { widgetId: data } 的映射
-      if (typeof res.data === 'object') {
-        widgetDataMap.value = res.data
+      // 后端返回格式: { dashboard: {...}, widgetData: { widgetId: { success, data: [...], errorMessage } } }
+      // 需要提取 widgetData 中每个组件的 data 字段
+      const widgetData = res.data.widgetData || res.data
+      if (typeof widgetData === 'object') {
+        const dataMap = {}
+        for (const [widgetId, result] of Object.entries(widgetData)) {
+          // 检查是否是 WidgetDataResult 格式（包含 data 字段）
+          if (result && typeof result === 'object' && 'data' in result) {
+            if (result.success && Array.isArray(result.data)) {
+              dataMap[widgetId] = result.data
+            } else {
+              console.warn(`组件 ${widgetId} 数据获取失败:`, result.errorMessage)
+              dataMap[widgetId] = []
+            }
+          } else if (Array.isArray(result)) {
+            // 兼容直接返回数组的情况
+            dataMap[widgetId] = result
+          }
+        }
+        widgetDataMap.value = dataMap
       }
     }
   } catch (err) {
@@ -789,22 +1047,21 @@ const updateLastRefreshTime = () => {
   lastRefreshTime.value = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`
 }
 
-// 设置自动刷新
+// 设置自动刷新 - 使用 rAF 定时器替代 setInterval
 const setupAutoRefresh = () => {
-  // 清除旧定时器
-  if (refreshTimer) {
-    clearInterval(refreshTimer)
-    refreshTimer = null
-  }
+  // 停止旧定时器
+  stopRefreshTimer()
 
   const interval = dashboardInfo.settings?.refreshInterval
   if (interval && interval > 0) {
-    refreshTimer = setInterval(async () => {
-      await loadDashboardData()
-      await initAllCharts()
-      updateLastRefreshTime()
-    }, interval * 1000)
+    refreshInterval.value = interval
+    startRefreshTimer()
   }
+}
+
+// 停止自动刷新
+const stopAutoRefresh = () => {
+  stopRefreshTimer()
 }
 
 // 进入全屏
@@ -871,8 +1128,9 @@ const handleMouseMove = () => {
   }, 3000)
 }
 
-// 窗口大小变化时重新初始化图表
+// 窗口大小变化时重新初始化图表和计算缩放
 const handleResize = () => {
+  calculateScale()
   initAllCharts()
 }
 
@@ -880,11 +1138,24 @@ const handleResize = () => {
 onMounted(async () => {
   await loadDashboard()
 
+  // 计算缩放比例
+  calculateScale()
+
+  // 检查是否需要自动全屏（从URL参数或 fullscreen=true)
+  const urlParams = new URLSearchParams(window.location.search)
+  if (urlParams.get('fullscreen') === 'true') {
+    // 标记为自动全屏预览模式
+    isAutoPreviewMode.value = true
+    // 自动进入全屏模式
+    nextTick(() => {
+      enterFullscreen()
+    })
+  }
+
   // 监听全屏变化
   document.addEventListener('fullscreenchange', handleFullscreenChange)
   document.addEventListener('webkitfullscreenchange', handleFullscreenChange)
   document.addEventListener('msfullscreenchange', handleFullscreenChange)
-
   // 监听鼠标移动
   document.addEventListener('mousemove', handleMouseMove)
 
@@ -894,9 +1165,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   // 清除定时器
-  if (refreshTimer) {
-    clearInterval(refreshTimer)
-  }
+  stopAutoRefresh()
   if (toolbarHideTimer) {
     clearTimeout(toolbarHideTimer)
   }
@@ -929,13 +1198,28 @@ onUnmounted(() => {
   z-index: 9999;
 }
 
+/* 全屏模式下的控制按钮 */
+.fullscreen-controls {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1001;
+  display: flex;
+  gap: 8px;
+}
+
+.fullscreen-controls .control-btn {
+  backdrop-filter: blur(10px);
+  background: rgba(0, 0, 0, 0.5) !important;
+}
+
 /* 悬浮工具栏 */
 .floating-toolbar {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 56px;
+  height: 50px;
   background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), transparent);
   display: flex;
   align-items: center;
@@ -1000,8 +1284,6 @@ onUnmounted(() => {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
-  transform-origin: center center;
   overflow: hidden;
 }
 
@@ -1160,6 +1442,102 @@ onUnmounted(() => {
   --el-table-border-color: rgba(255, 255, 255, 0.1);
   --el-table-text-color: #fff;
   --el-table-header-text-color: #fff;
+}
+
+/* 表格样式 - 深蓝色系 */
+.table-style-deep-blue :deep(.el-table) {
+  --el-table-bg-color: rgba(13, 40, 71, 0.8);
+  --el-table-tr-bg-color: transparent;
+  --el-table-header-bg-color: linear-gradient(135deg, #1a3a5c 0%, #0d2847 100%);
+  --el-table-row-hover-bg-color: rgba(34, 211, 238, 0.15);
+  --el-table-border-color: #22d3ee;
+  --el-table-text-color: #cffafe;
+  --el-table-header-text-color: #ffffff;
+  border: 2px solid #22d3ee;
+  box-shadow: 0 4px 20px rgba(34, 211, 238, 0.3);
+}
+
+.table-style-deep-blue :deep(.el-table th.el-table__cell) {
+  background: linear-gradient(135deg, #1a3a5c 0%, #0d2847 100%) !important;
+  font-weight: bold;
+  border-bottom: 2px solid #22d3ee !important;
+}
+
+.table-style-deep-blue :deep(.el-table td.el-table__cell) {
+  background-color: rgba(13, 40, 71, 0.8);
+  color: #cffafe;
+}
+
+/* 表格样式 - 深紫色系 */
+.table-style-deep-purple :deep(.el-table) {
+  --el-table-bg-color: rgba(88, 28, 135, 0.8);
+  --el-table-tr-bg-color: transparent;
+  --el-table-header-bg-color: linear-gradient(135deg, #6b21a8 0%, #4c1d95 100%);
+  --el-table-row-hover-bg-color: rgba(139, 92, 246, 0.15);
+  --el-table-border-color: #a855f7;
+  --el-table-text-color: #f3e8ff;
+  --el-table-header-text-color: #ffffff;
+  border: 2px solid #a855f7;
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);
+}
+
+.table-style-deep-purple :deep(.el-table th.el-table__cell) {
+  background: linear-gradient(135deg, #6b21a8 0%, #4c1d95 100%) !important;
+  font-weight: bold;
+  border-bottom: 2px solid #a855f7 !important;
+}
+
+.table-style-deep-purple :deep(.el-table td.el-table__cell) {
+  background-color: rgba(88, 28, 135, 0.8);
+  color: #f3e8ff;
+}
+
+/* 表格样式 - 青色系 */
+.table-style-cyan :deep(.el-table) {
+  --el-table-bg-color: rgba(6, 78, 94, 0.8);
+  --el-table-tr-bg-color: transparent;
+  --el-table-header-bg-color: linear-gradient(135deg, #0e7490 0%, #064e5e 100%);
+  --el-table-row-hover-bg-color: rgba(6, 182, 212, 0.15);
+  --el-table-border-color: #06b6d4;
+  --el-table-text-color: #cffafe;
+  --el-table-header-text-color: #ffffff;
+  border: 2px solid #06b6d4;
+  box-shadow: 0 4px 20px rgba(6, 182, 212, 0.3);
+}
+
+.table-style-cyan :deep(.el-table th.el-table__cell) {
+  background: linear-gradient(135deg, #0e7490 0%, #064e5e 100%) !important;
+  font-weight: bold;
+  border-bottom: 2px solid #06b6d4 !important;
+}
+
+.table-style-cyan :deep(.el-table td.el-table__cell) {
+  background-color: rgba(6, 78, 94, 0.8);
+  color: #cffafe;
+}
+
+/* 表格样式 - 橙色系 */
+.table-style-orange :deep(.el-table) {
+  --el-table-bg-color: rgba(124, 45, 18, 0.8);
+  --el-table-tr-bg-color: transparent;
+  --el-table-header-bg-color: linear-gradient(135deg, #c2410c 0%, #7c2d12 100%);
+  --el-table-row-hover-bg-color: rgba(249, 115, 22, 0.15);
+  --el-table-border-color: #f97316;
+  --el-table-text-color: #fed7aa;
+  --el-table-header-text-color: #ffffff;
+  border: 2px solid #f97316;
+  box-shadow: 0 4px 20px rgba(249, 115, 22, 0.3);
+}
+
+.table-style-orange :deep(.el-table th.el-table__cell) {
+  background: linear-gradient(135deg, #c2410c 0%, #7c2d12 100%) !important;
+  font-weight: bold;
+  border-bottom: 2px solid #f97316 !important;
+}
+
+.table-style-orange :deep(.el-table td.el-table__cell) {
+  background-color: rgba(124, 45, 18, 0.8);
+  color: #fed7aa;
 }
 
 :deep(.el-progress__text) {

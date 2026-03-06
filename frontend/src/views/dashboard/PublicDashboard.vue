@@ -192,11 +192,13 @@
  * - 通过 publicId 访问大屏
  * - 自动进入全屏模式
  * - 根据 RefreshInterval 配置自动刷新数据
+ * - 使用 requestAnimationFrame 替代 setInterval，实现与浏览器刷新率同步
  */
 import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { getPublicDashboardByUrl, getPublicDashboardDataByUrl } from '../../api/dashboard'
+import { useRAFTimer } from '../../display/composables/useAnimationFrame'
 
 const route = useRoute()
 
@@ -234,8 +236,16 @@ const widgetDataMap = ref({})
 const chartInstances = ref({})
 const chartRefs = ref({})
 
-// 自动刷新定时器
-let refreshTimer = null
+// 自动刷新 - 使用 rAF 定时器
+const refreshInterval = ref(0)
+const { start: startRefreshTimer, stop: stopRefreshTimer } = useRAFTimer(
+  async () => {
+    await loadDashboardData()
+    await initAllCharts()
+    updateLastRefreshTime()
+  },
+  refreshInterval
+)
 let toolbarHideTimer = null
 
 // 计算缩放比例（根据屏幕大小自动缩放)
@@ -947,22 +957,21 @@ const updateLastRefreshTime = () => {
   lastRefreshTime.value = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`
 }
 
-// 设置自动刷新
+// 设置自动刷新 - 使用 rAF 定时器替代 setInterval
 const setupAutoRefresh = () => {
-  // 清除旧定时器
-  if (refreshTimer) {
-    clearInterval(refreshTimer)
-    refreshTimer = null
-  }
+  // 停止旧定时器
+  stopAutoRefresh()
 
   const interval = dashboardInfo.settings?.refreshInterval
   if (interval && interval > 0) {
-    refreshTimer = setInterval(async () => {
-      await loadDashboardData()
-      await initAllCharts()
-      updateLastRefreshTime()
-    }, interval * 1000)
+    refreshInterval.value = interval
+    startRefreshTimer()
   }
+}
+
+// 停止自动刷新
+const stopAutoRefresh = () => {
+  stopRefreshTimer()
 }
 
 // 进入全屏
@@ -1049,9 +1058,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   // 清除定时器
-  if (refreshTimer) {
-    clearInterval(refreshTimer)
-  }
+  stopAutoRefresh()
   if (toolbarHideTimer) {
     clearTimeout(toolbarHideTimer)
   }
@@ -1090,7 +1097,7 @@ onUnmounted(() => {
   top: 0;
   left: 0;
   right: 0;
-  height: 56px;
+  height: 50px;
   background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), transparent);
   display: flex;
   align-items: center;

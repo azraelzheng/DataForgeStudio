@@ -1,10 +1,12 @@
 /**
  * DataBinder - 数据绑定系统
  * 负责管理数据源和组件之间的绑定关系，支持自动刷新
+ * 使用 requestAnimationFrame 替代 setInterval，实现与浏览器刷新率同步
  * @module dashboard/core/DataBinder
  */
 
 import { ref, type Ref, readonly } from 'vue'
+import { RAFTimerController } from '../../display/composables/useAnimationFrame'
 import type {
   DataSourceConfig,
   DataBindingConfig,
@@ -63,8 +65,9 @@ interface Binding {
 export class DataBinder {
   private sources: Map<string, DataSource> = new Map()
   private bindings: Map<string, Binding> = new Map()
-  private refreshTimers: Map<string, ReturnType<typeof setInterval>> = new Map()
-  private globalRefreshTimer: ReturnType<typeof setInterval> | null = null
+  // 使用 rAF 定时器替代 setInterval
+  private refreshTimers: Map<string, RAFTimerController> = new Map()
+  private globalRefreshTimer: RAFTimerController | null = null
 
   /**
    * 注册数据源
@@ -241,9 +244,11 @@ export class DataBinder {
 
     if (interval <= 0) return
 
-    this.globalRefreshTimer = setInterval(() => {
+    // 使用 rAF 定时器替代 setInterval
+    this.globalRefreshTimer = new RAFTimerController(() => {
       this.refreshAll()
-    }, interval * 1000)
+    }, interval)
+    this.globalRefreshTimer.start()
   }
 
   /**
@@ -251,7 +256,7 @@ export class DataBinder {
    */
   stopAutoRefresh(): void {
     if (this.globalRefreshTimer) {
-      clearInterval(this.globalRefreshTimer)
+      this.globalRefreshTimer.stop()
       this.globalRefreshTimer = null
     }
   }
@@ -264,10 +269,11 @@ export class DataBinder {
 
     if (interval <= 0) return
 
-    const timer = setInterval(() => {
+    // 使用 rAF 定时器替代 setInterval
+    const timer = new RAFTimerController(() => {
       this.refresh(widgetId)
-    }, interval * 1000)
-
+    }, interval)
+    timer.start()
     this.refreshTimers.set(widgetId, timer)
   }
 
@@ -277,7 +283,7 @@ export class DataBinder {
   private stopWidgetRefresh(widgetId: string): void {
     const timer = this.refreshTimers.get(widgetId)
     if (timer) {
-      clearInterval(timer)
+      timer.stop()
       this.refreshTimers.delete(widgetId)
     }
   }
