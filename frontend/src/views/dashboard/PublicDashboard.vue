@@ -233,9 +233,9 @@ const viewportWidth = ref(window.innerWidth)
 // 响应式字体配置
 const viewingDistance = ref<ViewingDistance>('medium')
 
-// 使用响应式字体 Hook
+// 使用响应式字体 Hook（传递 ref 以支持响应式更新）
 const { fontSize, getFontStyle } = useResponsiveFont(
-  { distance: viewingDistance.value, baseFontSize: 16, designWidth: 1920 },
+  { distance: viewingDistance, baseFontSize: 16, designWidth: 1920 },
   viewportWidth
 )
 

@@ -4,13 +4,13 @@
  * @module display/composables/useResponsiveFont
  */
 
-import { computed, ref, watch, type Ref } from 'vue'
+import { computed, ref, watch, isRef, type Ref } from 'vue'
 
 export type ViewingDistance = 'near' | 'medium' | 'far'
 
 export interface ResponsiveFontOptions {
   /** 观看距离 */
-  distance?: ViewingDistance
+  distance?: ViewingDistance | Ref<ViewingDistance>
   /** 基准字号（近距时的字号） */
   baseFontSize?: number
   /** 设计稿宽度 */
@@ -38,6 +38,9 @@ export function useResponsiveFont(
     designWidth = 1920
   } = options
 
+  // 支持响应式 distance
+  const distanceRef = isRef(distance) ? distance : ref<ViewingDistance>(distance)
+
   // 距离对应的字号缩放因子
   const distanceScale: Record<ViewingDistance, number> = {
     near: 1,      // 基准
@@ -48,12 +51,14 @@ export function useResponsiveFont(
   // 计算视口缩放比例
   const viewportScale = computed(() => {
     if (!viewportWidth?.value) return 1
-    return Math.min(viewportWidth.value / designWidth, 1)
+    const width = designWidth || 1920
+    if (width <= 0) return 1 // 防止除零
+    return Math.min(viewportWidth.value / width, 1)
   })
 
-  // 计算最终字号
+  // 计算最终字号（响应式 distance）
   const scale = computed(() => {
-    return distanceScale[distance] * viewportScale.value
+    return distanceScale[distanceRef.value] * viewportScale.value
   })
 
   // 字体大小预设
