@@ -1,0 +1,51 @@
+// =============================================================================
+// 语义化色彩系统 - Semantic Color System
+// =============================================================================
+// 遵循大屏设计规范：色相被视为功能语言而非装饰
+// 全屏色相不超过6-8种，建立语义化色彩字典
+// =============================================================================
+
+// 状态语义色
+$color-success: #22c55e;    // 健康/达成/正常
+$color-warning: #f59e0b;    // 待观察/风险/注意
+$color-danger: #ef4444;     // 警告/异常/错误
+$color-info: #3b82f6;       // 信息/中性
+
+// 基础语义色
+$color-primary: #3b82f6;    // 主色/品牌色
+$color-secondary: #6b7280;  // 次要/辅助色
+
+// 状态色映射
+$semantic-colors: (
+  'success': $color-success,
+  'warning': $color-warning,
+  'danger': $color-danger,
+  'info': $color-info,
+  'primary': $color-primary,
+  'secondary': $color-secondary
+);
+
+// =============================================================================
+// 辅助函数
+// =============================================================================
+
+/// 获取语义化颜色
+/// @param {String} $name - 颜色名称 (success, warning, danger, info, primary, secondary)
+/// @return {Color} 对应的颜色值
+@function semantic-color($name) {
+  @return map-get($semantic-colors, $name);
+}
+
+// =============================================================================
+// CSS 变量导出（用于 JS/TS 访问）
+// =============================================================================
+
+:root {
+  // 语义色变量
+  --color-success: #{$color-success};
+  --color-warning: #{$color-warning};
+  --color-danger: #{$color-danger};
+  --color-info: #{$color-info};
+  --color-primary: #{$color-primary};
+  --color-secondary: #{$color-secondary};
+}

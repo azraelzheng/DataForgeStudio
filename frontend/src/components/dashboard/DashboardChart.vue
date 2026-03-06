@@ -32,6 +32,7 @@ import {
 } from 'echarts/components'
 import { Loading } from '@element-plus/icons-vue'
 import type { ChartType, ChartConfig, ChartSeriesConfig } from './types'
+import { chartColors } from '@/styles/colors'
 
 // 注册 ECharts 组件
 use([
@@ -206,21 +207,11 @@ const computedTheme = computed(() => {
 })
 
 // ============================================================================
-// 颜色配置
+// 颜色配置（使用统一色彩字典）
 // ============================================================================
 
-const defaultColorScheme = [
-  '#3b82f6', // blue
-  '#22c55e', // green
-  '#f59e0b', // amber
-  '#ef4444', // red
-  '#8b5cf6', // purple
-  '#06b6d4', // cyan
-  '#f97316', // orange
-  '#ec4899', // pink
-  '#14b8a6', // teal
-  '#6366f1'  // indigo
-]
+// 使用统一的图表色板（6色，符合大屏设计规范）
+const defaultColorScheme = chartColors.primary
 
 // ============================================================================
 // 图表配置生成
