@@ -1,0 +1,5 @@
+export { setupNaive } from '@/daping/plugins/naive'
+export { setupDirectives } from '@/daping/plugins/directives'
+export { setupCustomComponents } from '@/daping/plugins/customComponents'
+export { icon } from '@/daping/plugins/icon'
+export { initFunction } from '@/daping/plugins/initFunction'

@@ -138,6 +138,56 @@ namespace DataForgeStudio.Data.Migrations
                     b.ToTable("BackupSchedules");
                 });
 
+            modelBuilder.Entity("DataForgeStudio.Domain.Entities.DapingProject", b =>
+                {
+                    b.Property<int>("ProjectId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ProjectId"));
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("CreatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("PublicUrl")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("State")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
+
+                    b.Property<DateTime?>("UpdatedTime")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("ProjectId");
+
+                    b.HasIndex("CreatedBy");
+
+                    b.HasIndex("CreatedTime");
+
+                    b.HasIndex("PublicUrl")
+                        .IsUnique()
+                        .HasFilter("[PublicUrl] IS NOT NULL");
+
+                    b.HasIndex("State");
+
+                    b.ToTable("DapingProjects");
+                });
+
             modelBuilder.Entity("DataForgeStudio.Domain.Entities.Dashboard", b =>
                 {
                     b.Property<int>("DashboardId")
@@ -1161,6 +1211,16 @@ namespace DataForgeStudio.Data.Migrations
                     b.HasIndex("WidgetId");
 
                     b.ToTable("WidgetRules");
+                });
+
+            modelBuilder.Entity("DataForgeStudio.Domain.Entities.DapingProject", b =>
+                {
+                    b.HasOne("DataForgeStudio.Domain.Entities.User", "Creator")
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Creator");
                 });
 
             modelBuilder.Entity("DataForgeStudio.Domain.Entities.Dashboard", b =>

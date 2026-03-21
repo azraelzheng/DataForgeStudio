@@ -10,6 +10,21 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
   },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        additionalData: `@import "@/daping/styles/common/style.scss";`
+      }
+    }
+  },
+  optimizeDeps: {
+    include: [
+      'naive-ui',
+      'echarts',
+      'vue-echarts',
+      '@vueuse/core'
+    ]
+  },
   server: {
     port: 9999,
     host: '127.0.0.1',

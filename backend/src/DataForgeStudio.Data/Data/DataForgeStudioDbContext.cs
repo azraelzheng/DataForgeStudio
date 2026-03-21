@@ -43,6 +43,9 @@ public class DataForgeStudioDbContext : DbContext
     public DbSet<DashboardWidget> DashboardWidgets { get; set; }
     public DbSet<WidgetRule> WidgetRules { get; set; }
 
+    // 高级大屏项目 (新增)
+    public DbSet<DapingProject> DapingProjects { get; set; }
+
     #endregion
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -291,6 +294,22 @@ public class DataForgeStudioDbContext : DbContext
                 .WithMany(w => w.Rules)
                 .HasForeignKey(e => e.WidgetId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // 配置 DapingProject
+        modelBuilder.Entity<DapingProject>(entity =>
+        {
+            entity.HasIndex(e => e.PublicUrl).IsUnique().HasFilter("[PublicUrl] IS NOT NULL");
+            entity.HasIndex(e => e.CreatedTime);
+            entity.HasIndex(e => e.State);
+
+            entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.State).HasDefaultValue(1);
+
+            entity.HasOne(e => e.Creator)
+                .WithMany()
+                .HasForeignKey(e => e.CreatedBy)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         // 全局配置: 禁止级联删除
