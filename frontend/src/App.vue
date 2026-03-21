@@ -262,11 +262,9 @@ const isAuthenticated = computed(() => {
 
 // 检测是否为全屏预览模式（隐藏侧边栏和顶部栏）
 const isFullscreenPreviewMode = computed(() => {
-  // 检查当前路由是否是 DashboardView
-  if (route.name === 'DashboardView') {
-    // 检查 URL 参数是否包含 fullscreen=true
-    const urlParams = new URLSearchParams(window.location.search)
-    return urlParams.get('fullscreen') === 'true'
+  // 大屏预览页面始终全屏
+  if (route.name === 'DashboardPreview' || route.name === 'PublicDashboard') {
+    return true
   }
   return false
 })
