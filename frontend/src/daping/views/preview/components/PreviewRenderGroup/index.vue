@@ -37,10 +37,10 @@
 
 <script setup lang="ts">
 import { PropType } from 'vue'
-import { CreateComponentGroupType } from '@/packages/index.d'
-import { animationsClass, getFilterStyle, getTransformStyle, getBlendModeStyle } from '@/utils'
+import { CreateComponentGroupType } from '@/daping/packages/index.d'
+import { animationsClass, getFilterStyle, getTransformStyle, getBlendModeStyle } from '@/daping/utils'
 import { getSizeStyle, getComponentAttrStyle, getStatusStyle, getPreviewConfigStyle } from '../../utils'
-import { useLifeHandler } from '@/hooks'
+import { useLifeHandler } from '@/daping/hooks'
 
 const props = defineProps({
   groupData: {

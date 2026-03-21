@@ -46,12 +46,12 @@
 
 <script setup lang="ts">
 import { PropType, computed, onMounted } from 'vue'
-import { useChartDataPondFetch } from '@/hooks'
+import { useChartDataPondFetch } from '@/daping/hooks'
 import { ChartEditStorageType } from '../../index.d'
 import { PreviewRenderGroup } from '../PreviewRenderGroup/index'
-import { CreateComponentGroupType } from '@/packages/index.d'
-import { chartColors } from '@/settings/chartThemes/index'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
+import { CreateComponentGroupType } from '@/daping/packages/index.d'
+import { chartColors } from '@/daping/settings/chartThemes/index'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
 import {
   animationsClass,
   getFilterStyle,
@@ -64,9 +64,9 @@ import {
   getAnimationsCurveStyle,
   getAnimationsPlayDelayStyle,
   colorCustomMerge
-} from '@/utils'
+} from '@/daping/utils'
 import { getSizeStyle, getComponentAttrStyle, getStatusStyle,getPreviewConfigStyle } from '../../utils'
-import { useLifeHandler } from '@/hooks'
+import { useLifeHandler } from '@/daping/hooks'
 type ChartEditStoreType = typeof useChartEditStore
 // 初始化数据池
 const { initDataPond, clearMittDataPondMap } = useChartDataPondFetch()

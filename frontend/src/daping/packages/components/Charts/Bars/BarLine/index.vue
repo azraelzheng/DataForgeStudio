@@ -15,16 +15,16 @@
 import { ref, computed, watch, PropType, nextTick } from 'vue'
 import VChart from 'vue-echarts'
 import { isObject, cloneDeep } from 'lodash'
-import { useCanvasInitOptions } from '@/hooks/useCanvasInitOptions.hook'
+import { useCanvasInitOptions } from '@/daping/hooks/useCanvasInitOptions.hook'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 //引入柱状图 折线图
 import { BarChart, LineChart } from 'echarts/charts'
 import config, { includes, barSeriesItem, lineSeriesItem } from './config'
-import { mergeTheme } from '@/packages/public/chart'
-import { useChartDataFetch } from '@/hooks'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
-import { isPreview } from '@/utils'
+import { mergeTheme } from '@/daping/packages/public/chart'
+import { useChartDataFetch } from '@/daping/hooks'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
+import { isPreview } from '@/daping/utils'
 import { DatasetComponent, GridComponent, TooltipComponent, LegendComponent } from 'echarts/components'
 
 const props = defineProps({

@@ -25,8 +25,8 @@
 
 <script setup lang="ts">
 import { ProjectLayoutSider } from './layout/components/ProjectLayoutSider'
-import { LayoutHeaderPro } from '@/layout/components/LayoutHeaderPro'
-import { LayoutTransitionMain } from '@/layout/components/LayoutTransitionMain/index'
+import { LayoutHeaderPro } from '@/daping/layout/components/LayoutHeaderPro'
+import { LayoutTransitionMain } from '@/daping/layout/components/LayoutTransitionMain/index'
 </script>
 
 <style lang="scss" scoped>

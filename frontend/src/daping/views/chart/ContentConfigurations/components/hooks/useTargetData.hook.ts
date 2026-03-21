@@ -1,6 +1,6 @@
 import { computed, Ref } from 'vue'
-import { CreateComponentType, CreateComponentGroupType } from '@/packages/index.d'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
+import { CreateComponentType, CreateComponentGroupType } from '@/daping/packages/index.d'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
 
 // 获取当前对象数据
 export const useTargetData = () => {

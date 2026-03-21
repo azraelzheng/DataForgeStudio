@@ -15,9 +15,9 @@
 <script setup lang="ts">
 import { toRefs, computed } from 'vue'
 import { useSizeStyle } from '../../hooks/useStyle.hook'
-import { canvasModelIndex } from '@/settings/designSetting'
+import { canvasModelIndex } from '@/daping/settings/designSetting'
 import { mousedownBoxSelect } from '../../hooks/useDrag.hook'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
 import { EditAlignLine } from '../EditAlignLine'
 import { EditWatermark } from '../EditWatermark'
 import { EditSelect } from '../EditSelect'

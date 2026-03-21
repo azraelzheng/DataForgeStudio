@@ -1,10 +1,10 @@
 import { ref, nextTick, toRaw } from 'vue'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
-import { CreateComponentType, CreateComponentGroupType } from '@/packages/index.d'
-import { renderIcon, loadingError } from '@/utils'
-import { icon } from '@/plugins'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
+import { CreateComponentType, CreateComponentGroupType } from '@/daping/packages/index.d'
+import { renderIcon, loadingError } from '@/daping/utils'
+import { icon } from '@/daping/plugins'
 import { MenuOptionsItemType } from './useContextMenu.hook.d'
-import { MenuEnum } from '@/enums/editPageEnum'
+import { MenuEnum } from '@/daping/enums/editPageEnum'
 import cloneDeep from 'lodash/cloneDeep'
 
 const {

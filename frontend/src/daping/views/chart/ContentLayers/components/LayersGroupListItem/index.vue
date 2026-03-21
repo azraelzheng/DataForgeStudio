@@ -45,17 +45,17 @@
 
 <script setup lang="ts">
 import { ref, computed, PropType } from 'vue'
-import { MouseEventButton, WinKeyboard, MacKeyboard } from '@/enums/editPageEnum'
-import { MenuEnum } from '@/enums/editPageEnum'
-import { useDesignStore } from '@/store/modules/designStore/designStore'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
-import { useContextMenu, divider } from '@/views/chart/hooks/useContextMenu.hook'
-import { MenuOptionsItemType } from '@/views/chart/hooks/useContextMenu.hook.d'
-import { LayerModeEnum } from '@/store/modules/chartLayoutStore/chartLayoutStore.d'
-import { CreateComponentType, CreateComponentGroupType } from '@/packages/index.d'
+import { MouseEventButton, WinKeyboard, MacKeyboard } from '@/daping/enums/editPageEnum'
+import { MenuEnum } from '@/daping/enums/editPageEnum'
+import { useDesignStore } from '@/daping/store/modules/designStore/designStore'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
+import { useContextMenu, divider } from '@/daping/views/chart/hooks/useContextMenu.hook'
+import { MenuOptionsItemType } from '@/daping/views/chart/hooks/useContextMenu.hook.d'
+import { LayerModeEnum } from '@/daping/store/modules/chartLayoutStore/chartLayoutStore.d'
+import { CreateComponentType, CreateComponentGroupType } from '@/daping/packages/index.d'
 import { LayersListItem } from '../LayersListItem'
 import { LayersStatus } from '../LayersStatus/index'
-import { icon } from '@/plugins'
+import { icon } from '@/daping/plugins'
 
 const props = defineProps({
   componentGroupData: {

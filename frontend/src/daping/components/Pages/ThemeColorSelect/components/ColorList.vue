@@ -54,8 +54,8 @@
 
 <script lang="ts" setup>
 import { PropType } from 'vue'
-import { AppThemeColorType } from '@/store/modules/designStore/designStore.d'
-import designColorRecommend from '@/settings/designColorRecommend.json'
+import { AppThemeColorType } from '@/daping/store/modules/designStore/designStore.d'
+import designColorRecommend from '@/daping/settings/designColorRecommend.json'
 
 const emits = defineEmits(['colorSelectHandle'])
 defineProps({

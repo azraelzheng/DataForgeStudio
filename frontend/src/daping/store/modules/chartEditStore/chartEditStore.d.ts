@@ -1,6 +1,6 @@
-import { CreateComponentType, CreateComponentGroupType, FilterEnum } from '@/packages/index.d'
-import { HistoryActionTypeEnum } from '@/store/modules/chartHistoryStore/chartHistoryStore.d'
-import { SyncEnum } from '@/enums/editPageEnum'
+import { CreateComponentType, CreateComponentGroupType, FilterEnum } from '@/daping/packages/index.d'
+import { HistoryActionTypeEnum } from '@/daping/store/modules/chartHistoryStore/chartHistoryStore.d'
+import { SyncEnum } from '@/daping/enums/editPageEnum'
 import {
   RequestHttpEnum,
   RequestContentTypeEnum,
@@ -9,9 +9,9 @@ import {
   RequestParams,
   RequestBodyEnum,
   RequestParamsObjType
-} from '@/enums/httpEnum'
-import { PreviewScaleEnum } from '@/enums/styleEnum'
-import type { ChartColorsNameType, CustomColorsType, GlobalThemeJsonType } from '@/settings/chartThemes/index'
+} from '@/daping/enums/httpEnum'
+import { PreviewScaleEnum } from '@/daping/enums/styleEnum'
+import type { ChartColorsNameType, CustomColorsType, GlobalThemeJsonType } from '@/daping/settings/chartThemes/index'
 
 // 项目数据枚举
 export enum ProjectInfoEnum {

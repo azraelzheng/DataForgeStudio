@@ -28,10 +28,10 @@
 </template>
 <script setup lang="ts">
 import { PropType, toRefs, shallowReactive, watch } from 'vue'
-import { CreateComponentType } from '@/packages/index.d'
-import { requireErrorImg } from '@/utils'
-import { useChartDataFetch } from '@/hooks'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
+import { CreateComponentType } from '@/daping/packages/index.d'
+import { requireErrorImg } from '@/daping/utils'
+import { useChartDataFetch } from '@/daping/hooks'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
 import { option as configOption } from './config'
 
 const props = defineProps({

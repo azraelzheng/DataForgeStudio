@@ -1,8 +1,8 @@
-import { PublicConfigClass } from '@/packages/public'
-import { CreateComponentType } from '@/packages/index.d'
+import { PublicConfigClass } from '@/daping/packages/public'
+import { CreateComponentType } from '@/daping/packages/index.d'
 import { Decorates03Config } from './index'
 import cloneDeep from 'lodash/cloneDeep'
-import { chartInitConfig } from '@/settings/designSetting'
+import { chartInitConfig } from '@/daping/settings/designSetting'
 
 export const option = {
   dataset: '我是标题',

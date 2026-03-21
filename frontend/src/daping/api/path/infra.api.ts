@@ -1,6 +1,6 @@
-import { http } from '@/api/http'
-import { httpErrorHandle } from '@/utils'
-import { RequestHttpEnum, ModuleTypeEnum, ContentTypeEnum } from '@/enums/httpEnum'
+import { http } from '@/daping/api/http'
+import { httpErrorHandle } from '@/daping/utils'
+import { RequestHttpEnum, ModuleTypeEnum, ContentTypeEnum } from '@/daping/enums/httpEnum'
 
 // * 上传文件
 export const uploadFile = async (data: object) => {

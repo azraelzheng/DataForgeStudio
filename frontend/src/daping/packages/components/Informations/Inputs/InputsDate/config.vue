@@ -64,8 +64,8 @@
 
 <script lang="ts" setup>
 import { PropType, computed } from 'vue'
-import { icon } from '@/plugins'
-import { CollapseItem, SettingItemBox, SettingItem } from '@/components/Pages/ChartItemSetting'
+import { icon } from '@/daping/plugins'
+import { CollapseItem, SettingItemBox, SettingItem } from '@/daping/components/Pages/ChartItemSetting'
 import { option } from './config'
 import { ComponentInteractEventEnum, DefaultTypeEnum, DifferUnitEnum, DifferUnitObject } from './interact'
 import dayjs from "dayjs";

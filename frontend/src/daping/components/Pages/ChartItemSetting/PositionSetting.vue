@@ -38,11 +38,11 @@
 
 <script setup lang="ts">
 import { PropType } from 'vue'
-import { PickCreateComponentType } from '@/packages/index.d'
-import { SettingItemBox } from '@/components/Pages/ChartItemSetting'
-import { renderIcon } from '@/utils'
-import { icon } from '@/plugins/index'
-import { EditCanvasConfigType } from '@/store/modules/chartEditStore/chartEditStore.d'
+import { PickCreateComponentType } from '@/daping/packages/index.d'
+import { SettingItemBox } from '@/daping/components/Pages/ChartItemSetting'
+import { renderIcon } from '@/daping/utils'
+import { icon } from '@/daping/plugins/index'
+import { EditCanvasConfigType } from '@/daping/store/modules/chartEditStore/chartEditStore.d'
 
 const {
   AlignHorizontalLeftIcon,

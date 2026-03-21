@@ -52,9 +52,9 @@
 </template>
 <script setup lang="ts">
 import {Component ,PropType, toRefs, shallowReactive, watch, computed, ref, onMounted, nextTick} from 'vue'
-import { CreateComponentType } from '@/packages/index.d'
-import { useChartDataFetch } from '@/hooks'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
+import { CreateComponentType } from '@/daping/packages/index.d'
+import { useChartDataFetch } from '@/daping/hooks'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
 import { option as configOption } from './config'
 import * as Icons from '@vicons/ionicons5'
 

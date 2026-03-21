@@ -12,12 +12,12 @@
 
 <script setup lang="ts">
 import { reactive, computed, watch } from 'vue'
-import { useDesignStore } from '@/store/modules/designStore/designStore'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
-import { EditCanvasTypeEnum } from '@/store/modules/chartEditStore/chartEditStore.d'
-import { useSettingStore } from '@/store/modules/settingStore/settingStore'
-import { CreateComponentType, CreateComponentGroupType } from '@/packages/index.d'
-import { setComponentPosition } from '@/utils'
+import { useDesignStore } from '@/daping/store/modules/designStore/designStore'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
+import { EditCanvasTypeEnum } from '@/daping/store/modules/chartEditStore/chartEditStore.d'
+import { useSettingStore } from '@/daping/store/modules/settingStore/settingStore'
+import { CreateComponentType, CreateComponentGroupType } from '@/daping/packages/index.d'
+import { setComponentPosition } from '@/daping/utils'
 import throttle from 'lodash/throttle'
 import cloneDeep from 'lodash/cloneDeep'
 // 全局颜色

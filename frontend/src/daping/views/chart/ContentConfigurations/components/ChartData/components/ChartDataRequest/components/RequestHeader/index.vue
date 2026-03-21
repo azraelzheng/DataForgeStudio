@@ -90,11 +90,11 @@
 
 <script setup lang="ts">
 import { ref, toRefs, PropType } from 'vue'
-import { MonacoEditor } from '@/components/Pages/MonacoEditor'
+import { MonacoEditor } from '@/daping/components/Pages/MonacoEditor'
 import { RequestHeaderTable } from '../RequestHeaderTable/index'
-import { SettingItemBox, SettingItem } from '@/components/Pages/ChartItemSetting'
-import { useTargetData } from '@/views/chart/ContentConfigurations/components/hooks/useTargetData.hook'
-import { RequestConfigType } from '@/store/modules/chartEditStore/chartEditStore.d'
+import { SettingItemBox, SettingItem } from '@/daping/components/Pages/ChartItemSetting'
+import { useTargetData } from '@/daping/views/chart/ContentConfigurations/components/hooks/useTargetData.hook'
+import { RequestConfigType } from '@/daping/store/modules/chartEditStore/chartEditStore.d'
 import {
   RequestParamsTypeEnum,
   RequestContentTypeEnum,
@@ -102,7 +102,7 @@ import {
   RequestBodyEnumList,
   RequestBodyEnum,
   RequestHttpEnum
-} from '@/enums/httpEnum'
+} from '@/daping/enums/httpEnum'
 
 const props = defineProps({
   targetDataRequest: Object as PropType<RequestConfigType>

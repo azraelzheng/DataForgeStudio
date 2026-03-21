@@ -53,9 +53,9 @@
   </div>
 </template>
 <script setup lang="ts">
-import { openDoc, openGiteeSourceCode } from '@/utils'
+import { openDoc, openGiteeSourceCode } from '@/daping/utils'
 
-import { icon } from '@/plugins'
+import { icon } from '@/daping/plugins'
 const { DocumentTextIcon, CodeSlashIcon } = icon.ionicons5
 
 const props = defineProps({

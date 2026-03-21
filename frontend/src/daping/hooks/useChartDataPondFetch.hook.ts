@@ -1,9 +1,9 @@
 import { toRaw, watch, computed, ComputedRef } from 'vue'
-import { customizeHttp } from '@/api/http'
-import { CreateComponentType } from '@/packages/index.d'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
-import { RequestGlobalConfigType, RequestDataPondItemType } from '@/store/modules/chartEditStore/chartEditStore.d'
-import { newFunctionHandle, intervalUnitHandle } from '@/utils'
+import { customizeHttp } from '@/daping/api/http'
+import { CreateComponentType } from '@/daping/packages/index.d'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
+import { RequestGlobalConfigType, RequestDataPondItemType } from '@/daping/store/modules/chartEditStore/chartEditStore.d'
+import { newFunctionHandle, intervalUnitHandle } from '@/daping/utils'
 
 // 获取类型
 type ChartEditStoreType = typeof useChartEditStore

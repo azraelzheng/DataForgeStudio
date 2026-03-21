@@ -1,6 +1,6 @@
 import type { App } from 'vue'
-import { GoSkeleton } from '@/components/GoSkeleton'
-import { GoLoading } from '@/components/GoLoading'
+import { GoSkeleton } from '@/daping/components/GoSkeleton'
+import { GoLoading } from '@/daping/components/GoLoading'
 import { SketchRule } from 'vue3-sketch-ruler'
 
 /**

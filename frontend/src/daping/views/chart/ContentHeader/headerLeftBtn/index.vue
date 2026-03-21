@@ -53,17 +53,17 @@
 
 <script setup lang="ts">
 import { toRefs, ref, Ref, reactive, computed } from 'vue'
-import { renderIcon, goDialog, goHome } from '@/utils'
-import { icon } from '@/plugins'
+import { renderIcon, goDialog, goHome } from '@/daping/utils'
+import { icon } from '@/daping/plugins'
 import { useRemoveKeyboard } from '../../hooks/useKeyboard.hook'
 import { useSync } from '../../hooks/useSync.hook'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
 
-import { useChartHistoryStore } from '@/store/modules/chartHistoryStore/chartHistoryStore'
-import { HistoryStackEnum } from '@/store/modules/chartHistoryStore/chartHistoryStore.d'
+import { useChartHistoryStore } from '@/daping/store/modules/chartHistoryStore/chartHistoryStore'
+import { HistoryStackEnum } from '@/daping/store/modules/chartHistoryStore/chartHistoryStore.d'
 
-import { useChartLayoutStore } from '@/store/modules/chartLayoutStore/chartLayoutStore'
-import { ChartLayoutStoreEnum } from '@/store/modules/chartLayoutStore/chartLayoutStore.d'
+import { useChartLayoutStore } from '@/daping/store/modules/chartLayoutStore/chartLayoutStore'
+import { ChartLayoutStoreEnum } from '@/daping/store/modules/chartLayoutStore/chartLayoutStore.d'
 
 const { LayersIcon, BarChartIcon, PrismIcon, HomeIcon, ArrowBackIcon, ArrowForwardIcon } = icon.ionicons5
 const { SaveIcon } = icon.carbon

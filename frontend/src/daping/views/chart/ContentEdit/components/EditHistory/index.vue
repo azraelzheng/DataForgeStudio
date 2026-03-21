@@ -36,17 +36,17 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { icon } from '@/plugins'
-import { useChartHistoryStore } from '@/store/modules/chartHistoryStore/chartHistoryStore'
-import { historyActionTypeName } from '@/store/modules/chartHistoryStore/chartHistoryDefine'
-import { CreateComponentType } from '@/packages/index.d'
-import { editHistoryMax } from '@/settings/designSetting'
+import { icon } from '@/daping/plugins'
+import { useChartHistoryStore } from '@/daping/store/modules/chartHistoryStore/chartHistoryStore'
+import { historyActionTypeName } from '@/daping/store/modules/chartHistoryStore/chartHistoryDefine'
+import { CreateComponentType } from '@/daping/packages/index.d'
+import { editHistoryMax } from '@/daping/settings/designSetting'
 import reverse from 'lodash/reverse'
 import {
   HistoryItemType,
   HistoryTargetTypeEnum,
   HistoryActionTypeEnum
-} from '@/store/modules/chartHistoryStore/chartHistoryStore.d'
+} from '@/daping/store/modules/chartHistoryStore/chartHistoryStore.d'
 
 const {
   DesktopOutlineIcon,

@@ -71,9 +71,9 @@
 <script script lang="ts" setup>
 import { reactive, ref, watch } from 'vue'
 import { ListType } from './index.d'
-import { useSettingStore } from '@/store/modules/settingStore/settingStore'
-import { SettingStoreEnums, ToolsStatusEnum } from '@/store/modules/settingStore/settingStore.d'
-import { icon } from '@/plugins'
+import { useSettingStore } from '@/daping/store/modules/settingStore/settingStore'
+import { SettingStoreEnums, ToolsStatusEnum } from '@/daping/store/modules/settingStore/settingStore.d'
+import { icon } from '@/daping/plugins'
 
 const props = defineProps({
   modelShow: Boolean

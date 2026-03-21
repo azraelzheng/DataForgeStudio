@@ -39,11 +39,11 @@
 </template>
 
 <script setup lang="ts">
-import { loadAsyncComponent } from '@/utils'
-import { LayoutHeaderPro } from '@/layout/components/LayoutHeaderPro'
+import { loadAsyncComponent } from '@/daping/utils'
+import { LayoutHeaderPro } from '@/daping/layout/components/LayoutHeaderPro'
 import { useContextMenu } from './hooks/useContextMenu.hook'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
-import { useChartHistoryStore } from '@/store/modules/chartHistoryStore/chartHistoryStore'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
+import { useChartHistoryStore } from '@/daping/store/modules/chartHistoryStore/chartHistoryStore'
 
 const chartHistoryStoreStore = useChartHistoryStore()
 const chartEditStore = useChartEditStore()

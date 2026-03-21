@@ -22,10 +22,10 @@
 
 <script setup lang="ts">
 import { PropType, toRefs, watch, shallowReactive } from 'vue'
-import { useChartDataFetch } from '@/hooks'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
+import { useChartDataFetch } from '@/daping/hooks'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
 import config, { option as configOption } from './config'
-import { toNumber } from '@/utils'
+import { toNumber } from '@/daping/utils'
 
 const props = defineProps({
   chartConfig: {

@@ -24,9 +24,9 @@
 
 <script setup lang="ts">
 import { PropType, toRefs, ref, reactive, watch } from 'vue'
-import { CreateComponentType } from '@/packages/index.d'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
-import { useChartDataFetch } from '@/hooks'
+import { CreateComponentType } from '@/daping/packages/index.d'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
+import { useChartDataFetch } from '@/daping/hooks'
 
 const props = defineProps({
   chartConfig: {

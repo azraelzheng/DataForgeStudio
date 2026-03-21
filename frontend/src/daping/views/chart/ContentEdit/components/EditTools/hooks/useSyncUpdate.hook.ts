@@ -1,13 +1,13 @@
 import { watch } from 'vue'
 import { useRoute } from 'vue-router'
 import throttle from 'lodash/throttle'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
-import { EditCanvasTypeEnum } from '@/store/modules/chartEditStore/chartEditStore.d'
-import { useSync } from '@/views/chart/hooks/useSync.hook'
-import { ChartEnum } from '@/enums/pageEnum'
-import { SavePageEnum } from '@/enums/editPageEnum'
-import { editToJsonInterval } from '@/settings/designSetting'
-import { goDialog } from '@/utils'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
+import { EditCanvasTypeEnum } from '@/daping/store/modules/chartEditStore/chartEditStore.d'
+import { useSync } from '@/daping/views/chart/hooks/useSync.hook'
+import { ChartEnum } from '@/daping/enums/pageEnum'
+import { SavePageEnum } from '@/daping/enums/editPageEnum'
+import { editToJsonInterval } from '@/daping/settings/designSetting'
+import { goDialog } from '@/daping/utils'
 
 const { updateComponent, dataSyncUpdate } = useSync()
 const chartEditStore = useChartEditStore()

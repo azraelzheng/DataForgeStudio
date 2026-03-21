@@ -29,16 +29,16 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { PreviewRenderList } from './components/PreviewRenderList'
-import { getFilterStyle, routerTurnByName, getSessionStorage, setTitle } from '@/utils'
+import { getFilterStyle, routerTurnByName, getSessionStorage, setTitle } from '@/daping/utils'
 import { getEditCanvasConfigStyle, getSessionStorageInfo, keyRecordHandle, dragCanvas } from './utils'
-import { PageEnum } from '@/enums/pageEnum'
-import { StorageEnum } from '@/enums/storageEnum'
+import { PageEnum } from '@/daping/enums/pageEnum'
+import { StorageEnum } from '@/daping/enums/storageEnum'
 import { useScale } from './hooks/useScale.hook'
 import { useStore } from './hooks/useStore.hook'
-import { PreviewScaleEnum } from '@/enums/styleEnum'
+import { PreviewScaleEnum } from '@/daping/enums/styleEnum'
 import { useComInstall } from './hooks/useComInstall.hook'
 import type { ChartEditStorageType } from './index.d'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
 
 const storageList: ChartEditStorageType[] = getSessionStorage(
   StorageEnum.GO_CHART_STORAGE_LIST

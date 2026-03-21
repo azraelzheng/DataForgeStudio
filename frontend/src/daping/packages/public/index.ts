@@ -1,2 +1,2 @@
-export * from '@/packages/public/chart'
-export * from '@/packages/public/publicConfig'
+export * from '@/daping/packages/public/chart'
+export * from '@/daping/packages/public/publicConfig'

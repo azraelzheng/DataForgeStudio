@@ -1,6 +1,6 @@
-import { useSystemStore } from '@/store/modules/systemStore/systemStore'
-import { SystemStoreEnum } from '@/store/modules/systemStore/systemStore.d'
-import { ResultEnum } from '@/enums/httpEnum'
+import { useSystemStore } from '@/daping/store/modules/systemStore/systemStore'
+import { SystemStoreEnum } from '@/daping/store/modules/systemStore/systemStore.d'
+import { ResultEnum } from '@/daping/enums/httpEnum'
 
 // * 初始化
 export const useSystemInit = async () => {

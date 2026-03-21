@@ -49,13 +49,13 @@
 
 <script script lang="ts" setup>
 import { PropType, ref, watch } from 'vue'
-import { RequestContentTypeEnum } from '@/enums/httpEnum'
+import { RequestContentTypeEnum } from '@/daping/enums/httpEnum'
 import { useTargetData } from '../../../hooks/useTargetData.hook'
 import { RequestGlobalConfig } from './components/RequestGlobalConfig'
 import { RequestTargetConfig } from './components/RequestTargetConfig'
-import { RequestDataPondItemType } from '@/store/modules/chartEditStore/chartEditStore.d'
-import { useSync } from '@/views/chart/hooks/useSync.hook'
-import { goDialog } from '@/utils'
+import { RequestDataPondItemType } from '@/daping/store/modules/chartEditStore/chartEditStore.d'
+import { useSync } from '@/daping/views/chart/hooks/useSync.hook'
+import { goDialog } from '@/daping/utils'
 
 const props = defineProps({
   modelShow: Boolean,

@@ -2,7 +2,7 @@
  * 资源管理和加载
  */
 import { LoadingManager, Texture, TextureLoader } from 'three'
-import { loadingStart, loadingFinish, loadingError } from '@/utils'
+import { loadingStart, loadingFinish, loadingError } from '@/daping/utils'
 import { resources } from './Assets'
 export class Resources {
   private manager!: LoadingManager

@@ -1,5 +1,5 @@
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
-import { ChartEditStoreEnum } from '@/store/modules/chartEditStore/chartEditStore.d'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
+import { ChartEditStoreEnum } from '@/daping/store/modules/chartEditStore/chartEditStore.d'
 import type { ChartEditStorageType } from '../index.d'
 
 // store 相关

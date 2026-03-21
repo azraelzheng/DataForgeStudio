@@ -70,12 +70,12 @@
 
 <script setup lang="ts">
 import { ref, toRefs, computed } from 'vue'
-import { useDesignStore } from '@/store/modules/designStore/designStore'
-import { SettingItemBox, SettingItem } from '@/components/Pages/ChartItemSetting'
-import { useTargetData } from '@/views/chart/ContentConfigurations/components/hooks/useTargetData.hook'
-import { selectTypeOptions, selectTimeOptions } from '@/views/chart/ContentConfigurations/components/ChartData/index.d'
+import { useDesignStore } from '@/daping/store/modules/designStore/designStore'
+import { SettingItemBox, SettingItem } from '@/daping/components/Pages/ChartItemSetting'
+import { useTargetData } from '@/daping/views/chart/ContentConfigurations/components/hooks/useTargetData.hook'
+import { selectTypeOptions, selectTimeOptions } from '@/daping/views/chart/ContentConfigurations/components/ChartData/index.d'
 import { RequestGlobalHeaderTable } from '../RequestGlobalHeaderTable'
-import { icon } from '@/plugins'
+import { icon } from '@/daping/plugins'
 
 const { PencilIcon, ChevronDownOutlineIcon, ChevronUpOutlineIcon } = icon.ionicons5
 const { chartEditStore } = useTargetData()

@@ -118,10 +118,10 @@
 
 <script setup lang="ts">
 import { PropType, watch } from 'vue'
-import { GlobalThemeJsonType } from '@/settings/chartThemes/index'
-import { GlobalSetting, CollapseItem, SettingItemBox, SettingItem } from '@/components/Pages/ChartItemSetting'
+import { GlobalThemeJsonType } from '@/daping/settings/chartThemes/index'
+import { GlobalSetting, CollapseItem, SettingItemBox, SettingItem } from '@/daping/components/Pages/ChartItemSetting'
 import { PieTypeObject, PieTypeEnum } from './config'
-import { labelConfig } from '@/packages/chartConfiguration/echarts'
+import { labelConfig } from '@/daping/packages/chartConfiguration/echarts'
 
 const props = defineProps({
   optionData: {

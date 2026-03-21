@@ -29,10 +29,10 @@
 
 <script setup lang="ts">
 import { ref, nextTick, computed } from 'vue'
-import { fetchRouteParamsLocation, setTitle } from '@/utils'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
-import { EditCanvasConfigEnum } from '@/store/modules/chartEditStore/chartEditStore.d'
-import { icon } from '@/plugins'
+import { fetchRouteParamsLocation, setTitle } from '@/daping/utils'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
+import { EditCanvasConfigEnum } from '@/daping/store/modules/chartEditStore/chartEditStore.d'
+import { icon } from '@/daping/plugins'
 
 const { FishIcon } = icon.ionicons5
 const chartEditStore = useChartEditStore()

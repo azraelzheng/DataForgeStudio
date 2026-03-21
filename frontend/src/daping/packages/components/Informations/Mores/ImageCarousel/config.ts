@@ -1,8 +1,8 @@
-import { PublicConfigClass } from '@/packages/public'
-import { CreateComponentType } from '@/packages/index.d'
+import { PublicConfigClass } from '@/daping/packages/public'
+import { CreateComponentType } from '@/daping/packages/index.d'
 import { ImageCarouselConfig } from './index'
 import cloneDeep from 'lodash/cloneDeep'
-import logo from '@/assets/logo.png'
+import logo from '@/daping/assets/logo.png'
 
 export const option = {
   // 图片资源列表

@@ -1,9 +1,9 @@
-import { PublicConfigClass } from '@/packages/public'
-import { CreateComponentType } from '@/packages/index.d'
+import { PublicConfigClass } from '@/daping/packages/public'
+import { CreateComponentType } from '@/daping/packages/index.d'
 import { FlipperNumberConfig } from './index'
 import cloneDeep from 'lodash/cloneDeep'
-import { chartInitConfig } from '@/settings/designSetting'
-import { FlipType } from '@/components/Pages/Flipper'
+import { chartInitConfig } from '@/daping/settings/designSetting'
+import { FlipType } from '@/daping/components/Pages/Flipper'
 
 export interface OptionType {
   dataset: number | string

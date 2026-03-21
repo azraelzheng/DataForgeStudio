@@ -32,8 +32,8 @@
 
 <script setup lang="ts">
 import { watch, ref } from 'vue'
-import { icon } from '@/plugins'
-import { WinKeyboard, MacKeyboard } from '@/enums/editPageEnum'
+import { icon } from '@/daping/plugins'
+import { WinKeyboard, MacKeyboard } from '@/daping/enums/editPageEnum'
 
 const { CloseIcon } = icon.ionicons5
 const modelShowRef = ref(false)

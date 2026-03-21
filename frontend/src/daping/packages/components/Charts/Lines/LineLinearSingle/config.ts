@@ -1,7 +1,7 @@
-import { echartOptionProfixHandle, PublicConfigClass } from '@/packages/public'
+import { echartOptionProfixHandle, PublicConfigClass } from '@/daping/packages/public'
 import { LineLinearSingleConfig } from './index'
-import { CreateComponentType } from '@/packages/index.d'
-import { defaultTheme, chartColorsSearch } from '@/settings/chartThemes/index'
+import { CreateComponentType } from '@/daping/packages/index.d'
+import { defaultTheme, chartColorsSearch } from '@/daping/settings/chartThemes/index'
 import cloneDeep from 'lodash/cloneDeep'
 import dataJson from './data.json'
 

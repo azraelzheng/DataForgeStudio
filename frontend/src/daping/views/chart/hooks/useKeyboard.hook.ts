@@ -1,10 +1,10 @@
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
 import { useSync } from './useSync.hook' 
-import { WinKeyboard, MacKeyboard, MenuEnum } from '@/enums/editPageEnum'
+import { WinKeyboard, MacKeyboard, MenuEnum } from '@/daping/enums/editPageEnum'
 import throttle from 'lodash/throttle'
 import debounce from 'lodash/debounce'
 import keymaster from 'keymaster'
-import { setKeyboardDressShow } from '@/utils'
+import { setKeyboardDressShow } from '@/daping/utils'
 
 // Keymaster可以支持识别以下组合键： ⇧，shift，option，⌥，alt，ctrl，control，command，和⌘
 const chartEditStore = useChartEditStore()

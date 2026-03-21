@@ -8,9 +8,9 @@
 </template>
 
 <script lang="ts" setup>
-import { useDesignStore } from '@/store/modules/designStore/designStore'
-import { setHtmlTheme } from '@/utils'
-import { icon } from '@/plugins'
+import { useDesignStore } from '@/daping/store/modules/designStore/designStore'
+import { setHtmlTheme } from '@/daping/utils'
+import { icon } from '@/daping/plugins'
 const { MoonIcon, SunnyIcon } = icon.ionicons5
 const designStore = useDesignStore()
 

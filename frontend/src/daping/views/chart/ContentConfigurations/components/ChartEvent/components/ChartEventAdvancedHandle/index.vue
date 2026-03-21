@@ -159,13 +159,13 @@
 
 <script lang="ts" setup>
 import { ref, computed, watch, toRefs, toRaw } from 'vue'
-import { MonacoEditor } from '@/components/Pages/MonacoEditor'
+import { MonacoEditor } from '@/daping/components/Pages/MonacoEditor'
 import { useTargetData } from '../../../hooks/useTargetData.hook'
 import { templateList } from './importTemplate'
-import { npmPkgs } from '@/hooks'
-import { icon } from '@/plugins'
-import { CreateComponentType } from '@/packages/index.d'
-import { EventLife } from '@/enums/eventEnum'
+import { npmPkgs } from '@/daping/hooks'
+import { icon } from '@/daping/plugins'
+import { CreateComponentType } from '@/daping/packages/index.d'
+import { EventLife } from '@/daping/enums/eventEnum'
 
 const { targetData, chartEditStore } = useTargetData()
 const { DocumentTextIcon, ChevronDownIcon, PencilIcon } = icon.ionicons5

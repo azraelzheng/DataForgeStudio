@@ -1,6 +1,6 @@
-import { http } from '@/api/http'
-import { httpErrorHandle } from '@/utils'
-import { RequestHttpEnum } from '@/enums/httpEnum'
+import { http } from '@/daping/api/http'
+import { httpErrorHandle } from '@/daping/utils'
+import { RequestHttpEnum } from '@/daping/enums/httpEnum'
 import { ProjectItem, ProjectDetail } from './project'
 
 // * 项目列表

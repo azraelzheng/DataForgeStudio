@@ -39,7 +39,7 @@ import {
   CollapseItem,
   SettingItemBox,
   SettingItem,
-} from '@/components/Pages/ChartItemSetting'
+} from '@/daping/components/Pages/ChartItemSetting'
 import { option } from './config'
 
 const props = defineProps({

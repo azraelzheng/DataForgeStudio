@@ -1,6 +1,6 @@
 import { App } from 'vue';
 import VueLazyLoad from 'vue3-lazyload'
-import { requireErrorImg } from '@/utils'
+import { requireErrorImg } from '@/daping/utils'
 
 // import { x } from '@/directives';
 

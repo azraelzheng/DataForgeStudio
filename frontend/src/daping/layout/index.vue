@@ -3,5 +3,5 @@
 </template>
 
 <script lang="ts" setup>
-import { LayoutMain } from '@/layout/components/LayoutMain/index'
+import { LayoutMain } from '@/daping/layout/components/LayoutMain/index'
 </script>

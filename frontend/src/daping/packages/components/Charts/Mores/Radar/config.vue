@@ -100,9 +100,9 @@
 
 <script setup lang="ts">
 import { PropType, computed, reactive } from 'vue'
-import { GlobalSetting, CollapseItem, SettingItemBox, SettingItem } from '@/components/Pages/ChartItemSetting'
+import { GlobalSetting, CollapseItem, SettingItemBox, SettingItem } from '@/daping/components/Pages/ChartItemSetting'
 import { option, RadarShapeEnumList } from './config'
-import { GlobalThemeJsonType } from '@/settings/chartThemes/index'
+import { GlobalThemeJsonType } from '@/daping/settings/chartThemes/index'
 
 const props = defineProps({
   optionData: {

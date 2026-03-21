@@ -87,17 +87,17 @@
 
 <script setup lang="ts">
 import { ref, toRefs, computed, onBeforeUnmount, watchEffect, toRaw } from 'vue'
-import { icon } from '@/plugins'
-import { useDesignStore } from '@/store/modules/designStore/designStore'
-import { SettingItemBox, SettingItem } from '@/components/Pages/ChartItemSetting'
+import { icon } from '@/daping/plugins'
+import { useDesignStore } from '@/daping/store/modules/designStore/designStore'
+import { SettingItemBox, SettingItem } from '@/daping/components/Pages/ChartItemSetting'
 import { ChartDataRequest } from '../ChartDataRequest/index'
-import { RequestHttpEnum, ResultEnum, SelectHttpTimeNameObj, RequestContentTypeEnum } from '@/enums/httpEnum'
-import { chartDataUrl, rankListUrl, scrollBoardUrl, numberFloatUrl, numberIntUrl, textUrl, imageUrl } from '@/api/mock'
-import { http, customizeHttp } from '@/api/http'
+import { RequestHttpEnum, ResultEnum, SelectHttpTimeNameObj, RequestContentTypeEnum } from '@/daping/enums/httpEnum'
+import { chartDataUrl, rankListUrl, scrollBoardUrl, numberFloatUrl, numberIntUrl, textUrl, imageUrl } from '@/daping/api/mock'
+import { http, customizeHttp } from '@/daping/api/http'
 import { SelectHttpType } from '../../index.d'
 import { ChartDataMatchingAndShow } from '../ChartDataMatchingAndShow'
 import { useTargetData } from '../../../hooks/useTargetData.hook'
-import { newFunctionHandle } from '@/utils'
+import { newFunctionHandle } from '@/daping/utils'
 
 const { HelpOutlineIcon, FlashIcon, PulseIcon } = icon.ionicons5
 const { targetData, chartEditStore } = useTargetData()

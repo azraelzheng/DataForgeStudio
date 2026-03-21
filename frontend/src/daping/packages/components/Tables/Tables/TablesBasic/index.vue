@@ -34,8 +34,8 @@
 
 <script setup lang="ts">
 import { computed, PropType, toRefs, watch, reactive, ref } from 'vue'
-import { CreateComponentType } from '@/packages/index.d'
-import { icon } from '@/plugins'
+import { CreateComponentType } from '@/daping/packages/index.d'
+import { icon } from '@/daping/plugins'
 
 const props = defineProps({
   chartConfig: {

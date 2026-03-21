@@ -1,4 +1,4 @@
-import { ThemeEnum } from '@/enums/styleEnum'
+import { ThemeEnum } from '@/daping/enums/styleEnum'
 
 export type AppThemeColorType = {
   CMYK: number[]

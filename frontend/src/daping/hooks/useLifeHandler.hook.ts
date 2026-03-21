@@ -1,5 +1,5 @@
-import { CreateComponentType, CreateComponentGroupType } from '@/packages/index.d'
-import { EventLife } from '@/enums/eventEnum'
+import { CreateComponentType, CreateComponentGroupType } from '@/daping/packages/index.d'
+import { EventLife } from '@/daping/enums/eventEnum'
 import * as echarts from 'echarts'
 
 // 所有图表组件集合对象

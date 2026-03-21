@@ -68,18 +68,18 @@
 
 <script setup lang="ts">
 import { ref, onUnmounted } from 'vue'
-import { icon } from '@/plugins'
-import { createComponent } from '@/packages'
-import { ConfigType, CreateComponentType } from '@/packages/index.d'
+import { icon } from '@/daping/plugins'
+import { createComponent } from '@/daping/packages'
+import { ConfigType, CreateComponentType } from '@/daping/packages/index.d'
 import { themeColor } from '../../hooks/useLayout.hook'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
-import { ChartModeEnum, ChartLayoutStoreEnum } from '@/store/modules/chartLayoutStore/chartLayoutStore.d'
-import { useChartLayoutStore } from '@/store/modules/chartLayoutStore/chartLayoutStore'
-import { isString, addEventListener, removeEventListener } from '@/utils'
-import { fetchConfigComponent, fetchChartComponent } from '@/packages/index'
-import { componentInstall, loadingStart, loadingFinish, loadingError } from '@/utils'
-import { ChartGlobImage } from '@/components/Pages/ChartGlobImage'
-import { GoIconify } from '@/components/GoIconify'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
+import { ChartModeEnum, ChartLayoutStoreEnum } from '@/daping/store/modules/chartLayoutStore/chartLayoutStore.d'
+import { useChartLayoutStore } from '@/daping/store/modules/chartLayoutStore/chartLayoutStore'
+import { isString, addEventListener, removeEventListener } from '@/daping/utils'
+import { fetchConfigComponent, fetchChartComponent } from '@/daping/packages/index'
+import { componentInstall, loadingStart, loadingFinish, loadingError } from '@/daping/utils'
+import { ChartGlobImage } from '@/daping/components/Pages/ChartGlobImage'
+import { GoIconify } from '@/daping/components/GoIconify'
 
 const props = defineProps({
   menuOptions: {

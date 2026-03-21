@@ -18,9 +18,9 @@
 
 <script setup lang="ts">
 import { PropType, toRefs, shallowReactive, watch, ref } from 'vue'
-import { useChartDataFetch } from '@/hooks'
-import { CreateComponentType } from '@/packages/index.d'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
+import { useChartDataFetch } from '@/daping/hooks'
+import { CreateComponentType } from '@/daping/packages/index.d'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
 import { option as configOption } from './config'
 
 const props = defineProps({

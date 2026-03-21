@@ -1,10 +1,10 @@
-import { icon } from '@/plugins'
-import { DialogEnum } from '@/enums/pluginEnum'
-import { dialogIconSize } from '@/settings/designSetting'
-import { maskClosable } from '@/settings/designSetting'
+import { icon } from '@/daping/plugins'
+import { DialogEnum } from '@/daping/enums/pluginEnum'
+import { dialogIconSize } from '@/daping/settings/designSetting'
+import { maskClosable } from '@/daping/settings/designSetting'
 import { DialogReactive } from 'naive-ui'
 const { InformationCircleIcon } = icon.ionicons5
-import { renderIcon } from '@/utils'
+import { renderIcon } from '@/daping/utils'
 
 // * 开启加载
 export const loadingStart = () => {

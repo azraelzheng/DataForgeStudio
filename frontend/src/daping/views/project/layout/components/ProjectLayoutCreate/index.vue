@@ -31,9 +31,9 @@
 </template>
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useDesignStore } from '@/store/modules/designStore/designStore'
+import { useDesignStore } from '@/daping/store/modules/designStore/designStore'
 import { CreateModal } from './components/CreateModal/index'
-import { icon } from '@/plugins'
+import { icon } from '@/daping/plugins'
 
 const { DuplicateIcon, DuplicateOutlineIcon } = icon.ionicons5
 const designStore = useDesignStore()

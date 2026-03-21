@@ -1,5 +1,5 @@
-import image from '@/assets/images/chart/decorates/border02.png'
-import { ConfigType, PackagesCategoryEnum,ChartFrameEnum } from '@/packages/index.d'
+import image from '@/daping/assets/images/chart/decorates/border02.png'
+import { ConfigType, PackagesCategoryEnum,ChartFrameEnum } from '@/daping/packages/index.d'
 import { ChatCategoryEnum, ChatCategoryEnumName } from '../../index.d'
 
 export const Border02Config: ConfigType = {

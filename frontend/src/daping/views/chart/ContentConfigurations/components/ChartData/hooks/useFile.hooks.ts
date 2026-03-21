@@ -1,7 +1,7 @@
 import { ref, toRef, nextTick } from 'vue'
 import { UploadCustomRequestOptions } from 'naive-ui'
-import { FileTypeEnum } from '@/enums/fileTypeEnum'
-import { readFile, downloadTextFile, JSONStringify, JSONParse } from '@/utils'
+import { FileTypeEnum } from '@/daping/enums/fileTypeEnum'
+import { readFile, downloadTextFile, JSONStringify, JSONParse } from '@/daping/utils'
 
 export const useFile = (targetData: any) => {
   const uploadFileListRef = ref()

@@ -19,10 +19,10 @@
 
 <script setup lang="ts">
 import { PropType, toRefs, watch, ref } from 'vue'
-import { CreateComponentType } from '@/packages/index.d'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
-import { useChartDataFetch } from '@/hooks'
-import { Flipper } from '@/components/Pages/Flipper'
+import { CreateComponentType } from '@/daping/packages/index.d'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
+import { useChartDataFetch } from '@/daping/hooks'
+import { Flipper } from '@/daping/components/Pages/Flipper'
 import { OptionType } from './config'
 
 const props = defineProps({

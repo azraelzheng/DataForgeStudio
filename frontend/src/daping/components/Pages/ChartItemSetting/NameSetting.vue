@@ -17,8 +17,8 @@
 
 <script setup lang="ts">
 import { PropType } from 'vue'
-import { SettingItemBox } from '@/components/Pages/ChartItemSetting'
-import { ConfigType } from '@/packages/index.d'
+import { SettingItemBox } from '@/daping/components/Pages/ChartItemSetting'
+import { ConfigType } from '@/daping/packages/index.d'
 
 const props = defineProps({
   chartConfig: {

@@ -1,5 +1,5 @@
 import { ref, onBeforeUnmount, nextTick } from 'vue'
-import { useDesignStore } from '@/store/modules/designStore/designStore'
+import { useDesignStore } from '@/daping/store/modules/designStore/designStore'
 import * as monaco from 'monaco-editor/esm/vs/editor/editor.api.js'
 
 export const useMonacoEditor = (language = 'javascript') => {

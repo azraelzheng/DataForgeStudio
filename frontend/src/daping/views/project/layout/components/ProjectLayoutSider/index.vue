@@ -36,9 +36,9 @@
 import { ref, computed, onMounted, onUnmounted, toRefs } from 'vue'
 import { ProjectLayoutCreate } from '../ProjectLayoutCreate/index'
 import { ProjectLayoutAsideFooter } from '../ProjectLayoutAsideFooter/index'
-import { asideWidth } from '@/settings/designSetting'
+import { asideWidth } from '@/daping/settings/designSetting'
 import { useRoute } from 'vue-router'
-import { useSettingStore } from '@/store/modules/settingStore/settingStore'
+import { useSettingStore } from '@/daping/store/modules/settingStore/settingStore'
 import { menuOptionsInit, expandedKeys } from './menu'
 
 const collapsed = ref<boolean>(false)

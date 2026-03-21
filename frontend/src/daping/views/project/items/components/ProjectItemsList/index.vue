@@ -47,7 +47,7 @@
 <script setup lang="ts">
 import { ProjectItemsCard } from '../ProjectItemsCard/index'
 import { ProjectItemsModalCard } from '../ProjectItemsModalCard/index'
-import { icon } from '@/plugins'
+import { icon } from '@/daping/plugins'
 import { useModalDataInit } from './hooks/useModal.hook'
 import { useDataListInit } from './hooks/useData.hook'
 

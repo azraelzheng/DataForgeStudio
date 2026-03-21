@@ -1,4 +1,4 @@
-import { PickCreateComponentType } from '@/packages/index.d'
+import { PickCreateComponentType } from '@/daping/packages/index.d'
 
 type AttrType = PickCreateComponentType<'attr'>
 

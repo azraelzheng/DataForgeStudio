@@ -9,8 +9,8 @@
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
-import { useChartLayoutStore } from '@/store/modules/chartLayoutStore/chartLayoutStore'
-import { useDesignStore } from '@/store/modules/designStore/designStore'
+import { useChartLayoutStore } from '@/daping/store/modules/chartLayoutStore/chartLayoutStore'
+import { useDesignStore } from '@/daping/store/modules/designStore/designStore'
 
 const chartLayoutStore = useChartLayoutStore()
 const designStore = useDesignStore()

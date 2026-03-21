@@ -50,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-import { icon } from '@/plugins'
+import { icon } from '@/daping/plugins'
 const { ChevronBackOutlineIcon } = icon.ionicons5
 
 const emit = defineEmits(['back'])

@@ -53,8 +53,8 @@
 
 <script setup lang="ts">
 import { onMounted, watch, reactive, PropType } from 'vue'
-import { useChartDataFetch } from '@/hooks'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
+import { useChartDataFetch } from '@/daping/hooks'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
 import config, { option } from './config'
 import cloneDeep from 'lodash/cloneDeep'
 

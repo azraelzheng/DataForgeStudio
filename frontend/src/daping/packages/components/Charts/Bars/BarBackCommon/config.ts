@@ -1,6 +1,6 @@
-import { echartOptionProfixHandle, PublicConfigClass } from '@/packages/public'
+import { echartOptionProfixHandle, PublicConfigClass } from '@/daping/packages/public'
 import { BarBackCommonConfig } from './index'
-import { CreateComponentType } from '@/packages/index.d'
+import { CreateComponentType } from '@/daping/packages/index.d'
 import cloneDeep from 'lodash/cloneDeep'
 import dataJson from './data.json'
 

@@ -1,4 +1,4 @@
-import { ModuleTypeEnum } from '@/enums/httpEnum'
+import { ModuleTypeEnum } from '@/daping/enums/httpEnum'
 
 // 接口白名单（免登录）
 export const fetchAllowList = [

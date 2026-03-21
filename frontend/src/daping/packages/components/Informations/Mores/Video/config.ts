@@ -1,8 +1,8 @@
-import { PublicConfigClass } from '@/packages/public'
-import { CreateComponentType } from '@/packages/index.d'
+import { PublicConfigClass } from '@/daping/packages/public'
+import { CreateComponentType } from '@/daping/packages/index.d'
 import { VideoConfig } from './index'
 import cloneDeep from 'lodash/cloneDeep'
-import video from '@/assets/videos/earth.mp4'
+import video from '@/daping/assets/videos/earth.mp4'
 
 export const option = {
   // 视频路径

@@ -48,7 +48,7 @@
 
 <script setup lang="ts">
 import { PropType, reactive, ref, toRefs, watch } from 'vue'
-import { RequestParamsObjType } from '@/enums/httpEnum'
+import { RequestParamsObjType } from '@/daping/enums/httpEnum'
 
 const emits = defineEmits(['update'])
 

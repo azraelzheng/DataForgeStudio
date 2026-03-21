@@ -14,9 +14,9 @@
   </div>
 </template>
 <script lang="ts" setup>
-import { icon } from '@/plugins'
+import { icon } from '@/daping/plugins'
 import { computed } from 'vue'
-import { screenfullFn } from '@/utils'
+import { screenfullFn } from '@/daping/utils'
 
 const emit = defineEmits(['close', 'remove', 'resize', 'fullResize'])
 

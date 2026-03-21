@@ -39,12 +39,12 @@
 
 <script script lang="ts" setup>
 import { ref, toRefs, PropType, watch } from 'vue'
-import { RequestContentTypeEnum } from '@/enums/httpEnum'
+import { RequestContentTypeEnum } from '@/daping/enums/httpEnum'
 import { useTargetData } from '../../../hooks/useTargetData.hook'
 import { RequestGlobalConfig } from './components/RequestGlobalConfig'
 import { RequestTargetConfig } from './components/RequestTargetConfig'
-import { useSync } from '@/views/chart/hooks/useSync.hook'
-import { CreateComponentType, CreateComponentGroupType } from '@/packages/index.d'
+import { useSync } from '@/daping/views/chart/hooks/useSync.hook'
+import { CreateComponentType, CreateComponentGroupType } from '@/daping/packages/index.d'
 
 const props = defineProps({
   modelShow: Boolean,

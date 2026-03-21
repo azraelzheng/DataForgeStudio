@@ -81,7 +81,7 @@
 <script setup lang="ts">
 import { PropType, watch, ref } from 'vue'
 import { option } from './config'
-import { CollapseItem, SettingItemBox, SettingItem } from '@/components/Pages/ChartItemSetting'
+import { CollapseItem, SettingItemBox, SettingItem } from '@/daping/components/Pages/ChartItemSetting'
 
 const page = [
   { label: '2', value: 2 },

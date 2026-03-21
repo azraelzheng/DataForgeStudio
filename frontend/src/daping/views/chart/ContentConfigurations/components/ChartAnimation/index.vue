@@ -91,9 +91,9 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { animations,animationsCurves,animationsDirections } from '@/settings/animations/index'
-import {CollapseItem, SettingItem, SettingItemBox} from '@/components/Pages/ChartItemSetting'
-import { useDesignStore } from '@/store/modules/designStore/designStore'
+import { animations,animationsCurves,animationsDirections } from '@/daping/settings/animations/index'
+import {CollapseItem, SettingItem, SettingItemBox} from '@/daping/components/Pages/ChartItemSetting'
+import { useDesignStore } from '@/daping/store/modules/designStore/designStore'
 import { useTargetData } from '../hooks/useTargetData.hook'
 
 // 全局颜色

@@ -1,22 +1,22 @@
 import { toRaw } from 'vue'
 import { defineStore } from 'pinia'
-import { CreateComponentType, CreateComponentGroupType } from '@/packages/index.d'
-import { PublicGroupConfigClass } from '@/packages/public/publicConfig'
+import { CreateComponentType, CreateComponentGroupType } from '@/daping/packages/index.d'
+import { PublicGroupConfigClass } from '@/daping/packages/public/publicConfig'
 import debounce from 'lodash/debounce'
 import cloneDeep from 'lodash/cloneDeep'
-import { defaultTheme, globalThemeJson } from '@/settings/chartThemes/index'
-import { requestInterval, previewScaleType, requestIntervalUnit } from '@/settings/designSetting'
+import { defaultTheme, globalThemeJson } from '@/daping/settings/chartThemes/index'
+import { requestInterval, previewScaleType, requestIntervalUnit } from '@/daping/settings/designSetting'
 // 记录记录
-import { useChartHistoryStore } from '@/store/modules/chartHistoryStore/chartHistoryStore'
+import { useChartHistoryStore } from '@/daping/store/modules/chartHistoryStore/chartHistoryStore'
 // 全局设置
-import { useSettingStore } from '@/store/modules/settingStore/settingStore'
+import { useSettingStore } from '@/daping/store/modules/settingStore/settingStore'
 import {
   HistoryActionTypeEnum,
   HistoryItemType,
   HistoryTargetTypeEnum
-} from '@/store/modules/chartHistoryStore/chartHistoryStore.d'
+} from '@/daping/store/modules/chartHistoryStore/chartHistoryStore.d'
 // 画布枚举
-import { MenuEnum, SyncEnum } from '@/enums/editPageEnum'
+import { MenuEnum, SyncEnum } from '@/daping/enums/editPageEnum'
 import {
   getUUID,
   loadingStart,
@@ -24,7 +24,7 @@ import {
   loadingError,
   isString,
   isArray, JSONStringify
-} from '@/utils'
+} from '@/daping/utils'
 
 import {
   ProjectInfoType,

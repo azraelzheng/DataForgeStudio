@@ -36,11 +36,11 @@
 
 <script lang="ts" setup>
 import { ref, watch, shallowRef } from 'vue'
-import { icon } from '@/plugins'
-import { PageEnum, ChartEnum } from '@/enums/pageEnum'
-import { ResultEnum } from '@/enums/httpEnum'
-import { fetchPathByName, routerTurnByPath, renderLang, getUUID } from '@/utils'
-import { createProjectApi } from '@/api/path'
+import { icon } from '@/daping/plugins'
+import { PageEnum, ChartEnum } from '@/daping/enums/pageEnum'
+import { ResultEnum } from '@/daping/enums/httpEnum'
+import { fetchPathByName, routerTurnByPath, renderLang, getUUID } from '@/daping/utils'
+import { createProjectApi } from '@/daping/api/path'
 
 const { FishIcon, CloseIcon } = icon.ionicons5
 const { StoreIcon, ObjectStorageIcon } = icon.carbon

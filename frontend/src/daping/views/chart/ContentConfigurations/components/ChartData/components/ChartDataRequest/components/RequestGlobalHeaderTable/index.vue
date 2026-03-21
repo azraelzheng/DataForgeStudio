@@ -17,9 +17,9 @@
 
 <script setup lang="ts">
 import { ref, toRefs } from 'vue'
-import { useTargetData } from '@/views/chart/ContentConfigurations/components/hooks/useTargetData.hook'
+import { useTargetData } from '@/daping/views/chart/ContentConfigurations/components/hooks/useTargetData.hook'
 import { RequestHeaderTable } from '../RequestHeaderTable'
-import { RequestParamsTypeEnum, RequestParamsObjType } from '@/enums/httpEnum'
+import { RequestParamsTypeEnum, RequestParamsObjType } from '@/daping/enums/httpEnum'
 
 defineProps({
   editDisabled: {

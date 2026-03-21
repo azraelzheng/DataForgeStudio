@@ -1,8 +1,8 @@
 import Color from 'color'
-import { useDesignStore } from '@/store/modules/designStore/designStore'
-import { PickCreateComponentType } from '@/packages/index.d'
-import { EditCanvasConfigType } from '@/store/modules/chartEditStore/chartEditStore.d'
-import { chartColors, chartColorsSearch, CustomColorsType } from '@/settings/chartThemes/index'
+import { useDesignStore } from '@/daping/store/modules/designStore/designStore'
+import { PickCreateComponentType } from '@/daping/packages/index.d'
+import { EditCanvasConfigType } from '@/daping/store/modules/chartEditStore/chartEditStore.d'
+import { chartColors, chartColorsSearch, CustomColorsType } from '@/daping/settings/chartThemes/index'
 
 type AttrType = PickCreateComponentType<'attr'>
 type StylesType = PickCreateComponentType<'styles'>

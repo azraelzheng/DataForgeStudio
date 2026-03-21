@@ -1,9 +1,9 @@
 import { defineStore } from 'pinia'
-import { systemSetting } from '@/settings/systemSetting'
-import { asideCollapsedWidth } from '@/settings/designSetting'
+import { systemSetting } from '@/daping/settings/systemSetting'
+import { asideCollapsedWidth } from '@/daping/settings/designSetting'
 import { SettingStoreType, ToolsStatusEnum } from './settingStore.d'
-import { setLocalStorage, getLocalStorage } from '@/utils'
-import { StorageEnum } from '@/enums/storageEnum'
+import { setLocalStorage, getLocalStorage } from '@/daping/utils'
+import { StorageEnum } from '@/daping/enums/storageEnum'
 const { GO_SYSTEM_SETTING_STORE } = StorageEnum
 
 const storageSetting: SettingStoreType = getLocalStorage(

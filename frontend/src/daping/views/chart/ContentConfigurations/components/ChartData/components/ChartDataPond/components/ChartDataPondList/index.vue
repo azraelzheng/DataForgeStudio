@@ -63,10 +63,10 @@
 
 <script setup lang="ts">
 import { toRefs, computed } from 'vue'
-import { useTargetData } from '@/views/chart/ContentConfigurations/components/hooks/useTargetData.hook'
-import { useDesignStore } from '@/store/modules/designStore/designStore'
-import { RequestDataPondItemType } from '@/store/modules/chartEditStore/chartEditStore.d'
-import { icon } from '@/plugins'
+import { useTargetData } from '@/daping/views/chart/ContentConfigurations/components/hooks/useTargetData.hook'
+import { useDesignStore } from '@/daping/store/modules/designStore/designStore'
+import { RequestDataPondItemType } from '@/daping/store/modules/chartEditStore/chartEditStore.d'
+import { icon } from '@/daping/plugins'
 
 const emit = defineEmits(['createPond', 'deletePond'])
 

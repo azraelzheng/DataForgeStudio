@@ -63,26 +63,26 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useSettingStore } from '@/store/modules/settingStore/settingStore'
-import { ToolsStatusEnum } from '@/store/modules/settingStore/settingStore.d'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
-import { EditCanvasTypeEnum } from '@/store/modules/chartEditStore/chartEditStore.d'
+import { useSettingStore } from '@/daping/store/modules/settingStore/settingStore'
+import { ToolsStatusEnum } from '@/daping/store/modules/settingStore/settingStore.d'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
+import { EditCanvasTypeEnum } from '@/daping/store/modules/chartEditStore/chartEditStore.d'
 import {
   fetchRouteParamsLocation,
   fetchPathByName,
   routerTurnByPath,
   setSessionStorage,
   getLocalStorage
-} from '@/utils'
-import { EditEnum } from '@/enums/pageEnum'
-import { StorageEnum } from '@/enums/storageEnum'
+} from '@/daping/utils'
+import { EditEnum } from '@/daping/enums/pageEnum'
+import { StorageEnum } from '@/daping/enums/storageEnum'
 import { useRoute } from 'vue-router'
-import { GoSystemSet } from '@/components/GoSystemSet/index'
+import { GoSystemSet } from '@/daping/components/GoSystemSet/index'
 import { exportHandle } from './utils'
 import { useFile } from './hooks/useFile.hooks'
 import { useSyncUpdate } from './hooks/useSyncUpdate.hook'
 import { BtnListType, TypeEnum } from './index.d'
-import { icon } from '@/plugins'
+import { icon } from '@/daping/plugins'
 
 const { DownloadIcon, ShareIcon, PawIcon, SettingsSharpIcon, CreateIcon } = icon.ionicons5
 const settingStore = useSettingStore()

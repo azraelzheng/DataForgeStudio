@@ -1,9 +1,9 @@
 import dayjs from 'dayjs'
 import cloneDeep from 'lodash/cloneDeep'
-import { PublicConfigClass } from '@/packages/public'
-import { CreateComponentType } from '@/packages/index.d'
-import { chartInitConfig } from '@/settings/designSetting'
-import { COMPONENT_INTERACT_EVENT_KET } from '@/enums/eventEnum'
+import { PublicConfigClass } from '@/daping/packages/public'
+import { CreateComponentType } from '@/daping/packages/index.d'
+import { chartInitConfig } from '@/daping/settings/designSetting'
+import { COMPONENT_INTERACT_EVENT_KET } from '@/daping/enums/eventEnum'
 import { interactActions, ComponentInteractEventEnum, DefaultTypeEnum, DifferUnitEnum } from './interact'
 import { InputsDateConfig } from './index'
 

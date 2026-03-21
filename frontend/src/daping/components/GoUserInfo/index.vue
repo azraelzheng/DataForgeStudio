@@ -27,15 +27,15 @@
 <script lang="ts" setup>
 import { h, ref } from 'vue'
 import { NAvatar, NText } from 'naive-ui'
-import { renderIcon, getLocalStorage } from '@/utils'
-import { SystemStoreEnum, SystemStoreUserInfoEnum } from '@/store/modules/systemStore/systemStore.d'
-import { StorageEnum } from '@/enums/storageEnum'
-import { logout, renderLang } from '@/utils'
-import { GoSystemSet } from '@/components/GoSystemSet/index'
-import { GoSystemInfo } from '@/components/GoSystemInfo/index'
+import { renderIcon, getLocalStorage } from '@/daping/utils'
+import { SystemStoreEnum, SystemStoreUserInfoEnum } from '@/daping/store/modules/systemStore/systemStore.d'
+import { StorageEnum } from '@/daping/enums/storageEnum'
+import { logout, renderLang } from '@/daping/utils'
+import { GoSystemSet } from '@/daping/components/GoSystemSet/index'
+import { GoSystemInfo } from '@/daping/components/GoSystemInfo/index'
 import Person from './person.png'
 
-import { icon } from '@/plugins'
+import { icon } from '@/daping/plugins'
 const {
   ChatboxEllipsesIcon,
   PersonIcon,

@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-import { docPath } from '@/settings/pathConst'
+import { docPath } from '@/daping/settings/pathConst'
 </script>
 
 <style lang="scss" scoped>

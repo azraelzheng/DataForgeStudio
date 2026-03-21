@@ -63,13 +63,13 @@
 
 <script setup lang="ts">
 import { ref, toRefs, watch, computed } from 'vue'
-import { icon } from '@/plugins'
-import { loadAsyncComponent } from '@/utils'
+import { icon } from '@/daping/plugins'
+import { loadAsyncComponent } from '@/daping/utils'
 import { ContentBox } from '../ContentBox/index'
 import { TabsEnum } from './index.d'
-import { useChartLayoutStore } from '@/store/modules/chartLayoutStore/chartLayoutStore'
-import { ChartLayoutStoreEnum } from '@/store/modules/chartLayoutStore/chartLayoutStore.d'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
+import { useChartLayoutStore } from '@/daping/store/modules/chartLayoutStore/chartLayoutStore'
+import { ChartLayoutStoreEnum } from '@/daping/store/modules/chartLayoutStore/chartLayoutStore.d'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
 
 const { getDetails } = toRefs(useChartLayoutStore())
 const { setItem } = useChartLayoutStore()

@@ -55,12 +55,12 @@
 import { ref, shallowReactive, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
 import { useClipboard } from '@vueuse/core'
-import { PreviewEnum } from '@/enums/pageEnum'
-import { StorageEnum } from '@/enums/storageEnum'
-import { ResultEnum } from '@/enums/httpEnum'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
-import { ProjectInfoEnum } from '@/store/modules/chartEditStore/chartEditStore.d'
-import { changeProjectReleaseApi } from '@/api/path'
+import { PreviewEnum } from '@/daping/enums/pageEnum'
+import { StorageEnum } from '@/daping/enums/storageEnum'
+import { ResultEnum } from '@/daping/enums/httpEnum'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
+import { ProjectInfoEnum } from '@/daping/store/modules/chartEditStore/chartEditStore.d'
+import { changeProjectReleaseApi } from '@/daping/api/path'
 import {
   previewPath,
   renderIcon,
@@ -70,8 +70,8 @@ import {
   getLocalStorage,
   httpErrorHandle,
   fetchRouteParamsLocation,
-} from '@/utils'
-import { icon } from '@/plugins'
+} from '@/daping/utils'
+import { icon } from '@/daping/plugins'
 
 const { BrowsersOutlineIcon, SendIcon, CloseIcon } = icon.ionicons5
 const chartEditStore = useChartEditStore()

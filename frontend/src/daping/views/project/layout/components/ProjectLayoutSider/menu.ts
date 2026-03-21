@@ -1,9 +1,9 @@
 import { reactive, h } from 'vue'
-import { renderIcon } from '@/utils'
+import { renderIcon } from '@/daping/utils'
 import { RouterLink } from 'vue-router'
-import { PageEnum } from '@/enums/pageEnum'
+import { PageEnum } from '@/daping/enums/pageEnum'
 import { MenuOption, MenuGroupOption } from 'naive-ui'
-import { icon } from '@/plugins'
+import { icon } from '@/daping/plugins'
 
 const { GridIcon, TvOutlineIcon } = icon.ionicons5
 const { StoreIcon, ObjectStorageIcon, DevicesIcon } = icon.carbon

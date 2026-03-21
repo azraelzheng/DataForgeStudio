@@ -5,14 +5,14 @@
 <script setup lang="ts">
 import { PropType, reactive, watch } from 'vue'
 import VChart from 'vue-echarts'
-import { useCanvasInitOptions } from '@/hooks/useCanvasInitOptions.hook'
+import { useCanvasInitOptions } from '@/daping/hooks/useCanvasInitOptions.hook'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { PieChart } from 'echarts/charts'
-import { mergeTheme } from '@/packages/public/chart'
+import { mergeTheme } from '@/daping/packages/public/chart'
 import config, { includes } from './config'
-import { useChartDataFetch } from '@/hooks'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
+import { useChartDataFetch } from '@/daping/hooks'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
 import { DatasetComponent, GridComponent, TooltipComponent, LegendComponent, TitleComponent } from 'echarts/components'
 
 const props = defineProps({

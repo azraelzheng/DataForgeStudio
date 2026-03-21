@@ -1,5 +1,5 @@
-import { LangEnum, PreviewScaleEnum } from '@/enums/styleEnum'
-import { RequestHttpIntervalEnum } from '@/enums/httpEnum'
+import { LangEnum, PreviewScaleEnum } from '@/daping/enums/styleEnum'
+import { RequestHttpIntervalEnum } from '@/daping/enums/httpEnum'
 import designColor from './designColor.json'
 
 // 默认语言

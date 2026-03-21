@@ -1,10 +1,10 @@
-import { ChartList } from '@/packages/components/Charts/index'
-import { DecorateList } from '@/packages/components/Decorates/index'
-import { InformationList } from '@/packages/components/Informations/index'
-import { TableList } from '@/packages/components/Tables/index'
-import { PhotoList } from '@/packages/components/Photos/index'
-import { IconList } from '@/packages/components/Icons/index'
-import { PackagesCategoryEnum, PackagesType, ConfigType, FetchComFlagType } from '@/packages/index.d'
+import { ChartList } from '@/daping/packages/components/Charts/index'
+import { DecorateList } from '@/daping/packages/components/Decorates/index'
+import { InformationList } from '@/daping/packages/components/Informations/index'
+import { TableList } from '@/daping/packages/components/Tables/index'
+import { PhotoList } from '@/daping/packages/components/Photos/index'
+import { IconList } from '@/daping/packages/components/Icons/index'
+import { PackagesCategoryEnum, PackagesType, ConfigType, FetchComFlagType } from '@/daping/packages/index.d'
 
 const configModules: Record<string, { default: string }> = import.meta.glob('./components/**/config.vue', {
   eager: true

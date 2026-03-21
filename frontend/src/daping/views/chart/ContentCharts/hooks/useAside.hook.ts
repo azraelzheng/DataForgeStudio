@@ -1,10 +1,10 @@
 import { shallowReactive, ref } from 'vue'
-import { icon } from '@/plugins'
-import { renderLang, renderIcon } from '@/utils'
+import { icon } from '@/daping/plugins'
+import { renderLang, renderIcon } from '@/daping/utils'
 import { themeColor, setItem, getCharts } from './useLayout.hook'
-import { PackagesCategoryEnum, PackagesCategoryName, ConfigType } from '@/packages/index.d'
-import { usePackagesStore } from '@/store/modules/packagesStore/packagesStore'
-import { ChartLayoutStoreEnum } from '@/store/modules/chartLayoutStore/chartLayoutStore.d'
+import { PackagesCategoryEnum, PackagesCategoryName, ConfigType } from '@/daping/packages/index.d'
+import { usePackagesStore } from '@/daping/store/modules/packagesStore/packagesStore'
+import { ChartLayoutStoreEnum } from '@/daping/store/modules/chartLayoutStore/chartLayoutStore.d'
 // 图标
 const { AirPlaneOutlineIcon, ImageIcon, BarChartIcon } = icon.ionicons5
 const { TableSplitIcon, RoadmapIcon, SpellCheckIcon, GraphicalDataFlowIcon } = icon.carbon

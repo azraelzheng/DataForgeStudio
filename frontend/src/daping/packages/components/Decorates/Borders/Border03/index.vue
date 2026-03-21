@@ -100,8 +100,8 @@
 
 <script setup lang="ts">
 import { PropType, toRefs } from 'vue'
-import { CreateComponentType } from '@/packages/index.d'
-import { getUUID, alpha } from '@/utils'
+import { CreateComponentType } from '@/daping/packages/index.d'
+import { getUUID, alpha } from '@/daping/utils'
 
 const props = defineProps({
   chartConfig: {

@@ -6,7 +6,7 @@
 
 <script setup lang="ts">
 import { PropType } from 'vue'
-import { CreateComponentType } from '@/packages/index.d'
+import { CreateComponentType } from '@/daping/packages/index.d'
 import { ChartDataMatchingAndShow } from '../ChartDataMatchingAndShow'
 </script>
 

@@ -16,6 +16,6 @@
   </layout-header>
 </template>
 <script setup lang="ts">
-import { LayoutHeader } from '@/layout/components/LayoutHeader'
-import { GoUserInfo } from '@/components/GoUserInfo'
+import { LayoutHeader } from '@/daping/layout/components/LayoutHeader'
+import { GoUserInfo } from '@/daping/components/GoUserInfo'
 </script>

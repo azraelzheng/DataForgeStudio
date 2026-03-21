@@ -41,8 +41,8 @@
 <script setup lang="ts">
     import { PropType, toRefs, ref, reactive, watch, onMounted, onUnmounted} from 'vue'
     // import { Component, Vue, Emit, } from 'vue-property-decorator';
-    import { CreateComponentType } from '@/packages/index.d'
-    import { getUUID } from '@/utils'
+    import { CreateComponentType } from '@/daping/packages/index.d'
+    import { getUUID } from '@/daping/utils'
     import {Component} from "@/router/types";
     let timer: any = null
     const props = defineProps({

@@ -103,12 +103,12 @@
 <script setup lang="ts">
 import { ref, watch, computed, reactive, nextTick, onMounted } from 'vue'
 import cloneDeep from 'lodash/cloneDeep'
-import noData from '@/assets/images/canvas/noData.png'
-import { getUUID, goDialog } from '@/utils'
-import { icon } from '@/plugins'
+import noData from '@/daping/assets/images/canvas/noData.png'
+import { getUUID, goDialog } from '@/daping/utils'
+import { icon } from '@/daping/plugins'
 import { UvIndex } from '@vicons/carbon'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
-import { EditCanvasConfigEnum } from '@/store/modules/chartEditStore/chartEditStore.d'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
+import { EditCanvasConfigEnum } from '@/daping/store/modules/chartEditStore/chartEditStore.d'
 import { CreateColorRender } from '../CreateColorRender/index'
 
 const props = defineProps({

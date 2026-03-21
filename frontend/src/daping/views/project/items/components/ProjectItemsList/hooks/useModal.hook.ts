@@ -1,6 +1,6 @@
 import { ref } from 'vue'
-import { ChartEnum } from '@/enums/pageEnum'
-import { fetchPathByName, routerTurnByPath, openNewWindow, previewPath } from '@/utils'
+import { ChartEnum } from '@/daping/enums/pageEnum'
+import { fetchPathByName, routerTurnByPath, openNewWindow, previewPath } from '@/daping/utils'
 import { Chartype } from '../../../index.d'
 export const useModalDataInit = () => {
   const modalShow = ref<boolean>(false)

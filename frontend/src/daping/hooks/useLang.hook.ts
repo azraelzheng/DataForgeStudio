@@ -1,6 +1,6 @@
 import { computed } from 'vue'
-import { LangEnum } from '@/enums/styleEnum'
-import { useLangStore } from '@/store/modules/langStore/langStore'
+import { LangEnum } from '@/daping/enums/styleEnum'
+import { useLangStore } from '@/daping/store/modules/langStore/langStore'
 import { zhCN, enUS, dateEnUS, dateZhCN } from 'naive-ui'
 
 type LangStoreType = typeof useLangStore

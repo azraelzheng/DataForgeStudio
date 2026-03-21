@@ -14,15 +14,15 @@
 <script setup lang="ts">
 import { PropType, computed, watch, ref, nextTick } from 'vue'
 import VChart from 'vue-echarts'
-import { useCanvasInitOptions } from '@/hooks/useCanvasInitOptions.hook'
+import { useCanvasInitOptions } from '@/daping/hooks/useCanvasInitOptions.hook'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { ScatterChart, EffectScatterChart } from 'echarts/charts'
 import config, { includes, seriesItem } from './config'
-import { mergeTheme } from '@/packages/public/chart'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
-import { useChartDataFetch } from '@/hooks'
-import { isPreview, isArray } from '@/utils'
+import { mergeTheme } from '@/daping/packages/public/chart'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
+import { useChartDataFetch } from '@/daping/hooks'
+import { isPreview, isArray } from '@/daping/utils'
 import {
   DatasetComponent,
   GridComponent,

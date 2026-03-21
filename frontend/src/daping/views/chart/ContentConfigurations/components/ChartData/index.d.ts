@@ -1,4 +1,4 @@
-import { RequestHttpEnum, RequestHttpIntervalEnum, RequestDataTypeEnum, SelectHttpTimeNameObj } from '@/enums/httpEnum'
+import { RequestHttpEnum, RequestHttpIntervalEnum, RequestDataTypeEnum, SelectHttpTimeNameObj } from '@/daping/enums/httpEnum'
 
 // 匹配结果
 export enum DataResultEnum {

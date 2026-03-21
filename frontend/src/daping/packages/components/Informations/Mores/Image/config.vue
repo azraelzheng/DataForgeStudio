@@ -32,7 +32,7 @@ import {
   CollapseItem,
   SettingItemBox,
   SettingItem,
-} from '@/components/Pages/ChartItemSetting'
+} from '@/daping/components/Pages/ChartItemSetting'
 
 const props = defineProps({
   optionData: {

@@ -21,8 +21,8 @@ import {
   NLoadingBarProvider
 } from 'naive-ui'
 
-import { MessageContent } from '@/components/Plugins/MessageContent'
-import { DialogContent } from '@/components/Plugins/DialogContent'
-import { LoadingContent } from '@/components/Plugins/LoadingContent'
+import { MessageContent } from '@/daping/components/Plugins/MessageContent'
+import { DialogContent } from '@/daping/components/Plugins/DialogContent'
+import { LoadingContent } from '@/daping/components/Plugins/LoadingContent'
 
 </script>

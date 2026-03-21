@@ -1,11 +1,11 @@
-import { ChartFrameEnum, ConfigType, PackagesCategoryEnum } from '@/packages/index.d'
-import { ImageConfig } from '@/packages/components/Informations/Mores/Image/index'
+import { ChartFrameEnum, ConfigType, PackagesCategoryEnum } from '@/daping/packages/index.d'
+import { ImageConfig } from '@/daping/packages/components/Informations/Mores/Image/index'
 import { ChatCategoryEnum, ChatCategoryEnumName } from '../index.d'
-import { setLocalStorage, getLocalStorage, goDialog } from '@/utils'
-import { StorageEnum } from '@/enums/storageEnum'
-import { FileTypeEnum } from '@/enums/fileTypeEnum'
-import { backgroundImageSize } from '@/settings/designSetting'
-import { usePackagesStore } from '@/store/modules/packagesStore/packagesStore'
+import { setLocalStorage, getLocalStorage, goDialog } from '@/daping/utils'
+import { StorageEnum } from '@/daping/enums/storageEnum'
+import { FileTypeEnum } from '@/daping/enums/fileTypeEnum'
+import { backgroundImageSize } from '@/daping/settings/designSetting'
+import { usePackagesStore } from '@/daping/store/modules/packagesStore/packagesStore'
 
 const StoreKey = StorageEnum.GO_USER_MEDIA_PHOTOS
 

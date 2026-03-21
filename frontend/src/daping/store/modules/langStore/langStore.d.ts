@@ -1,4 +1,4 @@
-import { LangEnum } from '@/enums/styleEnum'
+import { LangEnum } from '@/daping/enums/styleEnum'
 export interface LangStateType {
   // 当前语言
   lang: LangEnum,

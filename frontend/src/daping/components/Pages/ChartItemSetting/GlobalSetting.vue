@@ -337,11 +337,11 @@
 
 <script setup lang="ts">
 import { PropType, computed, watch } from 'vue'
-import { GlobalThemeJsonType } from '@/settings/chartThemes/index'
-import { axisConfig, legendConfig } from '@/packages/chartConfiguration/echarts/index'
-import { CollapseItem, SettingItemBox, SettingItem, GlobalSettingPosition } from '@/components/Pages/ChartItemSetting'
-import { icon } from '@/plugins'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
+import { GlobalThemeJsonType } from '@/daping/settings/chartThemes/index'
+import { axisConfig, legendConfig } from '@/daping/packages/chartConfiguration/echarts/index'
+import { CollapseItem, SettingItemBox, SettingItem, GlobalSettingPosition } from '@/daping/components/Pages/ChartItemSetting'
+import { icon } from '@/daping/plugins'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
 import EchartsRendererSetting from './EchartsRendererSetting.vue'
 
 const { HelpOutlineIcon } = icon.ionicons5

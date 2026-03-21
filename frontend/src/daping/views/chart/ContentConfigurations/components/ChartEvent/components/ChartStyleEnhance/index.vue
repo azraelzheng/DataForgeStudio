@@ -129,10 +129,10 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, toRefs, toRaw } from 'vue'
-import { MonacoEditor } from '@/components/Pages/MonacoEditor'
+import { MonacoEditor } from '@/daping/components/Pages/MonacoEditor'
 import { useTargetData } from '../../../hooks/useTargetData.hook'
-import { BaseEvent } from '@/enums/eventEnum'
-import { icon } from '@/plugins'
+import { BaseEvent } from '@/daping/enums/eventEnum'
+import { icon } from '@/daping/plugins'
 const { targetData, chartEditStore } = useTargetData()
 const { DocumentTextIcon, ChevronDownIcon, PencilIcon } = icon.ionicons5
 // import { validateCSS } from 'css-validator';

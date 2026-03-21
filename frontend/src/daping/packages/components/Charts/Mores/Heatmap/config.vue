@@ -4,9 +4,9 @@
 
 <script setup lang="ts">
 import { PropType, computed } from 'vue'
-import { GlobalSetting } from '@/components/Pages/ChartItemSetting'
+import { GlobalSetting } from '@/daping/components/Pages/ChartItemSetting'
 import { option } from './config'
-import { GlobalThemeJsonType } from '@/settings/chartThemes/index'
+import { GlobalThemeJsonType } from '@/daping/settings/chartThemes/index'
 
 const props = defineProps({
   optionData: {

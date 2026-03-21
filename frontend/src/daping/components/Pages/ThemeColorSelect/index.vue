@@ -44,13 +44,13 @@
 
 <script lang="ts" setup>
 import { ref, computed, watch, toRefs } from 'vue'
-import { useDesignStore } from '@/store/modules/designStore/designStore'
-import { AppThemeColorType } from '@/store/modules/designStore/designStore.d'
-import { icon } from '@/plugins'
-import themeColorLogo from '@/assets/images/exception/theme-color.png'
-import { loadAsyncComponent } from '@/utils'
+import { useDesignStore } from '@/daping/store/modules/designStore/designStore'
+import { AppThemeColorType } from '@/daping/store/modules/designStore/designStore.d'
+import { icon } from '@/daping/plugins'
+import themeColorLogo from '@/daping/assets/images/exception/theme-color.png'
+import { loadAsyncComponent } from '@/daping/utils'
 import { useScroll } from '@vueuse/core'
-import designColor from '@/settings/designColor.json'
+import designColor from '@/daping/settings/designColor.json'
 
 const ColorList = loadAsyncComponent(() =>
   import('./components/ColorList.vue')
@@ -135,7 +135,7 @@ $height: 85vh;
           width: 100px;
           height: 20px;
           border-radius: 3px;
-          background-image: url("@/assets/images/exception/texture.png");
+          background-image: url("@/daping/assets/images/exception/texture.png");
         }
         .color-name {
           font-family: serif;

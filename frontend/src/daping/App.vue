@@ -15,9 +15,9 @@
 
 <script lang="ts" setup>
 import { NConfigProvider } from 'naive-ui'
-import { GoAppProvider } from '@/components/GoAppProvider'
-import { I18n } from '@/components/I18n'
-import { useSystemInit, useDarkThemeHook, useThemeOverridesHook, useCode, useLang } from '@/hooks'
+import { GoAppProvider } from '@/daping/components/GoAppProvider'
+import { I18n } from '@/daping/components/I18n'
+import { useSystemInit, useDarkThemeHook, useThemeOverridesHook, useCode, useLang } from '@/daping/hooks'
 
 //字节图表全局配置部分
 import vScreenVolcanoBlue from '@visactor/vchart-theme/public/vScreenVolcanoBlue.json';

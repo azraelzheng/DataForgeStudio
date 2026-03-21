@@ -1,5 +1,5 @@
-import { ChartFrameEnum, PackagesCategoryEnum } from '@/packages/index.d'
-import { ImageConfig } from '@/packages/components/Informations/Mores/Image/index'
+import { ChartFrameEnum, PackagesCategoryEnum } from '@/daping/packages/index.d'
+import { ImageConfig } from '@/daping/packages/components/Informations/Mores/Image/index'
 import { ChatCategoryEnum, ChatCategoryEnumName } from '../index.d'
 
 // 远程共享库（调接口获取图像列表）

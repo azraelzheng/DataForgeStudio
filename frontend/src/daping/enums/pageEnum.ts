@@ -1,4 +1,4 @@
-import { ResultEnum } from '@/enums/httpEnum'
+import { ResultEnum } from '@/daping/enums/httpEnum'
 
 export enum ChartEnum {
   // 图表创建

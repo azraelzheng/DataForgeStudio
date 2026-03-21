@@ -4,9 +4,9 @@
 
 <script setup lang="ts">
 import { onMounted, PropType, ref, toRefs, watch } from 'vue'
-import { CreateComponentType } from '@/packages/index.d'
-import { useChartDataFetch } from '@/hooks'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
+import { CreateComponentType } from '@/daping/packages/index.d'
+import { useChartDataFetch } from '@/daping/hooks'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
 import { option } from './config'
 import World from './code/world/Word'
 import throttle from 'lodash/throttle'

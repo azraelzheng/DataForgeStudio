@@ -81,7 +81,7 @@
 <script setup lang="ts">
 import { PropType } from 'vue'
 import { option, MarkerEnum, ThemeEnum, LangEnum, ViewModeEnum, FeaturesEnum } from './config'
-import { CollapseItem, SettingItemBox, SettingItem } from '@/components/Pages/ChartItemSetting'
+import { CollapseItem, SettingItemBox, SettingItem } from '@/daping/components/Pages/ChartItemSetting'
 
 defineProps({
   optionData: {

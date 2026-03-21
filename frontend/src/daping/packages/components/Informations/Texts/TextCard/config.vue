@@ -111,7 +111,7 @@
 <script setup lang="ts">
 import { PropType } from 'vue'
 import { option, FontWeightEnum, FontWeightObject } from './config'
-import { CollapseItem, SettingItemBox, SettingItem } from '@/components/Pages/ChartItemSetting'
+import { CollapseItem, SettingItemBox, SettingItem } from '@/daping/components/Pages/ChartItemSetting'
 import {openNewWindow} from "@/utils";
 const props = defineProps({
   optionData: {

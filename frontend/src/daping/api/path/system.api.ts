@@ -1,6 +1,6 @@
-import { http } from '@/api/http'
-import { httpErrorHandle } from '@/utils'
-import { RequestHttpEnum, ModuleTypeEnum } from '@/enums/httpEnum'
+import { http } from '@/daping/api/http'
+import { httpErrorHandle } from '@/daping/utils'
+import { RequestHttpEnum, ModuleTypeEnum } from '@/daping/enums/httpEnum'
 import {AuthLoginRespVO, ProfileVO} from './system'
 
 // * 登录

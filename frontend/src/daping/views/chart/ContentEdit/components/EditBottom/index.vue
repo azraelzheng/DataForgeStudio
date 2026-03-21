@@ -55,14 +55,14 @@
 <script setup lang="ts">
 import { SelectInst } from 'naive-ui'
 import { reactive, ref, toRefs, watchEffect } from 'vue'
-import { icon } from '@/plugins'
+import { icon } from '@/daping/plugins'
 import { EditHistory } from '../EditHistory/index'
 import EditShortcutKey from '../EditShortcutKey/index.vue'
-import { useDesignStore } from '@/store/modules/designStore/designStore'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
-import { EditCanvasTypeEnum } from '@/store/modules/chartEditStore/chartEditStore.d'
-import { useChartLayoutStore } from '@/store/modules/chartLayoutStore/chartLayoutStore'
-import { ChartLayoutStoreEnum } from '@/store/modules/chartLayoutStore/chartLayoutStore.d'
+import { useDesignStore } from '@/daping/store/modules/designStore/designStore'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
+import { EditCanvasTypeEnum } from '@/daping/store/modules/chartEditStore/chartEditStore.d'
+import { useChartLayoutStore } from '@/daping/store/modules/chartLayoutStore/chartLayoutStore'
+import { ChartLayoutStoreEnum } from '@/daping/store/modules/chartLayoutStore/chartLayoutStore.d'
 
 const { LockClosedOutlineIcon, LockOpenOutlineIcon } = icon.ionicons5
 

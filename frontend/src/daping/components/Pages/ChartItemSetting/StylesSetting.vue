@@ -166,11 +166,11 @@
 
 <script setup lang="ts">
 import { ref, PropType } from 'vue'
-import { PickCreateComponentType, BlendModeEnumList } from '@/packages/index.d'
-import { SettingItemBox, SettingItem, CollapseItem } from '@/components/Pages/ChartItemSetting'
-import { icon } from '@/plugins'
-import logoImg from '@/assets/logo.png'
-import { useDesignStore } from '@/store/modules/designStore/designStore'
+import { PickCreateComponentType, BlendModeEnumList } from '@/daping/packages/index.d'
+import { SettingItemBox, SettingItem, CollapseItem } from '@/daping/components/Pages/ChartItemSetting'
+import { icon } from '@/daping/plugins'
+import logoImg from '@/daping/assets/logo.png'
+import { useDesignStore } from '@/daping/store/modules/designStore/designStore'
 
 const props = defineProps({
   isGroup: {

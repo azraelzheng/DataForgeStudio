@@ -32,7 +32,7 @@
         <n-upload-dragger>
           <img v-if="canvasConfig.backgroundImage" class="upload-show" :src="canvasConfig.backgroundImage" alt="背景" />
           <div class="upload-img" v-show="!canvasConfig.backgroundImage">
-            <img src="@/assets/images/canvas/noImage.png" />
+            <img src="@/daping/assets/images/canvas/noImage.png" />
             <n-text class="upload-desc" depth="3">
               背景图需小于 {{ backgroundImageSize }}M ，格式为 png/jpg/gif 的文件
             </n-text>
@@ -127,19 +127,19 @@
 
 <script setup lang="ts">
 import { ref, nextTick, watch } from 'vue'
-import { backgroundImageSize } from '@/settings/designSetting'
-import { swatchesColors } from '@/settings/chartThemes/index'
-import { FileTypeEnum } from '@/enums/fileTypeEnum'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
-import { EditCanvasConfigEnum } from '@/store/modules/chartEditStore/chartEditStore.d'
-import { useSystemStore } from '@/store/modules/systemStore/systemStore'
-import { StylesSetting } from '@/components/Pages/ChartItemSetting'
+import { backgroundImageSize } from '@/daping/settings/designSetting'
+import { swatchesColors } from '@/daping/settings/chartThemes/index'
+import { FileTypeEnum } from '@/daping/enums/fileTypeEnum'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
+import { EditCanvasConfigEnum } from '@/daping/store/modules/chartEditStore/chartEditStore.d'
+import { useSystemStore } from '@/daping/store/modules/systemStore/systemStore'
+import { StylesSetting } from '@/daping/components/Pages/ChartItemSetting'
 import { UploadCustomRequestOptions } from 'naive-ui'
-import { fileToUrl, loadAsyncComponent, fetchRouteParamsLocation } from '@/utils'
-import { PreviewScaleEnum } from '@/enums/styleEnum'
-import { ResultEnum } from '@/enums/httpEnum'
-import { icon } from '@/plugins'
-import { uploadFile} from '@/api/path'
+import { fileToUrl, loadAsyncComponent, fetchRouteParamsLocation } from '@/daping/utils'
+import { PreviewScaleEnum } from '@/daping/enums/styleEnum'
+import { ResultEnum } from '@/daping/enums/httpEnum'
+import { icon } from '@/daping/plugins'
+import { uploadFile} from '@/daping/api/path'
 
 const { ColorPaletteIcon } = icon.ionicons5
 const { ScaleIcon, FitToScreenIcon, FitToHeightIcon, FitToWidthIcon } = icon.carbon

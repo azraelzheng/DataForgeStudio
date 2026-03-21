@@ -1,9 +1,9 @@
-import { getSessionStorage, fetchRouteParamsLocation, httpErrorHandle, JSONParse } from '@/utils'
-import { ResultEnum } from '@/enums/httpEnum'
-import { StorageEnum } from '@/enums/storageEnum'
-import { ChartEditStorage } from '@/store/modules/chartEditStore/chartEditStore.d'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
-import { fetchProjectApi } from '@/api/path'
+import { getSessionStorage, fetchRouteParamsLocation, httpErrorHandle, JSONParse } from '@/daping/utils'
+import { ResultEnum } from '@/daping/enums/httpEnum'
+import { StorageEnum } from '@/daping/enums/storageEnum'
+import { ChartEditStorage } from '@/daping/store/modules/chartEditStore/chartEditStore.d'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
+import { fetchProjectApi } from '@/daping/api/path'
 
 const chartEditStore = useChartEditStore()
 

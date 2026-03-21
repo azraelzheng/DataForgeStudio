@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia'
 import { ConfigType, PackagesStoreType, PackagesType } from './packagesStore.d'
-import { packagesList } from '@/packages/index'
-import { StorageEnum } from '@/enums/storageEnum'
-import { getLocalStorage, setLocalStorage } from '@/utils'
+import { packagesList } from '@/daping/packages/index'
+import { StorageEnum } from '@/daping/enums/storageEnum'
+import { getLocalStorage, setLocalStorage } from '@/daping/utils'
 
 // 组件 packages
 export const usePackagesStore = defineStore({

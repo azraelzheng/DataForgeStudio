@@ -21,12 +21,12 @@
 
 <script setup lang="ts">
 import { computed, PropType, ref } from 'vue'
-import { requireErrorImg } from '@/utils'
-import { useDesignStore } from '@/store/modules/designStore/designStore'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
-import { LayerModeEnum } from '@/store/modules/chartLayoutStore/chartLayoutStore.d'
-import { fetchImages } from '@/packages'
-import { CreateComponentType, CreateComponentGroupType } from '@/packages/index.d'
+import { requireErrorImg } from '@/daping/utils'
+import { useDesignStore } from '@/daping/store/modules/designStore/designStore'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
+import { LayerModeEnum } from '@/daping/store/modules/chartLayoutStore/chartLayoutStore.d'
+import { fetchImages } from '@/daping/packages'
+import { CreateComponentType, CreateComponentGroupType } from '@/daping/packages/index.d'
 import { LayersStatus } from '../LayersStatus/index'
 
 const props = defineProps({

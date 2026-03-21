@@ -11,7 +11,7 @@
 
 <script setup lang="ts">
 import { PropType, reactive } from 'vue'
-import { CollapseItem, SettingItemBox, SettingItem } from '@/components/Pages/ChartItemSetting'
+import { CollapseItem, SettingItemBox, SettingItem } from '@/daping/components/Pages/ChartItemSetting'
 
 type positionType = {
   top?: number | string | null

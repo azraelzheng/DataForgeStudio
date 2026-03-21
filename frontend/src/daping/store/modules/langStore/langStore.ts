@@ -1,10 +1,10 @@
 import { defineStore } from 'pinia'
-import { lang } from '@/settings/designSetting'
+import { lang } from '@/daping/settings/designSetting'
 import { LangStateType } from './langStore.d'
-import { LangEnum } from '@/enums/styleEnum'
-import { setLocalStorage, getLocalStorage, reloadRoutePage } from '@/utils'
-import { StorageEnum } from '@/enums/storageEnum'
-import { useSettingStore } from '@/store/modules/settingStore/settingStore'
+import { LangEnum } from '@/daping/enums/styleEnum'
+import { setLocalStorage, getLocalStorage, reloadRoutePage } from '@/daping/utils'
+import { StorageEnum } from '@/daping/enums/storageEnum'
+import { useSettingStore } from '@/daping/store/modules/settingStore/settingStore'
 
 const { GO_LANG_STORE } = StorageEnum
 const storageLang: LangStateType = getLocalStorage(GO_LANG_STORE)

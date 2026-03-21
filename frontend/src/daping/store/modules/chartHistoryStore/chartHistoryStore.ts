@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia'
-import { CreateComponentType, CreateComponentGroupType } from '@/packages/index.d'
-import { EditCanvasType } from '@/store/modules/chartEditStore/chartEditStore.d'
-import { loadingStart, loadingFinish, loadingError } from '@/utils'
-import { editHistoryMax } from '@/settings/designSetting'
+import { CreateComponentType, CreateComponentGroupType } from '@/daping/packages/index.d'
+import { EditCanvasType } from '@/daping/store/modules/chartEditStore/chartEditStore.d'
+import { loadingStart, loadingFinish, loadingError } from '@/daping/utils'
+import { editHistoryMax } from '@/daping/settings/designSetting'
 import {
   HistoryStackItemEnum,
   HistoryActionTypeEnum,

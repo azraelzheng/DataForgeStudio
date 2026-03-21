@@ -67,18 +67,18 @@ import { computed, ref, watch } from 'vue'
 import Draggable from 'vuedraggable'
 import cloneDeep from 'lodash/cloneDeep'
 import { ContentBox } from '../ContentBox/index'
-import { useChartLayoutStore } from '@/store/modules/chartLayoutStore/chartLayoutStore'
-import { ChartLayoutStoreEnum, LayerModeEnum } from '@/store/modules/chartLayoutStore/chartLayoutStore.d'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
-import { CreateComponentType, CreateComponentGroupType } from '@/packages/index.d'
-import { MenuOptionsItemType } from '@/views/chart/hooks/useContextMenu.hook.d'
-import { useContextMenu } from '@/views/chart/hooks/useContextMenu.hook'
-import { MenuEnum, MouseEventButton, WinKeyboard, MacKeyboard } from '@/enums/editPageEnum'
+import { useChartLayoutStore } from '@/daping/store/modules/chartLayoutStore/chartLayoutStore'
+import { ChartLayoutStoreEnum, LayerModeEnum } from '@/daping/store/modules/chartLayoutStore/chartLayoutStore.d'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
+import { CreateComponentType, CreateComponentGroupType } from '@/daping/packages/index.d'
+import { MenuOptionsItemType } from '@/daping/views/chart/hooks/useContextMenu.hook.d'
+import { useContextMenu } from '@/daping/views/chart/hooks/useContextMenu.hook'
+import { MenuEnum, MouseEventButton, WinKeyboard, MacKeyboard } from '@/daping/enums/editPageEnum'
 
 import { LayersListItem } from './components/LayersListItem/index'
 import { LayersGroupListItem } from './components/LayersGroupListItem/index'
 
-import { icon } from '@/plugins'
+import { icon } from '@/daping/plugins'
 
 const { LayersIcon, GridIcon, ListIcon } = icon.ionicons5
 const { LaptopIcon } = icon.carbon

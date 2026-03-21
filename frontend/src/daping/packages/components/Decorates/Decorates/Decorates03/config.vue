@@ -55,8 +55,8 @@ import {
   CollapseItem,
   SettingItemBox,
   SettingItem,
-} from '@/components/Pages/ChartItemSetting'
-import { GlobalThemeJsonType } from '@/settings/chartThemes/index'
+} from '@/daping/components/Pages/ChartItemSetting'
+import { GlobalThemeJsonType } from '@/daping/settings/chartThemes/index'
 import { option } from './config'
 
 const props = defineProps({

@@ -1,6 +1,6 @@
-import { echartOptionProfixHandle } from '@/packages/public'
+import { echartOptionProfixHandle } from '@/daping/packages/public'
 import { graphic } from 'echarts/core'
-import { fade, hslToHex } from '@/utils'
+import { fade, hslToHex } from '@/daping/utils'
 
 export const includes = ['legend', 'xAxis', 'yAxis', 'grid']
 

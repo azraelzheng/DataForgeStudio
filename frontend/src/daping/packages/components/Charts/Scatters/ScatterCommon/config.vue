@@ -39,11 +39,11 @@
 
 <script setup lang="ts">
 import { PropType } from 'vue'
-import { GlobalThemeJsonType } from '@/settings/chartThemes/index'
-import { GlobalSetting, CollapseItem, SettingItemBox, SettingItem } from '@/components/Pages/ChartItemSetting'
+import { GlobalThemeJsonType } from '@/daping/settings/chartThemes/index'
+import { GlobalSetting, CollapseItem, SettingItemBox, SettingItem } from '@/daping/components/Pages/ChartItemSetting'
 import { option } from './config'
 import { ScatterEffectTypeEnumList, SymbolEnumList } from '../shard'
-import { axisConfig } from '@/packages/chartConfiguration/echarts/index'
+import { axisConfig } from '@/daping/packages/chartConfiguration/echarts/index'
 
 // eslint-disable-next-line no-unused-vars
 const props = defineProps({

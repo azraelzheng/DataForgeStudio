@@ -60,14 +60,14 @@
 
 <script setup lang="ts">
 import { ref, toRefs, toRaw, onBeforeUnmount, computed, watchEffect } from 'vue'
-import { icon } from '@/plugins'
-import { http, customizeHttp } from '@/api/http'
-import { SettingItemBox, SettingItem } from '@/components/Pages/ChartItemSetting'
+import { icon } from '@/daping/plugins'
+import { http, customizeHttp } from '@/daping/api/http'
+import { SettingItemBox, SettingItem } from '@/daping/components/Pages/ChartItemSetting'
 import { ChartDataPondControl } from './components/ChartDataPondControl'
-import { useDesignStore } from '@/store/modules/designStore/designStore'
+import { useDesignStore } from '@/daping/store/modules/designStore/designStore'
 import { useTargetData } from '../../../hooks/useTargetData.hook'
 import { ChartDataMatchingAndShow } from '../ChartDataMatchingAndShow'
-import { newFunctionHandle } from '@/utils'
+import { newFunctionHandle } from '@/daping/utils'
 
 const designStore = useDesignStore()
 const { HelpOutlineIcon, FlashIcon, PulseIcon, FishIcon } = icon.ionicons5

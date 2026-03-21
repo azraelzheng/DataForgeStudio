@@ -123,13 +123,13 @@
 <script lang="ts" setup>
 import { VNodeChild, computed } from 'vue'
 import { SelectOption, SelectGroupOption } from 'naive-ui'
-import { SettingItemBox, SettingItem, CollapseItem } from '@/components/Pages/ChartItemSetting'
-import { CreateComponentType, CreateComponentGroupType, ChartFrameEnum } from '@/packages/index.d'
-import { RequestParamsTypeEnum, RequestDataTypeEnum } from '@/enums/httpEnum'
-import { InteractEventOn, COMPONENT_INTERACT_EVENT_KET } from '@/enums/eventEnum'
-import { icon } from '@/plugins'
-import noData from '@/assets/images/canvas/noData.png'
-import { goDialog } from '@/utils'
+import { SettingItemBox, SettingItem, CollapseItem } from '@/daping/components/Pages/ChartItemSetting'
+import { CreateComponentType, CreateComponentGroupType, ChartFrameEnum } from '@/daping/packages/index.d'
+import { RequestParamsTypeEnum, RequestDataTypeEnum } from '@/daping/enums/httpEnum'
+import { InteractEventOn, COMPONENT_INTERACT_EVENT_KET } from '@/daping/enums/eventEnum'
+import { icon } from '@/daping/plugins'
+import noData from '@/daping/assets/images/canvas/noData.png'
+import { goDialog } from '@/daping/utils'
 import { useTargetData } from '../../../hooks/useTargetData.hook'
 
 const { CloseIcon, AddIcon, HelpOutlineIcon } = icon.ionicons5

@@ -33,10 +33,10 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, toRefs, watch, onUnmounted, computed } from 'vue'
 import { listen } from 'dom-helpers'
-import { useDesignStore } from '@/store/modules/designStore/designStore'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
-import { useChartLayoutStore } from '@/store/modules/chartLayoutStore/chartLayoutStore'
-import { ChartLayoutStoreEnum } from '@/store/modules/chartLayoutStore/chartLayoutStore.d'
+import { useDesignStore } from '@/daping/store/modules/designStore/designStore'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
+import { useChartLayoutStore } from '@/daping/store/modules/chartLayoutStore/chartLayoutStore'
+import { ChartLayoutStoreEnum } from '@/daping/store/modules/chartLayoutStore/chartLayoutStore.d'
 import throttle from 'lodash/throttle'
 
 const chartEditStore = useChartEditStore()

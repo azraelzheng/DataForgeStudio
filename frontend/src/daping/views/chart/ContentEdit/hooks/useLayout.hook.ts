@@ -1,6 +1,6 @@
 import { onUnmounted, onMounted } from 'vue'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
-import { EditCanvasTypeEnum } from '@/store/modules/chartEditStore/chartEditStore.d'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
+import { EditCanvasTypeEnum } from '@/daping/store/modules/chartEditStore/chartEditStore.d'
 
 const chartEditStore = useChartEditStore()
 

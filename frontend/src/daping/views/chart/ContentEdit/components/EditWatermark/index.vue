@@ -15,7 +15,7 @@
 </template>
 
 <script setup lang="ts">
-import { watermarkText } from '@/settings/designSetting'
+import { watermarkText } from '@/daping/settings/designSetting'
 </script>
 
 <style lang="scss" scoped>

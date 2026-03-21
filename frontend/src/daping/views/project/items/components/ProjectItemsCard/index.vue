@@ -83,9 +83,9 @@
 
 <script setup lang="ts">
 import { reactive, ref, PropType } from 'vue'
-import { renderIcon, renderLang,  requireErrorImg } from '@/utils'
-import { icon } from '@/plugins'
-import { MacOsControlBtn } from '@/components/Tips/MacOsControlBtn'
+import { renderIcon, renderLang,  requireErrorImg } from '@/daping/utils'
+import { icon } from '@/daping/plugins'
+import { MacOsControlBtn } from '@/daping/components/Tips/MacOsControlBtn'
 import { Chartype } from '../../index.d'
 import { log } from 'console'
 const {

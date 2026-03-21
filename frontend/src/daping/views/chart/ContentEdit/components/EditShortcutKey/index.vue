@@ -21,7 +21,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { icon } from '@/plugins'
+import { icon } from '@/daping/plugins'
 import ShortcutKeyModal from './ShortcutKeyModal.vue'
 
 const { DicomOverlayIcon } = icon.carbon

@@ -24,11 +24,11 @@
 
 <script lang="ts" setup>
 import { ref, toRefs, watch } from 'vue'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
-import { useDesignStore } from '@/store/modules/designStore/designStore'
-import { SyncEnum } from '@/enums/editPageEnum'
-import { icon } from '@/plugins'
-import { saveInterval } from '@/settings/designSetting'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
+import { useDesignStore } from '@/daping/store/modules/designStore/designStore'
+import { SyncEnum } from '@/daping/enums/editPageEnum'
+import { icon } from '@/daping/plugins'
+import { saveInterval } from '@/daping/settings/designSetting'
 
 const { ReloadIcon } = icon.ionicons5
 

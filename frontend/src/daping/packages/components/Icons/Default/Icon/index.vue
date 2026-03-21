@@ -6,8 +6,8 @@
 
 <script setup lang="ts">
 import { PropType, toRefs } from 'vue'
-import { CreateComponentType } from '@/packages/index.d'
-import { GoIconify } from '@/components/GoIconify'
+import { CreateComponentType } from '@/daping/packages/index.d'
+import { GoIconify } from '@/daping/components/GoIconify'
 
 const props = defineProps({
   chartConfig: {

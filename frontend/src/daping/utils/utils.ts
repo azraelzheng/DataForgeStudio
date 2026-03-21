@@ -7,10 +7,10 @@ import html2canvas from 'html2canvas'
 import { downloadByA } from './file'
 import { toString } from './type'
 import cloneDeep from 'lodash/cloneDeep'
-import { WinKeyboard } from '@/enums/editPageEnum'
-import { RequestHttpIntervalEnum, RequestParamsObjType } from '@/enums/httpEnum'
-import { CreateComponentType, CreateComponentGroupType } from '@/packages/index.d'
-import { excludeParseEventKeyList, excludeParseEventValueList } from '@/enums/eventEnum'
+import { WinKeyboard } from '@/daping/enums/editPageEnum'
+import { RequestHttpIntervalEnum, RequestParamsObjType } from '@/daping/enums/httpEnum'
+import { CreateComponentType, CreateComponentGroupType } from '@/daping/packages/index.d'
+import { excludeParseEventKeyList, excludeParseEventValueList } from '@/daping/enums/eventEnum'
 
 /**
  * * 判断是否是开发环境

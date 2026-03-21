@@ -5,8 +5,8 @@
 
 <script setup lang="ts">
 import { PropType } from 'vue'
-import { GlobalThemeJsonType } from '@/settings/chartThemes/index'
-import { GlobalSetting } from '@/components/Pages/ChartItemSetting'
+import { GlobalThemeJsonType } from '@/daping/settings/chartThemes/index'
+import { GlobalSetting } from '@/daping/components/Pages/ChartItemSetting'
 
 // eslint-disable-next-line no-unused-vars
 const props = defineProps({

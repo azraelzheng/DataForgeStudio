@@ -25,10 +25,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { GoThemeSelect } from '@/components/GoThemeSelect'
-import { GoLangSelect } from '@/components/GoLangSelect'
-import { ThemeColorSelect } from '@/components/Pages/ThemeColorSelect'
-import { PageEnum } from '@/enums/pageEnum'
+import { GoThemeSelect } from '@/daping/components/GoThemeSelect'
+import { GoLangSelect } from '@/daping/components/GoLangSelect'
+import { ThemeColorSelect } from '@/daping/components/Pages/ThemeColorSelect'
+import { PageEnum } from '@/daping/enums/pageEnum'
 
 const route = useRoute()
 

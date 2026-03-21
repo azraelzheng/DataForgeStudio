@@ -46,7 +46,7 @@
 import { PropType, computed } from 'vue'
 import { option, ShapeEnumList } from './config'
 // eslint-disable-next-line no-unused-vars
-import { GlobalSetting, CollapseItem, SettingItemBox, SettingItem } from '@/components/Pages/ChartItemSetting'
+import { GlobalSetting, CollapseItem, SettingItemBox, SettingItem } from '@/daping/components/Pages/ChartItemSetting'
 
 const props = defineProps({
   optionData: {

@@ -1,21 +1,21 @@
-import { getUUID } from '@/utils'
-import { RequestConfigType } from '@/store/modules/chartEditStore/chartEditStore.d'
-import { groupTitle } from '@/settings/designSetting'
-import { BaseEvent, EventLife } from '@/enums/eventEnum'
+import { getUUID } from '@/daping/utils'
+import { RequestConfigType } from '@/daping/store/modules/chartEditStore/chartEditStore.d'
+import { groupTitle } from '@/daping/settings/designSetting'
+import { BaseEvent, EventLife } from '@/daping/enums/eventEnum'
 import {
   RequestHttpEnum,
   RequestDataTypeEnum,
   RequestHttpIntervalEnum,
   RequestContentTypeEnum,
   RequestBodyEnum
-} from '@/enums/httpEnum'
+} from '@/daping/enums/httpEnum'
 import {
   ChartFrameEnum,
   PublicConfigType,
   CreateComponentType,
   CreateComponentGroupType
-} from '@/packages/index.d'
-import { chartInitConfig } from '@/settings/designSetting'
+} from '@/daping/packages/index.d'
+import { chartInitConfig } from '@/daping/settings/designSetting'
 import cloneDeep from 'lodash/cloneDeep'
 
 // 请求基础属性

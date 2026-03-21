@@ -8,7 +8,7 @@
 
 <script lang="ts" setup>
 import { PropType } from 'vue'
-import { CollapseItem, SettingItemBox } from '@/components/Pages/ChartItemSetting'
+import { CollapseItem, SettingItemBox } from '@/daping/components/Pages/ChartItemSetting'
 import { option } from './config'
 
 defineProps({

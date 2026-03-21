@@ -1,13 +1,13 @@
 import { useRoute } from 'vue-router'
-import { ResultEnum, RequestHttpHeaderEnum } from '@/enums/httpEnum'
-import { ErrorPageNameMap, PageEnum, PreviewEnum } from '@/enums/pageEnum'
-import { docPath, giteeSourceCodePath } from '@/settings/pathConst'
-import { SystemStoreEnum, SystemStoreUserInfoEnum } from '@/store/modules/systemStore/systemStore.d'
+import { ResultEnum, RequestHttpHeaderEnum } from '@/daping/enums/httpEnum'
+import { ErrorPageNameMap, PageEnum, PreviewEnum } from '@/daping/enums/pageEnum'
+import { docPath, giteeSourceCodePath } from '@/daping/settings/pathConst'
+import { SystemStoreEnum, SystemStoreUserInfoEnum } from '@/daping/store/modules/systemStore/systemStore.d'
 import { cryptoDecode } from './crypto'
-import { StorageEnum } from '@/enums/storageEnum'
+import { StorageEnum } from '@/daping/enums/storageEnum'
 import { clearLocalStorage, getLocalStorage, clearCookie } from './storage'
 import router from '@/router'
-import { logoutApi } from '@/api/path'
+import { logoutApi } from '@/daping/api/path'
 
 /**
  * * 根据名字跳转路由

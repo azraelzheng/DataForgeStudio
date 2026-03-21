@@ -26,8 +26,8 @@
 
 <script setup lang="ts">
 import { PropType, reactive, ref, toRefs, watch } from 'vue'
-import { RequestParamsObjType } from '@/enums/httpEnum'
-import noData from '@/assets/images/canvas/noData.png'
+import { RequestParamsObjType } from '@/daping/enums/httpEnum'
+import noData from '@/daping/assets/images/canvas/noData.png'
 
 const props = defineProps({
   target: Object as PropType<RequestParamsObjType>

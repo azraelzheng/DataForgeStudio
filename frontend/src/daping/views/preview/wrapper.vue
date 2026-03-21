@@ -5,9 +5,9 @@
 <script setup lang="ts">
 import { getSessionStorageInfo } from './utils'
 import type { ChartEditStorageType } from './index.d'
-import { SavePageEnum } from '@/enums/editPageEnum'
-import { setSessionStorage } from '@/utils'
-import { StorageEnum } from '@/enums/storageEnum'
+import { SavePageEnum } from '@/daping/enums/editPageEnum'
+import { setSessionStorage } from '@/daping/utils'
+import { StorageEnum } from '@/daping/enums/storageEnum'
 import { ref } from 'vue'
 import Preview from './index.vue'
 

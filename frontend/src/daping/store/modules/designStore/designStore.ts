@@ -1,9 +1,9 @@
 import { defineStore } from 'pinia'
-import { theme } from '@/settings/designSetting'
+import { theme } from '@/daping/settings/designSetting'
 import { DesignStateType, AppThemeColorType } from './designStore.d'
-import { setLocalStorage, getLocalStorage } from '@/utils'
-import { StorageEnum } from '@/enums/storageEnum'
-import { ThemeEnum } from '@/enums/styleEnum'
+import { setLocalStorage, getLocalStorage } from '@/daping/utils'
+import { StorageEnum } from '@/daping/enums/storageEnum'
+import { ThemeEnum } from '@/daping/enums/styleEnum'
 
 const { GO_DESIGN_STORE } = StorageEnum
 

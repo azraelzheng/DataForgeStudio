@@ -1,5 +1,5 @@
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
-import { canvasCut, downloadTextFile, JSONStringify } from '@/utils'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
+import { canvasCut, downloadTextFile, JSONStringify } from '@/daping/utils'
 const chartEditStore = useChartEditStore()
 
 // 导出

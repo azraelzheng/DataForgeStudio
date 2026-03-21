@@ -6,11 +6,11 @@ import {
   RequestDataTypeEnum,
   RequestContentTypeEnum,
   RequestParamsObjType
-} from '@/enums/httpEnum'
-import type { RequestGlobalConfigType, RequestConfigType } from '@/store/modules/chartEditStore/chartEditStore.d'
-import { getLocalStorage } from "@/utils";
-import { StorageEnum } from "@/enums/storageEnum";
-import { SystemStoreEnum, SystemStoreUserInfoEnum } from '@/store/modules/systemStore/systemStore.d'
+} from '@/daping/enums/httpEnum'
+import type { RequestGlobalConfigType, RequestConfigType } from '@/daping/store/modules/chartEditStore/chartEditStore.d'
+import { getLocalStorage } from "@/daping/utils";
+import { StorageEnum } from "@/daping/enums/storageEnum";
+import { SystemStoreEnum, SystemStoreUserInfoEnum } from '@/daping/store/modules/systemStore/systemStore.d'
 
 export const get = <T = any>(url: string, params?: object) => {
   return axiosInstance<T>({

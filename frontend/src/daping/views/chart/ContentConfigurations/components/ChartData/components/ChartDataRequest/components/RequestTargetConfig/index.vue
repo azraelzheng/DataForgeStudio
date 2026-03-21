@@ -57,13 +57,13 @@
 
 <script setup lang="ts">
 import { PropType, toRefs } from 'vue'
-import { SettingItemBox, SettingItem } from '@/components/Pages/ChartItemSetting'
-import { useTargetData } from '@/views/chart/ContentConfigurations/components/hooks/useTargetData.hook'
-import { selectTypeOptions, selectTimeOptions } from '@/views/chart/ContentConfigurations/components/ChartData/index.d'
-import { RequestConfigType } from '@/store/modules/chartEditStore/chartEditStore.d'
+import { SettingItemBox, SettingItem } from '@/daping/components/Pages/ChartItemSetting'
+import { useTargetData } from '@/daping/views/chart/ContentConfigurations/components/hooks/useTargetData.hook'
+import { selectTypeOptions, selectTimeOptions } from '@/daping/views/chart/ContentConfigurations/components/ChartData/index.d'
+import { RequestConfigType } from '@/daping/store/modules/chartEditStore/chartEditStore.d'
 import { RequestHeader } from '../RequestHeader'
-import { isDev } from '@/utils'
-import { icon } from '@/plugins'
+import { isDev } from '@/daping/utils'
+import { icon } from '@/daping/plugins'
 import {
   graphUrl,
   chartDataUrl,
@@ -83,7 +83,7 @@ import {
   treemapUrl,
   threeEarth01Url,
   sankeyUrl
-} from '@/api/mock'
+} from '@/daping/api/mock'
 
 const props = defineProps({
   targetDataRequest: Object as PropType<RequestConfigType>

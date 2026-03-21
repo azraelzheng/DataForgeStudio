@@ -1,8 +1,8 @@
-import { PublicConfigClass } from '@/packages/public'
-import { CreateComponentType } from '@/packages/index.d'
+import { PublicConfigClass } from '@/daping/packages/public'
+import { CreateComponentType } from '@/daping/packages/index.d'
 import { TimeCommonConfig } from './index'
 import cloneDeep from 'lodash/cloneDeep'
-import { chartInitConfig } from '@/settings/designSetting'
+import { chartInitConfig } from '@/daping/settings/designSetting'
 
 export enum FontWeightEnum {
   NORMAL = '常规',

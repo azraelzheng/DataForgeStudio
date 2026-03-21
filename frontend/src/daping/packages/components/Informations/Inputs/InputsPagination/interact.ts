@@ -1,4 +1,4 @@
-import { InteractEventOn, InteractActionsType } from '@/enums/eventEnum'
+import { InteractEventOn, InteractActionsType } from '@/daping/enums/eventEnum'
 
 // 时间组件类型
 export enum ComponentInteractEventEnum {

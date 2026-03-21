@@ -5,16 +5,16 @@
 <script setup lang="ts">
 import { PropType, watch, reactive } from 'vue'
 import VChart from 'vue-echarts'
-import { useCanvasInitOptions } from '@/hooks/useCanvasInitOptions.hook'
+import { useCanvasInitOptions } from '@/daping/hooks/useCanvasInitOptions.hook'
 import { use } from 'echarts/core'
 import 'echarts-liquidfill/src/liquidFill.js'
 import { CanvasRenderer } from 'echarts/renderers'
 import { GridComponent } from 'echarts/components'
 import config from './config'
-import { isPreview, isString, isNumber, colorGradientCustomMerge } from '@/utils'
-import { chartColorsSearch, defaultTheme } from '@/settings/chartThemes/index'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
-import { useChartDataFetch } from '@/hooks'
+import { isPreview, isString, isNumber, colorGradientCustomMerge } from '@/daping/utils'
+import { chartColorsSearch, defaultTheme } from '@/daping/settings/chartThemes/index'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
+import { useChartDataFetch } from '@/daping/hooks'
 
 const props = defineProps({
   themeSetting: {

@@ -97,8 +97,8 @@
 <script setup lang="ts">
 import { PropType, ref, watch, computed, reactive, nextTick } from 'vue'
 import cloneDeep from 'lodash/cloneDeep'
-import { darken, lighten, fade, hslToHex, hslToHexa, loadAsyncComponent } from '@/utils'
-import { icon } from '@/plugins'
+import { darken, lighten, fade, hslToHex, hslToHexa, loadAsyncComponent } from '@/daping/utils'
+import { icon } from '@/daping/plugins'
 
 type ColorType = {
   id: string

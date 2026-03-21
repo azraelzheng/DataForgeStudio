@@ -1,4 +1,4 @@
-import { MenuEnum } from '@/enums/editPageEnum'
+import { MenuEnum } from '@/daping/enums/editPageEnum'
 
 export interface MenuOptionsItemType {
   type?: string

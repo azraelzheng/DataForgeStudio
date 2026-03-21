@@ -12,11 +12,11 @@ import { VChart as VIChart,IVChart, ICommonChartSpec} from '@visactor/vchart';
 
 import { use } from 'echarts/core'
 import config, { includes, seriesItem } from './config'
-import { mergeTheme } from '@/packages/public/chart'
-import { useChartDataFetch } from '@/hooks'
-import { CreateComponentType } from '@/packages/index.d'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
-import { isPreview } from '@/utils'
+import { mergeTheme } from '@/daping/packages/public/chart'
+import { useChartDataFetch } from '@/daping/hooks'
+import { CreateComponentType } from '@/daping/packages/index.d'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
+import { isPreview } from '@/daping/utils'
 import isObject from 'lodash/isObject'
 
 

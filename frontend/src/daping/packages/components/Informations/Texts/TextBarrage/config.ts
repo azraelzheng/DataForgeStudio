@@ -1,7 +1,7 @@
-import { PublicConfigClass } from '@/packages/public'
-import { CreateComponentType } from '@/packages/index.d'
+import { PublicConfigClass } from '@/daping/packages/public'
+import { CreateComponentType } from '@/daping/packages/index.d'
 import { TextBarrageConfig } from './index'
-import { chartInitConfig } from '@/settings/designSetting'
+import { chartInitConfig } from '@/daping/settings/designSetting'
 import cloneDeep from 'lodash/cloneDeep'
 
 export enum FontWeightEnum {

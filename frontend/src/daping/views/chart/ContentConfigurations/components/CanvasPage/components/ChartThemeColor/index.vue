@@ -38,12 +38,12 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import cloneDeep from 'lodash/cloneDeep'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
-import { EditCanvasConfigEnum } from '@/store/modules/chartEditStore/chartEditStore.d'
-import { chartColors, ChartColorsNameType } from '@/settings/chartThemes/index'
-import { useDesignStore } from '@/store/modules/designStore/designStore'
-import { loadAsyncComponent, colorCustomMerge } from '@/utils'
-import { icon } from '@/plugins'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
+import { EditCanvasConfigEnum } from '@/daping/store/modules/chartEditStore/chartEditStore.d'
+import { chartColors, ChartColorsNameType } from '@/daping/settings/chartThemes/index'
+import { useDesignStore } from '@/daping/store/modules/designStore/designStore'
+import { loadAsyncComponent, colorCustomMerge } from '@/daping/utils'
+import { icon } from '@/daping/plugins'
 
 type FormateCustomColorType = {
   [T: string]: {

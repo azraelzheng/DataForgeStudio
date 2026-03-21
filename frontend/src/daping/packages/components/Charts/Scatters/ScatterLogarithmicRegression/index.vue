@@ -14,17 +14,17 @@
 <script setup lang="ts">
 import { PropType, computed, ref } from 'vue'
 import VChart from 'vue-echarts'
-import { useCanvasInitOptions } from '@/hooks/useCanvasInitOptions.hook'
+import { useCanvasInitOptions } from '@/daping/hooks/useCanvasInitOptions.hook'
 import ecStat from 'echarts-stat'
 import { use, registerTransform } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { ScatterChart, LineChart } from 'echarts/charts'
 import { UniversalTransition, LabelLayout } from 'echarts/features'
 import config, { includes } from './config'
-import { mergeTheme } from '@/packages/public/chart'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
-import { useChartDataFetch } from '@/hooks'
-import { isPreview } from '@/utils'
+import { mergeTheme } from '@/daping/packages/public/chart'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
+import { useChartDataFetch } from '@/daping/hooks'
+import { isPreview } from '@/daping/utils'
 import {
   DatasetComponent,
   GridComponent,

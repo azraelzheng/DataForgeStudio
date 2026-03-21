@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia'
 import { ChartLayoutType, LayerModeEnum, ChartModeEnum } from './chartLayoutStore.d'
-import { setLocalStorage, getLocalStorage } from '@/utils'
-import { StorageEnum } from '@/enums/storageEnum'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
+import { setLocalStorage, getLocalStorage } from '@/daping/utils'
+import { StorageEnum } from '@/daping/enums/storageEnum'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
 
 const chartEditStore = useChartEditStore()
 

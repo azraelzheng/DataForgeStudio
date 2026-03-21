@@ -1,6 +1,6 @@
 import test from './test.mock'
 import { MockMethod } from 'vite-plugin-mock'
-import { RequestHttpEnum } from '@/enums/httpEnum'
+import { RequestHttpEnum } from '@/daping/enums/httpEnum'
 
 // 单个X数据
 export const chartDataUrl = '/mock/chartData'

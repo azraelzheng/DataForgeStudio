@@ -1,8 +1,8 @@
 import { computed, toRefs } from 'vue'
 import { darkTheme, GlobalThemeOverrides } from 'naive-ui'
-import { useDesignStore } from '@/store/modules/designStore/designStore'
-import { borderRadius } from '@/settings/designSetting'
-import { alpha, lighten } from '@/utils'
+import { useDesignStore } from '@/daping/store/modules/designStore/designStore'
+import { borderRadius } from '@/daping/settings/designSetting'
+import { alpha, lighten } from '@/daping/utils'
 
 /**
  * * 设置全局主题

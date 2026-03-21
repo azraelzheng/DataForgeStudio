@@ -75,14 +75,14 @@
 
 <script setup lang="ts">
 import { PropType, computed } from 'vue'
-import { lineConf } from '@/packages/chartConfiguration/echarts/index'
-import { GlobalThemeJsonType } from '@/settings/chartThemes/index'
+import { lineConf } from '@/daping/packages/chartConfiguration/echarts/index'
+import { GlobalThemeJsonType } from '@/daping/settings/chartThemes/index'
 import {
   GlobalSetting,
   CollapseItem,
   SettingItemBox,
   SettingItem
-} from '@/components/Pages/ChartItemSetting'
+} from '@/daping/components/Pages/ChartItemSetting'
 
 const props = defineProps({
   optionData: {

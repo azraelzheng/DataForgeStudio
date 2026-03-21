@@ -5,7 +5,7 @@ import { HeatmapConfig } from './Heatmap/index'
 import { WaterPoloConfig } from './WaterPolo/index'
 import { TreeMapConfig } from './TreeMap/index'
 import {MoreInstrumentConfig} from "./MoreInstrument/index";
-import { BarLineCommonConfig } from '@/packages/components/Charts/Mores/BarLineCommon/index'
+import { BarLineCommonConfig } from '@/daping/packages/components/Charts/Mores/BarLineCommon/index'
 import {BiaxLineCommonConfig} from "@/packages/components/Charts/Mores/BiaxLineCommon/index";
 import {GroupedStackedRoseChartCommonConfig} from "@/packages/components/Charts/Mores/GroupedStackedRoseChartCommon/index";
 import {PolarCoordinateAxisCommonConfig} from "@/packages/components/Charts/Mores/PolarCoordinateAxisCommon/index";

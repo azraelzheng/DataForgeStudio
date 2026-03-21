@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { SystemStoreType, UserInfoType, TenantInfoType } from './systemStore.d'
-import { setLocalStorage, getLocalStorage } from '@/utils'
-import { StorageEnum } from '@/enums/storageEnum'
+import { setLocalStorage, getLocalStorage } from '@/daping/utils'
+import { StorageEnum } from '@/daping/enums/storageEnum'
 
 const { GO_SYSTEM_STORE } = StorageEnum
 

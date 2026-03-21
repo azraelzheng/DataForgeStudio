@@ -4,8 +4,8 @@
 
 <script setup lang="ts">
 import { ref, PropType, watch } from 'vue'
-import { fetchImages } from '@/packages'
-import { ConfigType } from '@/packages/index.d'
+import { fetchImages } from '@/daping/packages'
+import { ConfigType } from '@/daping/packages/index.d'
 
 const props = defineProps({
   chartConfig: {

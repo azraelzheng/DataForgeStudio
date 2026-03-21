@@ -13,7 +13,7 @@
   </n-radio-group>
 </template>
 <script setup lang="ts">
-import { type EchartsRenderer } from '@/settings/chartThemes'
+import { type EchartsRenderer } from '@/daping/settings/chartThemes'
 
 const props = defineProps<{ modelValue?: EchartsRenderer; includeInherit?: boolean }>()
 const emits = defineEmits(['update:modelValue'])

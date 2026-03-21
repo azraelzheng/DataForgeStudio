@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-import { NameSetting, PositionSetting, SizeSetting, StylesSetting } from '@/components/Pages/ChartItemSetting'
+import { NameSetting, PositionSetting, SizeSetting, StylesSetting } from '@/daping/components/Pages/ChartItemSetting'
 import { useTargetData } from '../hooks/useTargetData.hook'
 const { targetData, chartEditStore } = useTargetData()
 </script>

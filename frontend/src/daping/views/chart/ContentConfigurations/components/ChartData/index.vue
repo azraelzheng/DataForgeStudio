@@ -14,10 +14,10 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { loadAsyncComponent } from '@/utils'
-import { SettingItemBox } from '@/components/Pages/ChartItemSetting'
-import { RequestDataTypeEnum } from '@/enums/httpEnum'
-import { ChartFrameEnum } from '@/packages/index.d'
+import { loadAsyncComponent } from '@/daping/utils'
+import { SettingItemBox } from '@/daping/components/Pages/ChartItemSetting'
+import { RequestDataTypeEnum } from '@/daping/enums/httpEnum'
+import { ChartFrameEnum } from '@/daping/packages/index.d'
 import { useTargetData } from '../hooks/useTargetData.hook'
 import { SelectCreateDataType, SelectCreateDataEnum } from './index.d'
 

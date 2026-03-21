@@ -16,7 +16,7 @@
 </template>
 <script setup lang="ts">
 import { PropType } from 'vue'
-import {CollapseItem, SettingItem, SettingItemBox} from '@/components/Pages/ChartItemSetting'
+import {CollapseItem, SettingItem, SettingItemBox} from '@/daping/components/Pages/ChartItemSetting'
 import { option } from './config'
 
 const page = [

@@ -69,7 +69,7 @@
 
 <script lang="ts" setup>
 import { ref, watch } from 'vue'
-import { icon } from '@/plugins'
+import { icon } from '@/daping/plugins'
 
 const props = defineProps({
   modelShow: Boolean

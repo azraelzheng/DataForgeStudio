@@ -1,8 +1,8 @@
 import { ref, nextTick } from 'vue'
 import { UploadCustomRequestOptions } from 'naive-ui'
-import { FileTypeEnum } from '@/enums/fileTypeEnum'
-import { readFile, goDialog, JSONParse } from '@/utils'
-import { useSync } from '@/views/chart/hooks/useSync.hook'
+import { FileTypeEnum } from '@/daping/enums/fileTypeEnum'
+import { readFile, goDialog, JSONParse } from '@/daping/utils'
+import { useSync } from '@/daping/views/chart/hooks/useSync.hook'
 
 export const useFile = () => {
   const importUploadFileListRef = ref()

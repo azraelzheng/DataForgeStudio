@@ -27,8 +27,8 @@
 
 <script setup lang="ts">
 import { PropType } from 'vue'
-import { PickCreateComponentType } from '@/packages/index.d'
-import { SettingItemBox } from '@/components/Pages/ChartItemSetting'
+import { PickCreateComponentType } from '@/daping/packages/index.d'
+import { SettingItemBox } from '@/daping/components/Pages/ChartItemSetting'
 
 const props = defineProps({
   chartAttr: {

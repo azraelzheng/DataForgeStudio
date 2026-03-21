@@ -105,13 +105,13 @@
 import { PropType, computed, toRaw } from 'vue'
 import { merge, cloneDeep } from 'lodash';
 
-import GlobalSetting from '@/components/Pages/ChartItemSetting/GlobalSetting.vue'
-import CollapseItem from '@/components/Pages/ChartItemSetting/CollapseItem.vue'
-import SettingItemBox from '@/components/Pages/ChartItemSetting/SettingItemBox.vue'
-import SettingItem from '@/components/Pages/ChartItemSetting/SettingItem.vue'
+import GlobalSetting from '@/daping/components/Pages/ChartItemSetting/GlobalSetting.vue'
+import CollapseItem from '@/daping/components/Pages/ChartItemSetting/CollapseItem.vue'
+import SettingItemBox from '@/daping/components/Pages/ChartItemSetting/SettingItemBox.vue'
+import SettingItem from '@/daping/components/Pages/ChartItemSetting/SettingItem.vue'
 
-import { lineConf } from '@/packages/chartConfiguration/echarts'
-import { GlobalThemeJsonType } from '@/settings/chartThemes'
+import { lineConf } from '@/daping/packages/chartConfiguration/echarts'
+import { GlobalThemeJsonType } from '@/daping/settings/chartThemes'
 import { barSeriesItem, lineSeriesItem } from './config'
 
 

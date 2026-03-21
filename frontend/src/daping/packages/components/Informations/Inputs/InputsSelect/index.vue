@@ -9,10 +9,10 @@
 
 <script setup lang="ts">
 import { PropType, toRefs, ref, shallowReactive, watch } from 'vue'
-import { CreateComponentType } from '@/packages/index.d'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
-import { useChartInteract } from '@/hooks'
-import { InteractEventOn } from '@/enums/eventEnum'
+import { CreateComponentType } from '@/daping/packages/index.d'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
+import { useChartInteract } from '@/daping/hooks'
+import { InteractEventOn } from '@/daping/enums/eventEnum'
 import { ComponentInteractParamsEnum } from './interact'
 
 const props = defineProps({

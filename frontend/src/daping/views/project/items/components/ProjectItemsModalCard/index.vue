@@ -75,9 +75,9 @@
 
 <script setup lang="ts">
 import { ref, reactive, PropType, watch } from 'vue'
-import { renderIcon, renderLang } from '@/utils'
-import { icon } from '@/plugins'
-import { MacOsControlBtn } from '@/components/Tips/MacOsControlBtn'
+import { renderIcon, renderLang } from '@/daping/utils'
+import { icon } from '@/daping/plugins'
+import { MacOsControlBtn } from '@/daping/components/Tips/MacOsControlBtn'
 import { Chartype } from '../../index.d'
 
 const { HammerIcon } = icon.ionicons5

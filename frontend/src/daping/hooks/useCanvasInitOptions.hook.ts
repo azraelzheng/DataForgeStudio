@@ -1,6 +1,6 @@
 import { inject, type Ref } from 'vue'
-import { EchartsRenderer } from '@/settings/chartThemes'
-import { SCALE_KEY } from '@/views/preview/hooks/useScale.hook'
+import { EchartsRenderer } from '@/daping/settings/chartThemes'
+import { SCALE_KEY } from '@/daping/views/preview/hooks/useScale.hook'
 import { use } from 'echarts/core'
 import { CanvasRenderer, SVGRenderer } from 'echarts/renderers'
 

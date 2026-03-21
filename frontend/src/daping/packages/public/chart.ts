@@ -1,7 +1,7 @@
 import merge from 'lodash/merge'
 import pick from 'lodash/pick'
 import { EchartsDataType } from '../index.d'
-import { globalThemeJson } from '@/settings/chartThemes/index'
+import { globalThemeJson } from '@/daping/settings/chartThemes/index'
 import type VChart from 'vue-echarts'
 
 /**

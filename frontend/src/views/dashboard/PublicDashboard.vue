@@ -201,7 +201,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 /**
  * 公开大屏展示页面
  * - 无需登录即可访问

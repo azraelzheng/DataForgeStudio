@@ -15,11 +15,11 @@
 <script setup lang="ts">
 import { ref, PropType, toRefs, watch,onMounted,nextTick } from 'vue'
 // import AMapLoader from '@amap/amap-jsapi-loader'
-import { CreateComponentType } from '@/packages/index.d'
-import { useChartDataFetch } from '@/hooks'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
+import { CreateComponentType } from '@/daping/packages/index.d'
+import { useChartDataFetch } from '@/daping/hooks'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
 import { MarkerEnum } from './config'
-import { isArray } from '@/utils'
+import { isArray } from '@/daping/utils'
 // import * as Cesium from "cesium";
 const props = defineProps({
   chartConfig: {

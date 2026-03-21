@@ -13,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-import { requireErrorImg } from '@/utils'
+import { requireErrorImg } from '@/daping/utils'
 </script>
 
 <style lang="scss" scoped>

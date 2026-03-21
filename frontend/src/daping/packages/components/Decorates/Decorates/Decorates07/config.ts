@@ -1,6 +1,6 @@
-import { PublicConfigClass } from '@/packages/public'
-import { chartInitConfig } from '@/settings/designSetting'
-import { CreateComponentType } from '@/packages/index.d'
+import { PublicConfigClass } from '@/daping/packages/public'
+import { chartInitConfig } from '@/daping/settings/designSetting'
+import { CreateComponentType } from '@/daping/packages/index.d'
 import { Decorates07Config } from './index'
 import cloneDeep from 'lodash/cloneDeep'
 

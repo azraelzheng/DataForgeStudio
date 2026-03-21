@@ -103,10 +103,10 @@
 <script lang="ts" setup>
 import { ref, computed, watch, toRef, toRefs, toRaw, reactive } from 'vue'
 import { useTargetData } from '../../../hooks/useTargetData.hook'
-import { MonacoEditor } from '@/components/Pages/MonacoEditor'
-import { icon } from '@/plugins'
-import { goDialog, toString } from '@/utils'
-import { customizeHttp } from '@/api/http'
+import { MonacoEditor } from '@/daping/components/Pages/MonacoEditor'
+import { icon } from '@/daping/plugins'
+import { goDialog, toString } from '@/daping/utils'
+import { customizeHttp } from '@/daping/api/http'
 import cloneDeep from 'lodash/cloneDeep'
 
 const { DocumentTextIcon } = icon.ionicons5

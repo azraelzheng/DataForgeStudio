@@ -67,7 +67,7 @@
 
 <script setup lang="ts">
 import { PropType, ref, watch } from 'vue'
-import { CollapseItem, SettingItemBox, SettingItem } from '@/components/Pages/ChartItemSetting'
+import { CollapseItem, SettingItemBox, SettingItem } from '@/daping/components/Pages/ChartItemSetting'
 import { option } from './config'
 
 const props = defineProps({

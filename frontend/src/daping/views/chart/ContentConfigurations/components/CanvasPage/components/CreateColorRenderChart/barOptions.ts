@@ -1,4 +1,4 @@
-import { echartOptionProfixHandle } from '@/packages/public'
+import { echartOptionProfixHandle } from '@/daping/packages/public'
 
 export const includes = ['legend', 'xAxis', 'yAxis', 'grid']
 

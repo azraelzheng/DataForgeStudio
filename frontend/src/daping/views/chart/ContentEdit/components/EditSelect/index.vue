@@ -7,10 +7,10 @@
 
 <script setup lang="ts">
 import { ref, toRefs, watch, computed } from 'vue'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
-import { useDesignStore } from '@/store/modules/designStore/designStore'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
+import { useDesignStore } from '@/daping/store/modules/designStore/designStore'
 import { useSizeStyle, useComponentStyle } from '../../hooks/useStyle.hook'
-import { selectBoxIndex } from '@/settings/designSetting'
+import { selectBoxIndex } from '@/daping/settings/designSetting'
 
 // 全局颜色
 const designStore = useDesignStore()

@@ -126,10 +126,10 @@
 
 <script setup lang="ts">
 import { PropType, ref, toRefs } from 'vue'
-import { icon } from '@/plugins'
-import { MonacoEditor } from '@/components/Pages/MonacoEditor'
-import { SettingItemBox, SettingItem } from '@/components/Pages/ChartItemSetting'
-import { RequestDataPondItemType, RequestGlobalConfigType } from '@/store/modules/chartEditStore/chartEditStore.d'
+import { icon } from '@/daping/plugins'
+import { MonacoEditor } from '@/daping/components/Pages/MonacoEditor'
+import { SettingItemBox, SettingItem } from '@/daping/components/Pages/ChartItemSetting'
+import { RequestDataPondItemType, RequestGlobalConfigType } from '@/daping/store/modules/chartEditStore/chartEditStore.d'
 import displayTable from './displayTable.vue'
 import {
   RequestBodyEnum,
@@ -138,7 +138,7 @@ import {
   RequestContentTypeEnum,
   RequestBodyEnumList,
   RequestParamsObjType
-} from '@/enums/httpEnum'
+} from '@/daping/enums/httpEnum'
 
 const props = defineProps({
   globalData: Object as PropType<RequestGlobalConfigType>,

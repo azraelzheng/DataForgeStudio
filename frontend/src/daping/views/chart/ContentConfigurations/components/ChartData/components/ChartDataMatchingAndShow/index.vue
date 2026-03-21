@@ -136,15 +136,15 @@
 <script setup lang="ts">
 const { DocumentTextIcon, ChevronDownIcon, PencilIcon } = icon.ionicons5
 import { ref, computed, watch } from 'vue'
-import { ChartFrameEnum } from '@/packages/index.d'
-import { RequestDataTypeEnum } from '@/enums/httpEnum'
-import { icon } from '@/plugins'
+import { ChartFrameEnum } from '@/daping/packages/index.d'
+import { RequestDataTypeEnum } from '@/daping/enums/httpEnum'
+import { icon } from '@/daping/plugins'
 import { DataResultEnum, TimelineTitleEnum } from '../../index.d'
 import { ChartDataMonacoEditor } from '../ChartDataMonacoEditor'
 import { useFile } from '../../hooks/useFile.hooks'
 import { useTargetData } from '../../../hooks/useTargetData.hook'
 import isObject from 'lodash/isObject'
-import { toString, isArray } from '@/utils'
+import { toString, isArray } from '@/daping/utils'
 import {BaseEvent} from "@/enums/eventEnum";
 import {MonacoEditor} from "@/components/Pages/MonacoEditor/index";
 

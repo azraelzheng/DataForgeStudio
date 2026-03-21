@@ -20,11 +20,11 @@
 
 <script setup lang="ts">
 import { ref, watch, computed, reactive } from 'vue'
-import { ConfigType } from '@/packages/index.d'
-import { useSettingStore } from '@/store/modules/settingStore/settingStore'
-import { loadAsyncComponent } from '@/utils'
-import { usePackagesStore } from '@/store/modules/packagesStore/packagesStore'
-import { PackagesCategoryEnum } from '@/packages/index.d'
+import { ConfigType } from '@/daping/packages/index.d'
+import { useSettingStore } from '@/daping/store/modules/settingStore/settingStore'
+import { loadAsyncComponent } from '@/daping/utils'
+import { usePackagesStore } from '@/daping/store/modules/packagesStore/packagesStore'
+import { PackagesCategoryEnum } from '@/daping/packages/index.d'
 
 const ChartsItemBox = loadAsyncComponent(() => import('../ChartsItemBox/index.vue'))
 const packagesStore = usePackagesStore()

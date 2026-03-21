@@ -6,17 +6,17 @@
 <script setup lang="ts">
 import { PropType, watch, reactive } from 'vue'
 import VChart from 'vue-echarts'
-import { useCanvasInitOptions } from '@/hooks/useCanvasInitOptions.hook'
+import { useCanvasInitOptions } from '@/daping/hooks/useCanvasInitOptions.hook'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { LineChart } from 'echarts/charts'
 import config, { includes } from './config'
-import { mergeTheme } from '@/packages/public/chart'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
-import { chartColorsSearch, defaultTheme } from '@/settings/chartThemes/index'
+import { mergeTheme } from '@/daping/packages/public/chart'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
+import { chartColorsSearch, defaultTheme } from '@/daping/settings/chartThemes/index'
 import { DatasetComponent, GridComponent, TooltipComponent, LegendComponent } from 'echarts/components'
-import { useChartDataFetch } from '@/hooks'
-import { isPreview, colorGradientCustomMerge } from '@/utils'
+import { useChartDataFetch } from '@/daping/hooks'
+import { isPreview, colorGradientCustomMerge } from '@/daping/utils'
 
 const props = defineProps({
   themeSetting: {

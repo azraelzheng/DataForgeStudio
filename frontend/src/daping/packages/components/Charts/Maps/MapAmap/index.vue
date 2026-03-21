@@ -55,12 +55,12 @@
 <script setup lang="ts">
 import {ref, PropType, toRefs, watch, onMounted} from 'vue'
 import AMapLoader from '@amap/amap-jsapi-loader'
-import { CreateComponentType } from '@/packages/index.d'
-import { useChartDataFetch } from '@/hooks'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
+import { CreateComponentType } from '@/daping/packages/index.d'
+import { useChartDataFetch } from '@/daping/hooks'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
 import { MarkerEnum } from './config'
 import  myIcon  from './myIcon.vue'
-import { isArray } from '@/utils'
+import { isArray } from '@/daping/utils'
 let dataSelectItem= ref()
 let dataFilter =[
 "position","icon"

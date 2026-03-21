@@ -5,17 +5,17 @@
 <script setup lang="ts">
 import { ref, computed, PropType, watch } from 'vue'
 import VChart from 'vue-echarts'
-import { useCanvasInitOptions } from '@/hooks/useCanvasInitOptions.hook'
+import { useCanvasInitOptions } from '@/daping/hooks/useCanvasInitOptions.hook'
 import dataJson from './data.json'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { RadarChart } from 'echarts/charts'
 import { includes } from './config'
-import { mergeTheme, setOption } from '@/packages/public/chart'
-import { useChartDataFetch } from '@/hooks'
-import { CreateComponentType } from '@/packages/index.d'
-import { useChartEditStore } from '@/store/modules/chartEditStore/chartEditStore'
-import { isPreview } from '@/utils'
+import { mergeTheme, setOption } from '@/daping/packages/public/chart'
+import { useChartDataFetch } from '@/daping/hooks'
+import { CreateComponentType } from '@/daping/packages/index.d'
+import { useChartEditStore } from '@/daping/store/modules/chartEditStore/chartEditStore'
+import { isPreview } from '@/daping/utils'
 import { DatasetComponent, GridComponent, TooltipComponent, LegendComponent } from 'echarts/components'
 
 const props = defineProps({
