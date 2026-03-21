@@ -18,7 +18,7 @@ namespace DataForgeStudio.Data.Migrations
                     ProjectId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    State = table.Column<int>(type: "int", nullable: false),
+                    State = table.Column<int>(type: "int", nullable: false, defaultValue: 1),
                     Content = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     PublicUrl = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
                     CreatedBy = table.Column<int>(type: "int", nullable: true),
@@ -40,6 +40,23 @@ namespace DataForgeStudio.Data.Migrations
                 name: "IX_DapingProjects_CreatedBy",
                 table: "DapingProjects",
                 column: "CreatedBy");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DapingProjects_CreatedTime",
+                table: "DapingProjects",
+                column: "CreatedTime");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DapingProjects_PublicUrl",
+                table: "DapingProjects",
+                column: "PublicUrl",
+                unique: true,
+                filter: "[PublicUrl] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DapingProjects_State",
+                table: "DapingProjects",
+                column: "State");
         }
 
         /// <inheritdoc />

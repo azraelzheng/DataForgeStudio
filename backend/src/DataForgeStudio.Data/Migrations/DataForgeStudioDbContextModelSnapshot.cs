@@ -166,7 +166,9 @@ namespace DataForgeStudio.Data.Migrations
                         .HasColumnType("nvarchar(50)");
 
                     b.Property<int>("State")
-                        .HasColumnType("int");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
 
                     b.Property<DateTime?>("UpdatedTime")
                         .HasColumnType("datetime2");
@@ -174,6 +176,14 @@ namespace DataForgeStudio.Data.Migrations
                     b.HasKey("ProjectId");
 
                     b.HasIndex("CreatedBy");
+
+                    b.HasIndex("CreatedTime");
+
+                    b.HasIndex("PublicUrl")
+                        .IsUnique()
+                        .HasFilter("[PublicUrl] IS NOT NULL");
+
+                    b.HasIndex("State");
 
                     b.ToTable("DapingProjects");
                 });
