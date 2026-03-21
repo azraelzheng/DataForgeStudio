@@ -1,15 +1,15 @@
 import { http } from '@/api/http'
 import { httpErrorHandle } from '@/utils'
-import { ContentTypeEnum, RequestHttpEnum, ModuleTypeEnum } from '@/enums/httpEnum'
-import { ProjectItem, ProjectDetail } from './project' // TODO 分页返回，优化使用 ProjectItem
+import { RequestHttpEnum } from '@/enums/httpEnum'
+import { ProjectItem, ProjectDetail } from './project'
 
 // * 项目列表
 export const projectListApi = async (data: object) => {
   try {
-    const res = await http(RequestHttpEnum.GET)<{
+    const res = await http(RequestHttpEnum.POST)<{
       list: ProjectItem[],
       count: number
-    }>(`${ModuleTypeEnum.PROJECT}/my-page`, data)
+    }>('/api/daping/projects/list', data)
     return res
   } catch {
     httpErrorHandle()
@@ -19,7 +19,7 @@ export const projectListApi = async (data: object) => {
 // * 新增项目
 export const createProjectApi = async (data: object) => {
   try {
-    const res = await http(RequestHttpEnum.POST)<number>(`${ModuleTypeEnum.PROJECT}/create`, data)
+    const res = await http(RequestHttpEnum.POST)<number>('/api/daping/projects', data)
     return res
   } catch {
     httpErrorHandle()
@@ -27,9 +27,9 @@ export const createProjectApi = async (data: object) => {
 }
 
 // * 获取项目
-export const fetchProjectApi = async (data: object) => {
+export const fetchProjectApi = async (id: number) => {
   try {
-    const res = await http(RequestHttpEnum.GET)<ProjectDetail>(`${ModuleTypeEnum.PROJECT}/get`, data)
+    const res = await http(RequestHttpEnum.GET)<ProjectDetail>(`/api/daping/projects/${id}`)
     return res
   } catch {
     httpErrorHandle()
@@ -37,9 +37,9 @@ export const fetchProjectApi = async (data: object) => {
 }
 
 // * 保存项目
-export const saveProjectApi = async (data: object) => {
+export const saveProjectApi = async (id: number, data: object) => {
   try {
-    const res = await http(RequestHttpEnum.PUT)(`${ModuleTypeEnum.PROJECT}/update`, data)
+    const res = await http(RequestHttpEnum.PUT)(`/api/daping/projects/${id}`, data)
     return res
   } catch {
     httpErrorHandle()
@@ -47,9 +47,9 @@ export const saveProjectApi = async (data: object) => {
 }
 
 // * 修改项目基础信息
-export const updateProjectApi = async (data: object) => {
+export const updateProjectApi = async (id: number, data: object) => {
   try {
-    const res = await http(RequestHttpEnum.PUT)(`${ModuleTypeEnum.PROJECT}/update`, data)
+    const res = await http(RequestHttpEnum.PUT)(`/api/daping/projects/${id}`, data)
     return res
   } catch {
     httpErrorHandle()
@@ -57,19 +57,29 @@ export const updateProjectApi = async (data: object) => {
 }
 
 // * 删除项目
-export const deleteProjectApi = async (data: object) => {
+export const deleteProjectApi = async (id: number) => {
   try {
-    const res = await http(RequestHttpEnum.DELETE)(`${ModuleTypeEnum.PROJECT}/delete`, data)
+    const res = await http(RequestHttpEnum.DELETE)(`/api/daping/projects/${id}`)
     return res
   } catch {
     httpErrorHandle()
   }
 }
 
-// * 修改发布状态 [0 已发布, 1 未发布]
-export const changeProjectReleaseApi = async (data: object) => {
+// * 发布项目
+export const publishProjectApi = async (id: number) => {
   try {
-    const res = await http(RequestHttpEnum.PUT)(`${ModuleTypeEnum.PROJECT}/update`, data)
+    const res = await http(RequestHttpEnum.POST)(`/api/daping/projects/${id}/publish`)
+    return res
+  } catch {
+    httpErrorHandle()
+  }
+}
+
+// * 取消发布
+export const unpublishProjectApi = async (id: number) => {
+  try {
+    const res = await http(RequestHttpEnum.POST)(`/api/daping/projects/${id}/unpublish`)
     return res
   } catch {
     httpErrorHandle()
