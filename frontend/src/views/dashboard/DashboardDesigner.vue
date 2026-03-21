@@ -620,6 +620,7 @@ const rowHeight = computed(() => {
 
 // 使用 store 中的计算属性
 const selectedWidget = computed(() => store.selectedWidget)
+const selectedWidgetId = computed(() => store.selectedWidgetId)
 const canUndo = computed(() => store.canUndo)
 const canRedo = computed(() => store.canRedo)
 const scale = computed({
@@ -979,7 +980,8 @@ const handleDrop = (event) => {
   }
 
   layout.value.push(newWidget)
-  selectedWidgetId.value = newWidget.i
+  // 选中新添加的组件
+  store.selectWidget(newWidget.i)
   activeTab.value = 'widget'
 }
 
@@ -1030,7 +1032,7 @@ const getDefaultConfig = (type) => {
 
 // 选择组件
 const handleSelectWidget = async (item) => {
-  selectedWidgetId.value = item.i
+  store.selectWidget(item.i)
   activeTab.value = 'widget'
 
   // 获取选中的组件
