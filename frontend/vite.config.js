@@ -10,6 +10,14 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
   },
+  optimizeDeps: {
+    include: [
+      'naive-ui',
+      'echarts',
+      'vue-echarts',
+      '@vueuse/core'
+    ]
+  },
   server: {
     port: 9999,
     host: '127.0.0.1',
