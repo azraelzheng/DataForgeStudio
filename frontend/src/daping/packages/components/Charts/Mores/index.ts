@@ -5,12 +5,12 @@ import { HeatmapConfig } from './Heatmap/index'
 import { WaterPoloConfig } from './WaterPolo/index'
 import { TreeMapConfig } from './TreeMap/index'
 import {MoreInstrumentConfig} from "./MoreInstrument/index";
-import { BarLineCommonConfig } from '@/daping/packages/components/Charts/Mores/BarLineCommon/index'
-import {BiaxLineCommonConfig} from "@/packages/components/Charts/Mores/BiaxLineCommon/index";
-import {GroupedStackedRoseChartCommonConfig} from "@/packages/components/Charts/Mores/GroupedStackedRoseChartCommon/index";
-import {PolarCoordinateAxisCommonConfig} from "@/packages/components/Charts/Mores/PolarCoordinateAxisCommon/index";
-import {WeatherConfig} from "@/packages/components/Charts/Mores/Weather/index";
-import {GroundGlassConfig} from "@/packages/components/Charts/Mores/GroundGlass/index";
+import { BarLineCommonConfig } from './BarLineCommon/index'
+import {BiaxLineCommonConfig} from "./BiaxLineCommon/index";
+import {GroupedStackedRoseChartCommonConfig} from "./GroupedStackedRoseChartCommon/index";
+import {PolarCoordinateAxisCommonConfig} from "./PolarCoordinateAxisCommon/index";
+import {WeatherConfig} from "./Weather/index";
+import {GroundGlassConfig} from "./GroundGlass/index";
 
 import { DialConfig } from './Dial/index'
 import { SankeyConfig } from './Sankey/index'

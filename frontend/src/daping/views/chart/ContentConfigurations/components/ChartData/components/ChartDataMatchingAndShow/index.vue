@@ -146,7 +146,7 @@ import { useTargetData } from '../../../hooks/useTargetData.hook'
 import isObject from 'lodash/isObject'
 import { toString, isArray } from '@/daping/utils'
 import {BaseEvent} from "@/enums/eventEnum";
-import {MonacoEditor} from "@/components/Pages/MonacoEditor/index";
+import {MonacoEditor} from "@/daping/components/Pages/MonacoEditor/index";
 
 const { targetData } = useTargetData()
 const props = defineProps({

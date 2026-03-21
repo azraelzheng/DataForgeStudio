@@ -77,7 +77,7 @@ import {
   CollapseItem,
   SettingItemBox,
   SettingItem,
-} from "@/components/Pages/ChartItemSetting";
+} from "@/daping/components/Pages/ChartItemSetting";
 import { option, FontWeightEnum, FontWeightObject } from "./config";
 
 const props = defineProps({

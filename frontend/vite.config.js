@@ -13,7 +13,7 @@ export default defineConfig({
   css: {
     preprocessorOptions: {
       scss: {
-        additionalData: `@import "@/daping/styles/common/mixins/mixins.scss";`
+        additionalData: `@import "@/daping/styles/common/style.scss";`
       }
     }
   },

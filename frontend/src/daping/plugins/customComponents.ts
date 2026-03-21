@@ -1,7 +1,7 @@
 import type { App } from 'vue'
 import { GoSkeleton } from '@/daping/components/GoSkeleton'
 import { GoLoading } from '@/daping/components/GoLoading'
-import { SketchRule } from 'vue3-sketch-ruler'
+import SketchRule from 'vue3-sketch-ruler'
 
 /**
  * 全局注册自定义组件

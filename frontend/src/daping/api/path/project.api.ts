@@ -85,3 +85,19 @@ export const unpublishProjectApi = async (id: number) => {
     httpErrorHandle()
   }
 }
+
+// * 修改发布状态 (兼容旧接口)
+export const changeProjectReleaseApi = async (data: { id: string | number; status: number }) => {
+  try {
+    const { id, status } = data
+    if (status === 1) {
+      const res = await http(RequestHttpEnum.POST)(`/api/daping/projects/${id}/publish`)
+      return res
+    } else {
+      const res = await http(RequestHttpEnum.POST)(`/api/daping/projects/${id}/unpublish`)
+      return res
+    }
+  } catch {
+    httpErrorHandle()
+  }
+}
