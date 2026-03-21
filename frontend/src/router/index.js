@@ -90,7 +90,7 @@ const routes = [
     component: () => import('../views/system/BackupManagement.vue'),
     meta: { title: '备份管理', requiresAuth: true, permission: 'backup:view' }
   },
-  // 大屏模块
+  // 大屏模块 - 使用 go-view
   {
     path: '/dashboard',
     name: 'Dashboard',
@@ -99,25 +99,25 @@ const routes = [
   {
     path: '/dashboard/list',
     name: 'DashboardList',
-    component: () => import('../views/dashboard/DashboardList.vue'),
+    component: () => import('../views/daping/DapingProjectList.vue'),
     meta: { title: '大屏管理', requiresAuth: true, permission: 'dashboard:view' }
   },
   {
     path: '/dashboard/designer/:id?',
     name: 'DashboardDesigner',
-    component: () => import('../views/dashboard/DashboardDesigner.vue'),
+    component: () => import('../views/daping/DapingDesigner.vue'),
     meta: { title: '大屏设计器', requiresAuth: true, permission: 'dashboard:edit' }
   },
   {
-    path: '/dashboard/view/:id',
-    name: 'DashboardView',
-    component: () => import('../views/dashboard/DashboardView.vue'),
-    meta: { title: '大屏展示', requiresAuth: true, permission: 'dashboard:view' }
+    path: '/dashboard/preview/:id',
+    name: 'DashboardPreview',
+    component: () => import('../views/daping/DapingPreview.vue'),
+    meta: { title: '大屏预览', requiresAuth: true, permission: 'dashboard:view' }
   },
   {
     path: '/public/d/:publicUrl',
     name: 'PublicDashboard',
-    component: () => import('../views/dashboard/PublicDashboard.vue'),
+    component: () => import('../views/daping/DapingPublic.vue'),
     meta: { title: '大屏', requiresAuth: false }
   },
   {
